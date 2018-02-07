@@ -13,7 +13,12 @@ export default class BetterPositionBehavior {
 		this.element.style.background = 'red';
 	}
 
-	cleanUp() {
+	detach() {
 		this.element.style.background = '';
+		this.element.style.transform = '';
+	}
+
+	scroll() {
+		this.element.style.transform = `rotate(${(Date.now() - 1517925133289) / 100}deg)`;
 	}
 }

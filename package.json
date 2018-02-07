@@ -4,25 +4,26 @@
   "description": "Open-source JavaScript framework to declaratively build scrolling experiences",
   "main": "./src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "watchify ./src/index.js -o ./dist/scrollmeister.js -v",
-    "build": "browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js"
+    "test": "NODE_PATH='./src' jest",
+    "watch": "NODE_PATH='./src' watchify ./src/index.js -o ./dist/scrollmeister.js -v",
+    "build": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Prinzhorn/scrollmeister.git"
   },
   "browserify": {
-    "transform": [
-      [
-        "babelify",
-        {
-          "presets": [
-            "env"
-          ]
-        }
-      ]
-    ]
+    "transform": ["babelify", "browserify-css"]
+  },
+  "babel": {
+    "presets": ["env"]
+  },
+  "browserify-css": {
+    "autoInject": true,
+    "autoInjectOptions": {
+      "verbose": false
+    },
+    "minify": true
   },
   "keywords": [
     "scrolling",
@@ -47,12 +48,15 @@
   },
   "homepage": "https://www.scrollmeister.com",
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
     "document-register-element": "^1.7.2"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babelify": "^8.0.0",
+    "browserify-css": "^0.14.0",
+    "jest": "^22.1.4",
     "tinyify": "^2.4.0",
     "watchify": "^3.10.0"
   }

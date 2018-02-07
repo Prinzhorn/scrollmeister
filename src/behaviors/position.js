@@ -12,7 +12,9 @@ export default class PositionBehavior {
 		this.element.layout.bam();
 	}
 
-	cleanUp() {}
+	detach() {}
+
+	scroll() {}
 
 	wup() {
 		console.log('dup');

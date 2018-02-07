@@ -7,10 +7,19 @@
 		<script src="../dist/scrollmeister.js"></script>
 	</head>
 	<body>
-		<scroll-meister betterposition position layout>
-		</scroll-meister>
+		<scroll-meister
+			layout="
+				guides:
+					contentleft 0% 2vmin,
+					center 50% 2vmin,
+					centercollapsed 50% 0px,
+					contentright 100% 2vmin;
+				width :
+					1200px;
+				widths: 100px, 400px, 9001px;
+			"
+		>
 
-		<el-meister layout>
-		</el-meister>
+		</scroll-meister>
 	</body>
 </html>

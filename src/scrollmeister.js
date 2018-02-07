@@ -1,15 +1,16 @@
-var lowerCaseAndDashRegex = /^[a-z-]+$/;
+const lowerCaseAndDashRegex = /^[a-z-]+$/;
 
-var Scrollmeister = {
-	behaviors: new Map(),
+const Scrollmeister = {
+	behaviors: {},
+	//TODO: get rid of this Map (no polyfill etc.)
 	behaviorsWaitingForDependencies: new Map(),
 
 	getDefinedBehaviorNames: function() {
-		return Array.from(this.behaviors.keys());
+		return Object.keys(this.behaviors);
 	},
 
 	defineBehavior: function(name, classDefinition) {
-		if (this.behaviors.has(name)) {
+		if (this.behaviors.hasOwnProperty(name)) {
 			throw new Error(`You are trying to redefine the "${name}" behavior.`);
 		}
 
@@ -19,21 +20,22 @@ var Scrollmeister = {
 			);
 		}
 
-		this.behaviors.set(name, classDefinition);
+		this.behaviors[name] = classDefinition;
 	},
 
 	attachBehavior: function(element, name, config) {
-		if (!this.behaviors.has(name)) {
+		if (!this.behaviors.hasOwnProperty(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes which correspond to defined behaviors.`
 			);
 		}
 
-		var Behavior = this.behaviors.get(name);
+		let Behavior = this.behaviors[name];
 
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].doTheThing();
+			element.behaviorsUpdated();
 		} else {
 			//Check if this behavior depends on one or more others which are not yet fulfilled.
 			//TODO: The whole dependency resolving is based on my mantra of "first make it work, then make it great". It works.
@@ -45,8 +47,8 @@ var Scrollmeister = {
 							this.behaviorsWaitingForDependencies.set(element, new Set());
 						}
 
-						let behaviors = this.behaviorsWaitingForDependencies.get(element);
-						behaviors.add(name);
+						let waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
+						waitingBehaviors.add(name);
 						return;
 					}
 				}
@@ -66,18 +68,21 @@ var Scrollmeister = {
 			//We just attached a new behavior.
 			//Let's see if this element has behaviors waiting for the one we just created.
 			if (this.behaviorsWaitingForDependencies.has(element)) {
-				let behaviors = this.behaviorsWaitingForDependencies.get(element);
+				let waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
 
-				for (let behavior of behaviors) {
+				for (let behavior of waitingBehaviors) {
 					this.attachBehavior(element, behavior, config);
 				}
 			}
+
+			element.behaviorsUpdated();
 		}
 	},
 
 	detachBehavior: function(element, name) {
-		element[name].cleanUp();
+		element[name].detach();
 		delete element[name];
+		element.behaviorsUpdated();
 	}
 };
 
