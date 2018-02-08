@@ -4,4 +4,4 @@ import CSSLengthType from 'types/CSSLengthType.js';
 
 //TODO: named nested properties. Just arrays so far.
 //But let's see how far we get.
-export default [StringType, NumberType, CSSLengthType];
+export default [{ name: StringType }, { position: NumberType }, { width: CSSLengthType }];

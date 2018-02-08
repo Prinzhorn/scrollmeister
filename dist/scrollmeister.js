@@ -203,15 +203,6 @@ var Behavior = function () {
 						throw new Error('You are missing the "' + key + '" property for the ' + this.constructor.name + ' class, which has no default value.');
 					} else {
 						//There is a default specified, use it.
-						/*
-      Object.defineProperty(this, key, {
-      	get() {
-      		},
-      	set(value) {
-      		this.raw[key] = value;
-      	}
-      });
-      */
 						this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 						continue;
 					}
@@ -235,6 +226,8 @@ var Behavior = function () {
 					propertyType = propertyType[0];
 
 					if (propertyType instanceof Array) {
+						//thing: keyword 30px 30px, anotherone 100px 8px
+						//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
 						var rawValuesList = rawValue.split(',');
 
 						return rawValuesList.map(function (rawValue, index) {
@@ -258,9 +251,23 @@ var Behavior = function () {
 						throw new Error('The schema for the "' + property + '" property of the "' + this.constructor.name + '" class expects ' + propertyType.length + ' values. Got ' + _rawValuesList2.length + ', namely "' + _rawValuesList2.join(' ') + '".');
 					}
 
-					return _rawValuesList2.map(function (rawValue, index) {
-						return propertyType[index].parse(rawValue);
-					});
+					var map = {};
+
+					for (var rawValueIndex = 0; rawValueIndex < _rawValuesList2.length; rawValueIndex++) {
+						var namedPropertyType = propertyType[rawValueIndex];
+						var keys = Object.keys(namedPropertyType);
+
+						if (keys.length !== 1) {
+							throw new Error('A nested schema should have exactly one key (the name) which maps to the type.');
+						}
+
+						var name = keys[0];
+						var _rawValue = _rawValuesList2[rawValueIndex];
+
+						map[name] = namedPropertyType[name].parse(_rawValue);
+					}
+
+					return map;
 				} else {
 					throw new Error('You have defined an empty array as schema type for the "' + property + '"" property of the "' + this.constructor.name + '" class.');
 				}
@@ -1098,13 +1105,15 @@ var GuideLayoutEngine = function () {
 					guide = this.guides[guideIndex] = {};
 				}
 
-				guide.name = rawGuide[0];
+				guide.name = rawGuide.name;
 
-				guide.width = this.lengthToPixel(rawGuide[2], pixelWidth);
+				guide.width = this.lengthToPixel(rawGuide.width, pixelWidth);
 
 				//The guide position is always expressed in percentages of the content width.
 				//This is actually the CENTER position of the guide.
-				guide.position = contentMargin + pixelWidth * rawGuide[1];
+				guide.position = contentMargin + pixelWidth * rawGuide.position;
+
+				//TODO: if the guide position is negative, it should calculate the offset from the right instead of the left.
 
 				//The RIGHT edge, but the position where the LEFT guide would snap to.
 				guide.leftPosition = guide.position + guide.width / 2;
@@ -1366,7 +1375,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 //TODO: named nested properties. Just arrays so far.
 //But let's see how far we get.
-exports.default = [_StringType2.default, _NumberType2.default, _CSSLengthType2.default];
+exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
 },{"types/CSSLengthType.js":17,"types/NumberType.js":19,"types/StringType.js":20}],19:[function(require,module,exports){
 'use strict';

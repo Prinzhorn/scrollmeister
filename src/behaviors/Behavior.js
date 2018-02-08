@@ -86,16 +86,6 @@ export default class Behavior {
 					);
 				} else {
 					//There is a default specified, use it.
-					/*
-					Object.defineProperty(this, key, {
-						get() {
-
-						},
-						set(value) {
-							this.raw[key] = value;
-						}
-					});
-					*/
 					this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 					continue;
 				}
@@ -116,6 +106,8 @@ export default class Behavior {
 				propertyType = propertyType[0];
 
 				if (propertyType instanceof Array) {
+					//thing: keyword 30px 30px, anotherone 100px 8px
+					//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
 					let rawValuesList = rawValue.split(',');
 
 					return rawValuesList.map((rawValue, index) => {
@@ -144,9 +136,23 @@ export default class Behavior {
 					);
 				}
 
-				return rawValuesList.map((rawValue, index) => {
-					return propertyType[index].parse(rawValue);
-				});
+				let map = {};
+
+				for (let rawValueIndex = 0; rawValueIndex < rawValuesList.length; rawValueIndex++) {
+					let namedPropertyType = propertyType[rawValueIndex];
+					let keys = Object.keys(namedPropertyType);
+
+					if (keys.length !== 1) {
+						throw new Error(`A nested schema should have exactly one key (the name) which maps to the type.`);
+					}
+
+					let name = keys[0];
+					let rawValue = rawValuesList[rawValueIndex];
+
+					map[name] = namedPropertyType[name].parse(rawValue);
+				}
+
+				return map;
 			} else {
 				throw new Error(
 					`You have defined an empty array as schema type for the "${property}"" property of the "${this.constructor

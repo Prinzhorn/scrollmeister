@@ -69,13 +69,15 @@ export default class GuideLayoutEngine {
 				guide = this.guides[guideIndex] = {};
 			}
 
-			guide.name = rawGuide[0];
+			guide.name = rawGuide.name;
 
-			guide.width = this.lengthToPixel(rawGuide[2], pixelWidth);
+			guide.width = this.lengthToPixel(rawGuide.width, pixelWidth);
 
 			//The guide position is always expressed in percentages of the content width.
 			//This is actually the CENTER position of the guide.
-			guide.position = contentMargin + pixelWidth * rawGuide[1];
+			guide.position = contentMargin + pixelWidth * rawGuide.position;
+
+			//TODO: if the guide position is negative, it should calculate the offset from the right instead of the left.
 
 			//The RIGHT edge, but the position where the LEFT guide would snap to.
 			guide.leftPosition = guide.position + guide.width / 2;
