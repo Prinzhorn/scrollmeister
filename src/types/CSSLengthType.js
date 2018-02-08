@@ -1,8 +1,10 @@
+// @flow
+
 const units = ['px', 'vw', 'vh', 'vmin', 'vmax', '%'];
 const unitRegex = new RegExp('[\\d.](' + units.join('|') + ')$');
 
 export default {
-	parse: function(value) {
+	parse: function(value: string): { length: number, unit: string } {
 		value = value.trim();
 
 		//Special unit-less value.
@@ -33,7 +35,7 @@ export default {
 			unit: unitMatch[1]
 		};
 	},
-	stringify: function(value) {
+	stringify: function(value: { length: number, unit: string }): string {
 		return '' + value.length + value.unit;
 	}
 };

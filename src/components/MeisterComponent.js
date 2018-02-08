@@ -28,7 +28,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	attributeChangedCallback(attr, oldValue, newValue) {
-		console.log('attr', attr);
 		if (newValue === null) {
 			Scrollmeister.detachBehavior(this, attr);
 		} else {

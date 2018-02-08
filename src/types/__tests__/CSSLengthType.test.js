@@ -51,6 +51,6 @@ describe('parse', () => {
 
 describe('stringify', () => {
 	test('concats length and value', () => {
-		expect(CSSLengthType.stringify({ length: 100.5, unit: 'px' })).toBe('100.5px');
+		expect(CSSLengthType.stringify({ length: -100.5, unit: 'px' })).toBe('-100.5px');
 	});
 });

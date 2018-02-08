@@ -7,6 +7,10 @@ export default class PositionBehavior {
 		return ['layout'];
 	}
 
+	static get behaviorName(): string {
+		return 'position';
+	}
+
 	constructor(element) {
 		this.element = element;
 		this.element.layout.bam();

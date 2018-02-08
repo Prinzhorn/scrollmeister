@@ -99,20 +99,79 @@ var Behavior = function () {
 		_classCallCheck(this, Behavior);
 
 		this.element = element;
+		this.raw = {};
+		this.cooked = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
 	}
 
-	//TODO: This might not belong to the behavior itself but to the schemas/types folder.
-
-
 	_createClass(Behavior, [{
+		key: 'destructor',
+		value: function destructor() {
+			if (this.listeners) {
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = this.listeners[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var listener = _step.value;
+
+						listener.element.removeEventListener(listener.event, listener.callback);
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			}
+
+			if (this.detach) {
+				this.detach();
+			}
+		}
+	}, {
+		key: 'listen',
+		value: function listen(element, event, callback) {
+			element.addEventListener(event, callback);
+
+			if (!this.listeners) {
+				this.listeners = [];
+			}
+
+			this.listeners.push({ element: element, event: event, callback: callback });
+		}
+	}, {
+		key: 'listenAndInvoke',
+		value: function listenAndInvoke(element, event, callback) {
+			this.listen(element, event, callback);
+			callback();
+		}
+	}, {
+		key: 'emit',
+		value: function emit(name, params) {
+			var event = new Event(this.constructor.behaviorName + ':' + name);
+
+			this.element.dispatchEvent(event);
+		}
+
+		//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
+
+	}, {
 		key: 'parseProperties',
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
 			var rawPropertiesMap = {};
-			var properties = {};
 			var match = void 0;
 
 			propertiesAndValuesRegex.lastIndex = 0;
@@ -122,7 +181,8 @@ var Behavior = function () {
 				var rawValue = match[2];
 
 				if (!schema.hasOwnProperty(property)) {
-					throw new Error('You have defined a property "' + property + '" that "' + this.constructor.name + '" is not expecting. The value was "' + rawValue + '".');
+					debugger;
+					throw new Error('You have defined a property "' + property + '" in your HTML that "' + this.constructor.name + '" is not expecting. The value was "' + rawValue + '".');
 				}
 
 				rawPropertiesMap[property] = rawValue;
@@ -137,29 +197,29 @@ var Behavior = function () {
 					//The schema specifies a property that is currently not defined and no default was specified.
 					//TODO: does that imply they are all required? What if falsy properties are OK?
 					if (!schema[key].hasOwnProperty('default')) {
-						throw new Error('You are missing the ' + key + ' property, which has no default value specified for the ' + this.constructor.name + ' class.');
+						//TODO: this error message does not help people who only write HTML and don't even know what the class is.
+						//It should simply be something like "The layout attribute misses the required guides property"
+						//Don't get too technical.
+						throw new Error('You are missing the "' + key + '" property for the ' + this.constructor.name + ' class, which has no default value.');
 					} else {
 						//There is a default specified, use it.
-						properties[key] = this.parseProperty(key, schema[key].default, schema[key].type);
+						/*
+      Object.defineProperty(this, key, {
+      	get() {
+      		},
+      	set(value) {
+      		this.raw[key] = value;
+      	}
+      });
+      */
+						this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 						continue;
 					}
 				}
 
-				properties[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
-				console.log(JSON.stringify(properties[key], null, 4));
+				this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 			}
 		}
-
-		/*
-  const GuideDefinition = {
-  	type: [{ name: String }, { left: Number }, { width: Number }]
-  };
-  	type: [GuideDefinition]
-  	type: [{
-  	type: [{ name: String }, { left: Number }, { width: Number }]
-  }]
-  */
-
 	}, {
 		key: 'parseProperty',
 		value: function parseProperty(property, rawValue, propertyType) {
@@ -235,17 +295,11 @@ var _StringType = require('types/StringType.js');
 
 var _StringType2 = _interopRequireDefault(_StringType);
 
-var _CSSLengthType = require('types/CSSLengthType.js');
+var _Behavior2 = require('behaviors/Behavior.js');
 
-var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
-
-var _Behavior4 = require('behaviors/Behavior.js');
-
-var _Behavior5 = _interopRequireDefault(_Behavior4);
+var _Behavior3 = _interopRequireDefault(_Behavior2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -253,9 +307,125 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var GuideDefinitionType = {
-	type: [{ name: String }, { left: Number }, { width: Number }]
-};
+var DebugGuidesBehavior = function (_Behavior) {
+	_inherits(DebugGuidesBehavior, _Behavior);
+
+	function DebugGuidesBehavior() {
+		_classCallCheck(this, DebugGuidesBehavior);
+
+		return _possibleConstructorReturn(this, (DebugGuidesBehavior.__proto__ || Object.getPrototypeOf(DebugGuidesBehavior)).apply(this, arguments));
+	}
+
+	_createClass(DebugGuidesBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			var _this2 = this;
+
+			this._createElement();
+
+			this.listenAndInvoke(this.element, 'layout:layout', function () {
+				_this2._renderGuides();
+			});
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this._removeElement();
+		}
+	}, {
+		key: 'scroll',
+		value: function scroll() {}
+	}, {
+		key: '_createElement',
+		value: function _createElement() {
+			this._guidesWrapper = document.createElement('div');
+			this._guidesWrapper.style.cssText = '\n\t\t\tposition: fixed;\n\t\t\tleft: 0;\n\t\t\ttop: 0;\n\t\t\twidth: 100%;\n\t\t\theight: 100%;\n\t\t\tpointer-events: none;\n\t\t';
+
+			if (document.body) {
+				document.body.appendChild(this._guidesWrapper);
+			}
+		}
+	}, {
+		key: '_removeElement',
+		value: function _removeElement() {
+			if (document.body) {
+				document.body.removeChild(this._guidesWrapper);
+			}
+		}
+	}, {
+		key: '_renderGuides',
+		value: function _renderGuides() {
+			var guides = this.element.layout.engine.guides;
+			var html = guides.map(function (guide) {
+				if (guide.width === 0) {
+					return '\n\t\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 0, 255, 1); left: ' + guide.rightPosition + 'px; width: 1px;"></div>\n\t\t\t\t';
+				} else {
+					return '\n\t\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 255, 255, 0.5); left: ' + guide.rightPosition + 'px; width: ' + guide.width + 'px;"></div>\n\t\t\t\t';
+				}
+			});
+
+			this._guidesWrapper.innerHTML = html.join('');
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				/*
+    color: {
+    	type: StringType
+    }
+    */
+			};
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['layout'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'debugguides';
+		}
+	}]);
+
+	return DebugGuidesBehavior;
+}(_Behavior3.default);
+
+exports.default = DebugGuidesBehavior;
+
+},{"behaviors/Behavior.js":3,"types/StringType.js":20}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _GuideDefinitionType = require('types/GuideDefinitionType.js');
+
+var _GuideDefinitionType2 = _interopRequireDefault(_GuideDefinitionType);
+
+var _CSSLengthType = require('types/CSSLengthType.js');
+
+var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
+
+var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var LayoutBehavior = function (_Behavior) {
 	_inherits(LayoutBehavior, _Behavior);
@@ -269,6 +439,17 @@ var LayoutBehavior = function (_Behavior) {
 	_createClass(LayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
+			var _this2 = this;
+
+			this.engine = new _GuideLayoutEngine2.default();
+
+			this.listenAndInvoke(window, 'resize', function () {
+				var viewport = _this2._getViewport();
+				_this2.engine.updateViewport(viewport);
+				_this2.engine.doLayout(_this2.guides, _this2.width);
+				_this2.emit('layout');
+			});
+
 			this.element.title = 'behavior did this 1';
 		}
 	}, {
@@ -284,20 +465,49 @@ var LayoutBehavior = function (_Behavior) {
 		value: function bam() {
 			console.log('in yop face');
 		}
+	}, {
+		key: '_getViewport',
+		value: function _getViewport() {
+			var documentElement = document.documentElement;
+
+			if (!documentElement) {
+				throw new Error('There is no documentElement to get the size of.');
+			}
+
+			var originalOverflow = documentElement.style.overflowY;
+
+			//Force a scrollbar to get the inner dimensions.
+			documentElement.style.overflowY = 'scroll';
+
+			var width = documentElement.clientWidth;
+			var height = documentElement.clientHeight;
+
+			//Force NO scrollbar to get the outer dimensions.
+			documentElement.style.overflowY = 'hidden';
+
+			var outerWidth = documentElement.clientWidth;
+			var outerHeight = documentElement.clientHeight;
+
+			//Restore overflow.
+			documentElement.style.overflowY = originalOverflow;
+
+			return {
+				width: width,
+				height: height,
+				outerWidth: outerWidth,
+				outerHeight: outerHeight
+			};
+		}
 	}], [{
 		key: 'schema',
 		get: function get() {
 			return {
 				guides: {
-					type: [[_StringType2.default, _CSSLengthType2.default, _CSSLengthType2.default]]
+					type: [_GuideDefinitionType2.default]
 				},
 				width: {
 					type: _CSSLengthType2.default,
 					default: '1400px'
-				},
-				widths: {
-					type: [_CSSLengthType2.default],
-					default: '1400px, 500px'
 				}
 			};
 		}
@@ -306,86 +516,104 @@ var LayoutBehavior = function (_Behavior) {
 		get: function get() {
 			return [];
 		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'layout';
+		}
 	}]);
 
 	return LayoutBehavior;
-}(_Behavior5.default);
+}(_Behavior3.default);
+
+/*
+class IndexedExampleSchemaBehavior extends Behavior {
+	static get schema() {
+		return {
+			thing: {
+				//thing: keyword
+				//a.thing = 'keyword'
+				type: StringType,
+				type: {
+					parse: function() {}
+				},
+
+				//thing: keyword, anotherone, and, more
+				//a.thing = ['keyword', 'anotherone', 'and', 'more']
+				type: [StringType],
+
+				//thing: keyword 100px
+				//a.thing = ['keyword', {length: 100, unit: 'px'}]
+				type: [StringType, CSSLengthType],
+
+				//thing: keyword 30px 30px, anotherone 100px 8px
+				//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
+				type: [GuideDefinitionType],
+				type: [[StringType, CSSLengthType, CSSLengthType]]
+			}
+		};
+	}
+}
+
+class NamedExampleSchemaBehavior extends Behavior {
+	static get schema() {
+		return {
+			thing: {
+				//thing: keyword
+				//a.thing = 'keyword'
+				type: StringType,
+				type: {
+					parse: function() {}
+				},
+
+				//thing: keyword, anotherone, and, more
+				//a.thing = ['keyword', 'anotherone', 'and', 'more']
+				type: [StringType],
+				type: [
+					{
+						parse: function() {}
+					}
+				],
+
+				//thing: keyword 100px
+				//a.thing = {first: 'keyword', second: '100px'}
+				type: [{ first: StringType }, { second: CSSLengthType }],
+				type: [
+					{
+						first: { parse: function() {} }
+					},
+					{
+						second: { parse: function() {} }
+					}
+				],
+
+				//thing: keyword 30px 30px, anotherone 100px 8px
+				type: [GuideDefinitionType],
+				type: [
+					{
+						type: [
+							{
+								first: StringType
+							},
+							{
+								second: CSSLengthType
+							},
+							{
+								third: CSSLengthType
+							}
+						]
+					}
+				]
+			}
+		};
+	}
+}
+*/
+
 
 exports.default = LayoutBehavior;
 
-var IndexedExampleSchemaBehavior = function (_Behavior2) {
-	_inherits(IndexedExampleSchemaBehavior, _Behavior2);
-
-	function IndexedExampleSchemaBehavior() {
-		_classCallCheck(this, IndexedExampleSchemaBehavior);
-
-		return _possibleConstructorReturn(this, (IndexedExampleSchemaBehavior.__proto__ || Object.getPrototypeOf(IndexedExampleSchemaBehavior)).apply(this, arguments));
-	}
-
-	_createClass(IndexedExampleSchemaBehavior, null, [{
-		key: 'schema',
-		get: function get() {
-			var _thing;
-
-			return {
-				thing: (_thing = {
-					//thing: keyword
-					//a.thing = 'keyword'
-					type: _StringType2.default
-				}, _defineProperty(_thing, 'type', {
-					parse: function parse() {}
-				}), _defineProperty(_thing, 'type', [_StringType2.default]), _defineProperty(_thing, 'type', [_StringType2.default, _CSSLengthType2.default]), _defineProperty(_thing, 'type', [GuideDefinitionType]), _defineProperty(_thing, 'type', [[_StringType2.default, _CSSLengthType2.default, _CSSLengthType2.default]]), _thing)
-			};
-		}
-	}]);
-
-	return IndexedExampleSchemaBehavior;
-}(_Behavior5.default);
-
-var NamedExampleSchemaBehavior = function (_Behavior3) {
-	_inherits(NamedExampleSchemaBehavior, _Behavior3);
-
-	function NamedExampleSchemaBehavior() {
-		_classCallCheck(this, NamedExampleSchemaBehavior);
-
-		return _possibleConstructorReturn(this, (NamedExampleSchemaBehavior.__proto__ || Object.getPrototypeOf(NamedExampleSchemaBehavior)).apply(this, arguments));
-	}
-
-	_createClass(NamedExampleSchemaBehavior, null, [{
-		key: 'schema',
-		get: function get() {
-			var _thing2;
-
-			return {
-				thing: (_thing2 = {
-					//thing: keyword
-					//a.thing = 'keyword'
-					type: _StringType2.default
-				}, _defineProperty(_thing2, 'type', {
-					parse: function parse() {}
-				}), _defineProperty(_thing2, 'type', [_StringType2.default]), _defineProperty(_thing2, 'type', [{
-					parse: function parse() {}
-				}]), _defineProperty(_thing2, 'type', [{ first: _StringType2.default }, { second: _CSSLengthType2.default }]), _defineProperty(_thing2, 'type', [{
-					first: { parse: function parse() {} }
-				}, {
-					second: { parse: function parse() {} }
-				}]), _defineProperty(_thing2, 'type', [GuideDefinitionType]), _defineProperty(_thing2, 'type', [{
-					type: [{
-						first: _StringType2.default
-					}, {
-						second: _CSSLengthType2.default
-					}, {
-						third: _CSSLengthType2.default
-					}]
-				}]), _thing2)
-			};
-		}
-	}]);
-
-	return NamedExampleSchemaBehavior;
-}(_Behavior5.default);
-
-},{"behaviors/Behavior.js":3,"types/CSSLengthType.js":15,"types/StringType.js":16}],5:[function(require,module,exports){
+},{"behaviors/Behavior.js":3,"lib/GuideLayoutEngine.js":14,"types/CSSLengthType.js":17,"types/GuideDefinitionType.js":18}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -406,6 +634,11 @@ var BetterPositionBehavior = function () {
 		key: 'dependencies',
 		get: function get() {
 			return ['position'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'betterposition';
 		}
 	}]);
 
@@ -435,7 +668,7 @@ var BetterPositionBehavior = function () {
 
 exports.default = BetterPositionBehavior;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -445,6 +678,10 @@ var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
 
 var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
+
+var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
+
+var _DebugGuidesBehavior2 = _interopRequireDefault(_DebugGuidesBehavior);
 
 var _position = require('behaviors/position.js');
 
@@ -456,11 +693,13 @@ var _betterposition2 = _interopRequireDefault(_betterposition);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_scrollmeister2.default.defineBehavior('layout', _LayoutBehavior2.default);
-_scrollmeister2.default.defineBehavior('position', _position2.default);
-_scrollmeister2.default.defineBehavior('betterposition', _betterposition2.default);
+_scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 
-},{"behaviors/LayoutBehavior.js":4,"behaviors/betterposition.js":5,"behaviors/position.js":7,"scrollmeister.js":14}],7:[function(require,module,exports){
+_scrollmeister2.default.defineBehavior(_position2.default);
+_scrollmeister2.default.defineBehavior(_betterposition2.default);
+
+},{"behaviors/DebugGuidesBehavior.js":4,"behaviors/LayoutBehavior.js":5,"behaviors/betterposition.js":6,"behaviors/position.js":8,"scrollmeister.js":16}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -481,6 +720,11 @@ var PositionBehavior = function () {
 		key: 'dependencies',
 		get: function get() {
 			return ['layout'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'position';
 		}
 	}]);
 
@@ -509,7 +753,7 @@ var PositionBehavior = function () {
 
 exports.default = PositionBehavior;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -542,7 +786,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":9}],9:[function(require,module,exports){
+},{"./MeisterComponent.js":10}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -628,7 +872,6 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'attributeChangedCallback',
 		value: function attributeChangedCallback(attr, oldValue, newValue) {
-			console.log('attr', attr);
 			if (newValue === null) {
 				_scrollmeister2.default.detachBehavior(this, attr);
 			} else {
@@ -706,7 +949,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"scrollmeister.js":14}],10:[function(require,module,exports){
+},{"scrollmeister.js":16}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -739,7 +982,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":9}],11:[function(require,module,exports){
+},{"./MeisterComponent.js":10}],12:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -757,7 +1000,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":8,"components/ScrollMeisterComponent.js":10,"document-register-element":2}],12:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":9,"components/ScrollMeisterComponent.js":11,"document-register-element":2}],13:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.css');
@@ -768,9 +1011,132 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":6,"./components":11,"./scrollmeister.css":13,"./scrollmeister.js":14}],13:[function(require,module,exports){
-var css = "html{overflow-x:hidden}scroll-meister{display:block;width:100%;height:2000px;overflow:visible}el-meister{display:block;position:fixed;left:50%;top:50%;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],14:[function(require,module,exports){
+},{"./behaviors":7,"./components":12,"./scrollmeister.css":15,"./scrollmeister.js":16}],14:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GuideLayoutEngine = function () {
+	function GuideLayoutEngine() {
+		_classCallCheck(this, GuideLayoutEngine);
+
+		this.guides = [];
+	}
+
+	_createClass(GuideLayoutEngine, [{
+		key: 'updateViewport',
+		value: function updateViewport(viewport) {
+			this.viewport = viewport;
+		}
+	}, {
+		key: 'lengthToPixel',
+		value: function lengthToPixel(value, percentageReference) {
+			switch (value.unit) {
+				case 'px':
+					return value.length;
+				case 'vw':
+					return value.length / 100 * this.viewport.width;
+				case 'vh':
+					return value.length / 100 * this.viewport.height;
+				case 'vmin':
+					return value.length / 100 * Math.min(this.viewport.width, this.viewport.height);
+				case 'vmax':
+					return value.length / 100 * Math.max(this.viewport.width, this.viewport.height);
+				case '%':
+					if (percentageReference == null) {
+						throw new Error('To convert percentages to pixels a reference value needs to be specified.');
+					}
+
+					return percentageReference * (value.length / 100);
+				default:
+					throw new Error('Unknown unit "' + value.unit + '" of length "' + value.length + '"');
+			}
+		}
+	}, {
+		key: 'doLayout',
+		value: function doLayout(rawGuides, contentWidth) {
+			console.log('did the layout');
+			this._computeGuides(rawGuides, contentWidth);
+		}
+
+		//This will attach the layout info directly to each dom node. No need for a lookup map.
+
+	}, {
+		key: '_doItemLayout',
+		value: function _doItemLayout() {}
+	}, {
+		key: '_computeGuides',
+		value: function _computeGuides(rawGuides, contentWidth) {
+			var pixelWidth = this.lengthToPixel(contentWidth, this.viewport.width);
+
+			//If the wrapper element does not have enough room, make it full width fluid.
+			if (pixelWidth > this.viewport.width) {
+				pixelWidth = this.viewport.width;
+			}
+
+			//This causes the content to be centered by shifting it to the right by half of the margin.
+			var contentMargin = (this.viewport.width - pixelWidth) / 2;
+
+			//Expand or collapse the guides array to the correct length.
+			//This will eliminate the need for push() calls.
+			this.guides.length = rawGuides.length;
+
+			for (var guideIndex = 0; guideIndex < rawGuides.length; guideIndex++) {
+				var rawGuide = rawGuides[guideIndex];
+
+				//Reuse an existing guide object to make gc happy.
+				//It doesn't matter if it was the same one, we will overwrite the properties anyway.
+				var guide = this.guides[guideIndex];
+
+				if (!guide) {
+					guide = this.guides[guideIndex] = {};
+				}
+
+				guide.name = rawGuide[0];
+
+				guide.width = this.lengthToPixel(rawGuide[2], pixelWidth);
+
+				//The guide position is always expressed in percentages of the content width.
+				//This is actually the CENTER position of the guide.
+				guide.position = contentMargin + pixelWidth * rawGuide[1];
+
+				//The RIGHT edge, but the position where the LEFT guide would snap to.
+				guide.leftPosition = guide.position + guide.width / 2;
+
+				//The LEFT edge, but the position where the RIGHT guide would snap to.
+				guide.rightPosition = guide.position - guide.width / 2;
+
+				//This makes sure that guides very close to the edges don't get cut off with small viewports.
+				//It's basically for the 0% and 100% guide
+				//which otherwise would only use 50% of their width on small viewports
+				//because the center of the guide would be aligned with the edge.
+				if (guide.rightPosition < 0) {
+					guide.rightPosition = 0;
+					guide.leftPosition = guide.width;
+					guide.position = guide.width / 2;
+				} else if (guide.leftPosition > this.viewport.width) {
+					guide.leftPosition = this.viewport.width;
+					guide.rightPosition = guide.leftPosition - guide.width;
+					guide.position = guide.leftPosition - guide.width / 2;
+				}
+			}
+		}
+	}]);
+
+	return GuideLayoutEngine;
+}();
+
+exports.default = GuideLayoutEngine;
+
+},{}],15:[function(require,module,exports){
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;width:100%;height:2000px;overflow:visible}el-meister{display:block;position:fixed;left:50%;top:50%;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+},{"browserify-css":1}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -780,14 +1146,15 @@ var lowerCaseAndDashRegex = /^[a-z-]+$/;
 
 var Scrollmeister = {
 	behaviors: {},
-	//TODO: get rid of this Map (no polyfill etc.)
-	behaviorsWaitingForDependencies: new Map(),
+	behaviorsWaitingForDependencies: [],
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return Object.keys(this.behaviors);
 	},
 
-	defineBehavior: function defineBehavior(name, classDefinition) {
+	defineBehavior: function defineBehavior(classDefinition) {
+		var name = classDefinition.behaviorName;
+
 		if (this.behaviors.hasOwnProperty(name)) {
 			throw new Error("You are trying to redefine the \"" + name + "\" behavior.");
 		}
@@ -806,105 +1173,135 @@ var Scrollmeister = {
 
 		var Behavior = this.behaviors[name];
 
+		console.log(name);
+
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].doTheThing();
 			element.behaviorsUpdated();
 		} else {
-			//Check if this behavior depends on one or more others which are not yet fulfilled.
-			//TODO: The whole dependency resolving is based on my mantra of "first make it work, then make it great". It works.
-			if (Behavior.dependencies.length > 0) {
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+			if (this._checkBehaviorDependencies(element, name)) {
+				//Make the behavior available as a property on the DOM node.
+				//TODO: What if people assign a plain config to the property?
+				//Maybe this should not be allowed at all, but instead always use the attribute?
+				//BUT: if we can make it work then it should work for UX reasons.
+				//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
+				element[name] = new Behavior(element, config);
 
-				try {
-					for (var _iterator = Behavior.dependencies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var dependency = _step.value;
+				this._updateWaitingBehaviors(element);
 
-						//If so remember it in the map and check later.
-						if (!element.hasOwnProperty(dependency)) {
-							if (!this.behaviorsWaitingForDependencies.has(element)) {
-								this.behaviorsWaitingForDependencies.set(element, new Set());
-							}
-
-							var waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
-							waitingBehaviors.add(name);
-							return;
-						}
-					}
-				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
-						}
-					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
-						}
-					}
-				}
+				element.behaviorsUpdated();
+			} else {
+				this.behaviorsWaitingForDependencies.push({ name: name, config: config });
 			}
-
-			//Looks like all dependencies are resolved, remove it from the list if it's in.
-			if (this.behaviorsWaitingForDependencies.has(element)) {
-				this.behaviorsWaitingForDependencies.get(element).delete(name);
-			}
-
-			//Make the behavior available as a property on the DOM node.
-			//TODO: What if people assign a plain config to the property?
-			//Maybe this should not be allowed at all, but instead always use the attribute?
-			//BUT: if we can make it work then it should work for UX reasons.
-			element[name] = new Behavior(element, config);
-
-			//We just attached a new behavior.
-			//Let's see if this element has behaviors waiting for the one we just created.
-			if (this.behaviorsWaitingForDependencies.has(element)) {
-				var _waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
-
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
-
-				try {
-					for (var _iterator2 = _waitingBehaviors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var behavior = _step2.value;
-
-						this.attachBehavior(element, behavior, config);
-					}
-				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
-						}
-					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
-						}
-					}
-				}
-			}
-
-			element.behaviorsUpdated();
 		}
 	},
 
 	detachBehavior: function detachBehavior(element, name) {
-		element[name].detach();
+		element[name].destructor();
 		delete element[name];
 		element.behaviorsUpdated();
+	},
+
+	_checkBehaviorDependencies: function _checkBehaviorDependencies(element, name) {
+		var Behavior = this.behaviors[name];
+
+		var _iteratorNormalCompletion = true;
+		var _didIteratorError = false;
+		var _iteratorError = undefined;
+
+		try {
+			for (var _iterator = Behavior.dependencies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var dependency = _step.value;
+
+				if (!element.hasOwnProperty(dependency)) {
+					return false;
+				}
+			}
+		} catch (err) {
+			_didIteratorError = true;
+			_iteratorError = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion && _iterator.return) {
+					_iterator.return();
+				}
+			} finally {
+				if (_didIteratorError) {
+					throw _iteratorError;
+				}
+			}
+		}
+
+		return true;
+	},
+
+	_updateWaitingBehaviors: function _updateWaitingBehaviors(element) {
+		var stillWaiting = [];
+		var finallyResolved = [];
+
+		//Check if any of the waiting behaviors can now be resolved.
+		var _iteratorNormalCompletion2 = true;
+		var _didIteratorError2 = false;
+		var _iteratorError2 = undefined;
+
+		try {
+			for (var _iterator2 = this.behaviorsWaitingForDependencies[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+				var waitingBehavior = _step2.value;
+
+				if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
+					finallyResolved.push(waitingBehavior);
+				} else {
+					stillWaiting.push(waitingBehavior);
+				}
+			}
+		} catch (err) {
+			_didIteratorError2 = true;
+			_iteratorError2 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion2 && _iterator2.return) {
+					_iterator2.return();
+				}
+			} finally {
+				if (_didIteratorError2) {
+					throw _iteratorError2;
+				}
+			}
+		}
+
+		this.behaviorsWaitingForDependencies = stillWaiting;
+
+		var _iteratorNormalCompletion3 = true;
+		var _didIteratorError3 = false;
+		var _iteratorError3 = undefined;
+
+		try {
+			for (var _iterator3 = finallyResolved[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+				var _waitingBehavior = _step3.value;
+
+				this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.config);
+			}
+		} catch (err) {
+			_didIteratorError3 = true;
+			_iteratorError3 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion3 && _iterator3.return) {
+					_iterator3.return();
+				}
+			} finally {
+				if (_didIteratorError3) {
+					throw _iteratorError3;
+				}
+			}
+		}
 	}
 };
 
 exports.default = Scrollmeister;
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -946,7 +1343,61 @@ exports.default = {
 	}
 };
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _StringType = require('types/StringType.js');
+
+var _StringType2 = _interopRequireDefault(_StringType);
+
+var _NumberType = require('types/NumberType.js');
+
+var _NumberType2 = _interopRequireDefault(_NumberType);
+
+var _CSSLengthType = require('types/CSSLengthType.js');
+
+var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//TODO: named nested properties. Just arrays so far.
+//But let's see how far we get.
+exports.default = [_StringType2.default, _NumberType2.default, _CSSLengthType2.default];
+
+},{"types/CSSLengthType.js":17,"types/NumberType.js":19,"types/StringType.js":20}],19:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var looksLikeANumberRegex = /^-?[\d.+]+$/;
+
+exports.default = {
+	parse: function parse(value) {
+		value = value.trim();
+
+		if (!looksLikeANumberRegex.test(value)) {
+			throw new Error('The value "' + value + '" does not look like a number.');
+		}
+
+		var number = parseFloat(value);
+
+		if (isNaN(number)) {
+			throw new Error('Could not parse "' + value + '" as a number.');
+		}
+
+		return number;
+	},
+	stringify: function stringify(value) {
+		return '' + value;
+	}
+};
+
+},{}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -961,4 +1412,4 @@ exports.default = {
 	}
 };
 
-},{}]},{},[12]);
+},{}]},{},[13]);

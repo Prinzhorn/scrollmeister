@@ -4,7 +4,9 @@
   "description": "Open-source JavaScript framework to declaratively build scrolling experiences",
   "main": "./src/index.js",
   "scripts": {
-    "test": "NODE_PATH='./src' jest",
+    "test": "npm run flow && npm run jest",
+    "jest": "NODE_PATH='./src' jest",
+    "flow": "flow check",
     "watch": "NODE_PATH='./src' watchify ./src/index.js -o ./dist/scrollmeister.js -v",
     "build": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js"
   },
@@ -13,10 +15,16 @@
     "url": "git+ssh://git@github.com/Prinzhorn/scrollmeister.git"
   },
   "browserify": {
-    "transform": ["babelify", "browserify-css"]
+    "transform": [
+      "babelify",
+      "browserify-css"
+    ]
   },
   "babel": {
-    "presets": ["env"]
+    "presets": [
+      "env",
+      "flow"
+    ]
   },
   "browserify-css": {
     "autoInject": true,
@@ -54,8 +62,10 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
+    "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
     "browserify-css": "^0.14.0",
+    "flow-bin": "^0.65.0",
     "jest": "^22.1.4",
     "tinyify": "^2.4.0",
     "watchify": "^3.10.0"

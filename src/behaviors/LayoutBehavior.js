@@ -1,33 +1,43 @@
-import StringType from 'types/StringType.js';
+// @flow
+
+import GuideDefinitionType from 'types/GuideDefinitionType.js';
 import CSSLengthType from 'types/CSSLengthType.js';
+
 import Behavior from 'behaviors/Behavior.js';
 
-const GuideDefinitionType = {
-	type: [{ name: String }, { left: Number }, { width: Number }]
-};
+import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
 
 export default class LayoutBehavior extends Behavior {
-	static get schema() {
+	static get schema(): any {
 		return {
 			guides: {
-				type: [[StringType, CSSLengthType, CSSLengthType]]
+				type: [GuideDefinitionType]
 			},
 			width: {
 				type: CSSLengthType,
 				default: '1400px'
-			},
-			widths: {
-				type: [CSSLengthType],
-				default: '1400px, 500px'
 			}
 		};
 	}
 
-	static get dependencies() {
+	static get dependencies(): Array<string> {
 		return [];
 	}
 
+	static get behaviorName(): string {
+		return 'layout';
+	}
+
 	attach() {
+		this.engine = new GuideLayoutEngine();
+
+		this.listenAndInvoke(window, 'resize', () => {
+			let viewport = this._getViewport();
+			this.engine.updateViewport(viewport);
+			this.engine.doLayout(this.guides, this.width);
+			this.emit('layout');
+		});
+
 		this.element.title = 'behavior did this 1';
 	}
 
@@ -40,8 +50,41 @@ export default class LayoutBehavior extends Behavior {
 	bam() {
 		console.log('in yop face');
 	}
+
+	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
+		var documentElement = document.documentElement;
+
+		if (!documentElement) {
+			throw new Error('There is no documentElement to get the size of.');
+		}
+
+		var originalOverflow = documentElement.style.overflowY;
+
+		//Force a scrollbar to get the inner dimensions.
+		documentElement.style.overflowY = 'scroll';
+
+		var width = documentElement.clientWidth;
+		var height = documentElement.clientHeight;
+
+		//Force NO scrollbar to get the outer dimensions.
+		documentElement.style.overflowY = 'hidden';
+
+		var outerWidth = documentElement.clientWidth;
+		var outerHeight = documentElement.clientHeight;
+
+		//Restore overflow.
+		documentElement.style.overflowY = originalOverflow;
+
+		return {
+			width,
+			height,
+			outerWidth,
+			outerHeight
+		};
+	}
 }
 
+/*
 class IndexedExampleSchemaBehavior extends Behavior {
 	static get schema() {
 		return {
@@ -123,3 +166,4 @@ class NamedExampleSchemaBehavior extends Behavior {
 		};
 	}
 }
+*/

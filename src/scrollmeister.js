@@ -2,14 +2,15 @@ const lowerCaseAndDashRegex = /^[a-z-]+$/;
 
 const Scrollmeister = {
 	behaviors: {},
-	//TODO: get rid of this Map (no polyfill etc.)
-	behaviorsWaitingForDependencies: new Map(),
+	behaviorsWaitingForDependencies: [],
 
 	getDefinedBehaviorNames: function() {
 		return Object.keys(this.behaviors);
 	},
 
-	defineBehavior: function(name, classDefinition) {
+	defineBehavior: function(classDefinition) {
+		let name = classDefinition.behaviorName;
+
 		if (this.behaviors.hasOwnProperty(name)) {
 			throw new Error(`You are trying to redefine the "${name}" behavior.`);
 		}
@@ -32,57 +33,66 @@ const Scrollmeister = {
 
 		let Behavior = this.behaviors[name];
 
+		console.log(name);
+
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].doTheThing();
 			element.behaviorsUpdated();
 		} else {
-			//Check if this behavior depends on one or more others which are not yet fulfilled.
-			//TODO: The whole dependency resolving is based on my mantra of "first make it work, then make it great". It works.
-			if (Behavior.dependencies.length > 0) {
-				for (let dependency of Behavior.dependencies) {
-					//If so remember it in the map and check later.
-					if (!element.hasOwnProperty(dependency)) {
-						if (!this.behaviorsWaitingForDependencies.has(element)) {
-							this.behaviorsWaitingForDependencies.set(element, new Set());
-						}
+			if (this._checkBehaviorDependencies(element, name)) {
+				//Make the behavior available as a property on the DOM node.
+				//TODO: What if people assign a plain config to the property?
+				//Maybe this should not be allowed at all, but instead always use the attribute?
+				//BUT: if we can make it work then it should work for UX reasons.
+				//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
+				element[name] = new Behavior(element, config);
 
-						let waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
-						waitingBehaviors.add(name);
-						return;
-					}
-				}
+				this._updateWaitingBehaviors(element);
+
+				element.behaviorsUpdated();
+			} else {
+				this.behaviorsWaitingForDependencies.push({ name, config });
 			}
-
-			//Looks like all dependencies are resolved, remove it from the list if it's in.
-			if (this.behaviorsWaitingForDependencies.has(element)) {
-				this.behaviorsWaitingForDependencies.get(element).delete(name);
-			}
-
-			//Make the behavior available as a property on the DOM node.
-			//TODO: What if people assign a plain config to the property?
-			//Maybe this should not be allowed at all, but instead always use the attribute?
-			//BUT: if we can make it work then it should work for UX reasons.
-			element[name] = new Behavior(element, config);
-
-			//We just attached a new behavior.
-			//Let's see if this element has behaviors waiting for the one we just created.
-			if (this.behaviorsWaitingForDependencies.has(element)) {
-				let waitingBehaviors = this.behaviorsWaitingForDependencies.get(element);
-
-				for (let behavior of waitingBehaviors) {
-					this.attachBehavior(element, behavior, config);
-				}
-			}
-
-			element.behaviorsUpdated();
 		}
 	},
 
 	detachBehavior: function(element, name) {
-		element[name].detach();
+		element[name].destructor();
 		delete element[name];
 		element.behaviorsUpdated();
+	},
+
+	_checkBehaviorDependencies: function(element, name) {
+		let Behavior = this.behaviors[name];
+
+		for (let dependency of Behavior.dependencies) {
+			if (!element.hasOwnProperty(dependency)) {
+				return false;
+			}
+		}
+
+		return true;
+	},
+
+	_updateWaitingBehaviors: function(element) {
+		let stillWaiting = [];
+		let finallyResolved = [];
+
+		//Check if any of the waiting behaviors can now be resolved.
+		for (let waitingBehavior of this.behaviorsWaitingForDependencies) {
+			if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
+				finallyResolved.push(waitingBehavior);
+			} else {
+				stillWaiting.push(waitingBehavior);
+			}
+		}
+
+		this.behaviorsWaitingForDependencies = stillWaiting;
+
+		for (let waitingBehavior of finallyResolved) {
+			this.attachBehavior(element, waitingBehavior.name, waitingBehavior.config);
+		}
 	}
 };
 

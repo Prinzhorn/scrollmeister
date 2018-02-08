@@ -6,16 +6,50 @@ const whiteSpaceRegex = /\s+/;
 export default class Behavior {
 	constructor(element, rawProperties) {
 		this.element = element;
+		this.raw = {};
+		this.cooked = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
 	}
 
-	//TODO: This might not belong to the behavior itself but to the schemas/types folder.
+	destructor() {
+		if (this.listeners) {
+			for (let listener of this.listeners) {
+				listener.element.removeEventListener(listener.event, listener.callback);
+			}
+		}
+
+		if (this.detach) {
+			this.detach();
+		}
+	}
+
+	listen(element, event, callback) {
+		element.addEventListener(event, callback);
+
+		if (!this.listeners) {
+			this.listeners = [];
+		}
+
+		this.listeners.push({ element, event, callback });
+	}
+
+	listenAndInvoke(element, event, callback) {
+		this.listen(element, event, callback);
+		callback();
+	}
+
+	emit(name, params) {
+		var event = new Event(this.constructor.behaviorName + ':' + name);
+
+		this.element.dispatchEvent(event);
+	}
+
+	//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
 	parseProperties(rawProperties) {
 		const schema = this.constructor.schema;
 		const rawPropertiesMap = {};
-		const properties = {};
 		let match;
 
 		propertiesAndValuesRegex.lastIndex = 0;
@@ -25,8 +59,9 @@ export default class Behavior {
 			let rawValue = match[2];
 
 			if (!schema.hasOwnProperty(property)) {
+				debugger;
 				throw new Error(
-					`You have defined a property "${property}" that "${this.constructor
+					`You have defined a property "${property}" in your HTML that "${this.constructor
 						.name}" is not expecting. The value was "${rawValue}".`
 				);
 			}
@@ -43,33 +78,32 @@ export default class Behavior {
 				//The schema specifies a property that is currently not defined and no default was specified.
 				//TODO: does that imply they are all required? What if falsy properties are OK?
 				if (!schema[key].hasOwnProperty('default')) {
+					//TODO: this error message does not help people who only write HTML and don't even know what the class is.
+					//It should simply be something like "The layout attribute misses the required guides property"
+					//Don't get too technical.
 					throw new Error(
-						`You are missing the ${key} property, which has no default value specified for the ${this.constructor
-							.name} class.`
+						`You are missing the "${key}" property for the ${this.constructor.name} class, which has no default value.`
 					);
 				} else {
 					//There is a default specified, use it.
-					properties[key] = this.parseProperty(key, schema[key].default, schema[key].type);
+					/*
+					Object.defineProperty(this, key, {
+						get() {
+
+						},
+						set(value) {
+							this.raw[key] = value;
+						}
+					});
+					*/
+					this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 					continue;
 				}
 			}
 
-			properties[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
-			console.log(JSON.stringify(properties[key], null, 4));
+			this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 		}
 	}
-
-	/*
-	const GuideDefinition = {
-		type: [{ name: String }, { left: Number }, { width: Number }]
-	};
-
-	type: [GuideDefinition]
-
-	type: [{
-		type: [{ name: String }, { left: Number }, { width: Number }]
-	}]
-	*/
 
 	parseProperty(property, rawValue, propertyType) {
 		if (propertyType instanceof Array) {

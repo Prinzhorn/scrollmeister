@@ -7,6 +7,10 @@ export default class BetterPositionBehavior {
 		return ['position'];
 	}
 
+	static get behaviorName(): string {
+		return 'betterposition';
+	}
+
 	constructor(element) {
 		this.element = element;
 		this.element.position.wup();

@@ -6,6 +6,10 @@ html {
 	overflow-x: hidden;
 }
 
+body {
+	margin: 0;
+}
+
 scroll-meister {
 	display: block;
 	width: 100%;
