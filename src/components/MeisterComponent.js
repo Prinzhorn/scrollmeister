@@ -1,11 +1,9 @@
+import raf from 'raf';
+
 import Scrollmeister from 'scrollmeister.js';
 
 export default class ScrollMeisterComponent extends HTMLElement {
-	static get observedAttributes() {
-		return Scrollmeister.getDefinedBehaviorNames();
-	}
-
-	//https://github.com/WebReflection/document-register-element#v1-caveat
+	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
 	constructor(_) {
 		return (_ = super(_)).init(), _;
 	}
@@ -15,20 +13,24 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	connectedCallback() {
-		this.raf = requestAnimationFrame(this.tick.bind(this));
+		console.log('connectedCallback');
+		this._rafHandle = raf(this.tick.bind(this));
 	}
 
 	disconnectedCallback() {
-		cancelAnimationFrame(this.raf);
+		cancelAnimationFrame(this._rafHandle);
 
-		for (let i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
-			let attr = ScrollMeisterComponent.observedAttributes[i];
+		let observedAttributes = this.constructor.observedAttributes;
+
+		for (let i = 0; i < observedAttributes.length; i++) {
+			let attr = observedAttributes[i];
 
 			Scrollmeister.detachBehavior(this, attr);
 		}
 	}
 
 	attributeChangedCallback(attr, oldValue, newValue) {
+		console.log('attributeChangedCallback');
 		if (newValue === null) {
 			Scrollmeister.detachBehavior(this, attr);
 		} else {
@@ -40,9 +42,11 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		//Clear the array.
 		this._scrollBehaviors.length = 0;
 
+		let observedAttributes = this.constructor.observedAttributes;
+
 		//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
-		for (let i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
-			let attr = ScrollMeisterComponent.observedAttributes[i];
+		for (let i = 0; i < observedAttributes.length; i++) {
+			let attr = observedAttributes[i];
 
 			if (this.hasOwnProperty(attr) && this[attr].scroll) {
 				this._scrollBehaviors.push(this[attr]);
@@ -56,6 +60,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 			behavior.scroll();
 		}
 
-		requestAnimationFrame(this.tick.bind(this));
+		raf(this.tick.bind(this));
 	}
 }

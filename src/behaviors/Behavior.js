@@ -1,4 +1,4 @@
-import 'lib/CustomEvent.js';
+import CustomEvent from 'ponies/CustomEvent.js';
 
 //property:value; pairs (separated by colons) separated by semicolons.
 //TODO: if this isn't the perfect thing to write unit tests for then call me steve.
