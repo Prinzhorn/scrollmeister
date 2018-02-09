@@ -87,14 +87,36 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+require('lib/CustomEvent.js');
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 //property:value; pairs (separated by colons) separated by semicolons.
 //TODO: if this isn't the perfect thing to write unit tests for then call me steve.
+//TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
+//However, the right part should allow colons bruh. This also solves the issue with selectors like "target: .foo:not(bar)". The only reserved character is the semicolon.
+//                               /([^:]+):([^;]+)/g;
 var propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
 var whiteSpaceRegex = /\s+/;
 
 var Behavior = function () {
+	_createClass(Behavior, null, [{
+		key: 'schema',
+		get: function get() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "schema" getter.');
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "dependencies" getter.');
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "behaviorName" getter.');
+		}
+	}]);
+
 	function Behavior(element, rawProperties) {
 		_classCallCheck(this, Behavior);
 
@@ -110,29 +132,9 @@ var Behavior = function () {
 		key: 'destructor',
 		value: function destructor() {
 			if (this.listeners) {
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
-
-				try {
-					for (var _iterator = this.listeners[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var listener = _step.value;
-
-						listener.element.removeEventListener(listener.event, listener.callback);
-					}
-				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
-						}
-					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
-						}
-					}
+				for (var listenerIndex = 0; listenerIndex < this.listeners.length; listenerIndex++) {
+					var listener = this.listeners[listenerIndex];
+					listener.element.removeEventListener(listener.event, listener.callback);
 				}
 			}
 
@@ -160,7 +162,7 @@ var Behavior = function () {
 	}, {
 		key: 'emit',
 		value: function emit(name, params) {
-			var event = new Event(this.constructor.behaviorName + ':' + name);
+			var event = new CustomEvent(this.constructor.behaviorName + ':' + name);
 
 			this.element.dispatchEvent(event);
 		}
@@ -289,7 +291,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{}],4:[function(require,module,exports){
+},{"lib/CustomEvent.js":14}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -401,7 +403,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":3,"types/StringType.js":20}],5:[function(require,module,exports){
+},{"behaviors/Behavior.js":3,"types/StringType.js":21}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -620,7 +622,7 @@ class NamedExampleSchemaBehavior extends Behavior {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":3,"lib/GuideLayoutEngine.js":14,"types/CSSLengthType.js":17,"types/GuideDefinitionType.js":18}],6:[function(require,module,exports){
+},{"behaviors/Behavior.js":3,"lib/GuideLayoutEngine.js":15,"types/CSSLengthType.js":18,"types/GuideDefinitionType.js":19}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -706,7 +708,7 @@ _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_position2.default);
 _scrollmeister2.default.defineBehavior(_betterposition2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":4,"behaviors/LayoutBehavior.js":5,"behaviors/betterposition.js":6,"behaviors/position.js":8,"scrollmeister.js":16}],8:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":4,"behaviors/LayoutBehavior.js":5,"behaviors/betterposition.js":6,"behaviors/position.js":8,"scrollmeister.js":17}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -850,30 +852,10 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		value: function disconnectedCallback() {
 			cancelAnimationFrame(this.raf);
 
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
+			for (var i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
+				var attr = ScrollMeisterComponent.observedAttributes[i];
 
-			try {
-				for (var _iterator = ScrollMeisterComponent.observedAttributes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var attr = _step.value;
-
-					console.log('detach all the things');
-					_scrollmeister2.default.detachBehavior(this, attr);
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
+				_scrollmeister2.default.detachBehavior(this, attr);
 			}
 		}
 	}, {
@@ -892,59 +874,20 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			this._scrollBehaviors.length = 0;
 
 			//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+			for (var i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
+				var attr = ScrollMeisterComponent.observedAttributes[i];
 
-			try {
-				for (var _iterator2 = ScrollMeisterComponent.observedAttributes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var attr = _step2.value;
-
-					if (this.hasOwnProperty(attr) && this[attr].scroll) {
-						this._scrollBehaviors.push(this[attr]);
-					}
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
+				if (this.hasOwnProperty(attr) && this[attr].scroll) {
+					this._scrollBehaviors.push(this[attr]);
 				}
 			}
 		}
 	}, {
 		key: 'tick',
 		value: function tick() {
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
-
-			try {
-				for (var _iterator3 = this._scrollBehaviors[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var behavior = _step3.value;
-
-					behavior.scroll();
-				}
-			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
-					}
-				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
-					}
-				}
+			for (var i = 0; i < this._scrollBehaviors.length; i++) {
+				var behavior = this._scrollBehaviors[i];
+				behavior.scroll();
 			}
 
 			requestAnimationFrame(this.tick.bind(this));
@@ -956,7 +899,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"scrollmeister.js":16}],11:[function(require,module,exports){
+},{"scrollmeister.js":17}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1018,7 +961,26 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":7,"./components":12,"./scrollmeister.css":15,"./scrollmeister.js":16}],14:[function(require,module,exports){
+},{"./behaviors":7,"./components":12,"./scrollmeister.css":16,"./scrollmeister.js":17}],14:[function(require,module,exports){
+'use strict';
+
+// https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
+(function () {
+	if (typeof window.CustomEvent === 'function') return false;
+
+	function CustomEvent(event, params) {
+		params = params || { bubbles: false, cancelable: false, detail: undefined };
+		var evt = document.createEvent('CustomEvent');
+		evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+		return evt;
+	}
+
+	CustomEvent.prototype = window.Event.prototype;
+
+	window.CustomEvent = CustomEvent;
+})();
+
+},{}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1143,9 +1105,9 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;width:100%;height:2000px;overflow:visible}el-meister{display:block;position:fixed;left:50%;top:50%;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],16:[function(require,module,exports){
+},{"browserify-css":1}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1207,38 +1169,21 @@ var Scrollmeister = {
 	},
 
 	detachBehavior: function detachBehavior(element, name) {
-		element[name].destructor();
-		delete element[name];
-		element.behaviorsUpdated();
+		if (element.hasOwnProperty(name)) {
+			element[name].destructor();
+			delete element[name];
+			element.behaviorsUpdated();
+		}
 	},
 
 	_checkBehaviorDependencies: function _checkBehaviorDependencies(element, name) {
 		var Behavior = this.behaviors[name];
 
-		var _iteratorNormalCompletion = true;
-		var _didIteratorError = false;
-		var _iteratorError = undefined;
+		for (var dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
+			var dependency = Behavior.dependencies[dependencyIndex];
 
-		try {
-			for (var _iterator = Behavior.dependencies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-				var dependency = _step.value;
-
-				if (!element.hasOwnProperty(dependency)) {
-					return false;
-				}
-			}
-		} catch (err) {
-			_didIteratorError = true;
-			_iteratorError = err;
-		} finally {
-			try {
-				if (!_iteratorNormalCompletion && _iterator.return) {
-					_iterator.return();
-				}
-			} finally {
-				if (_didIteratorError) {
-					throw _iteratorError;
-				}
+			if (!element.hasOwnProperty(dependency)) {
+				return false;
 			}
 		}
 
@@ -1250,67 +1195,29 @@ var Scrollmeister = {
 		var finallyResolved = [];
 
 		//Check if any of the waiting behaviors can now be resolved.
-		var _iteratorNormalCompletion2 = true;
-		var _didIteratorError2 = false;
-		var _iteratorError2 = undefined;
+		for (var behaviorIndex = 0; behaviorIndex < this.behaviorsWaitingForDependencies.length; behaviorIndex++) {
+			var waitingBehavior = this.behaviorsWaitingForDependencies[behaviorIndex];
 
-		try {
-			for (var _iterator2 = this.behaviorsWaitingForDependencies[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-				var waitingBehavior = _step2.value;
-
-				if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
-					finallyResolved.push(waitingBehavior);
-				} else {
-					stillWaiting.push(waitingBehavior);
-				}
-			}
-		} catch (err) {
-			_didIteratorError2 = true;
-			_iteratorError2 = err;
-		} finally {
-			try {
-				if (!_iteratorNormalCompletion2 && _iterator2.return) {
-					_iterator2.return();
-				}
-			} finally {
-				if (_didIteratorError2) {
-					throw _iteratorError2;
-				}
+			if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
+				finallyResolved.push(waitingBehavior);
+			} else {
+				stillWaiting.push(waitingBehavior);
 			}
 		}
 
 		this.behaviorsWaitingForDependencies = stillWaiting;
 
-		var _iteratorNormalCompletion3 = true;
-		var _didIteratorError3 = false;
-		var _iteratorError3 = undefined;
+		for (var _behaviorIndex = 0; _behaviorIndex < finallyResolved.length; _behaviorIndex++) {
+			var _waitingBehavior = finallyResolved[_behaviorIndex];
 
-		try {
-			for (var _iterator3 = finallyResolved[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-				var _waitingBehavior = _step3.value;
-
-				this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.config);
-			}
-		} catch (err) {
-			_didIteratorError3 = true;
-			_iteratorError3 = err;
-		} finally {
-			try {
-				if (!_iteratorNormalCompletion3 && _iterator3.return) {
-					_iterator3.return();
-				}
-			} finally {
-				if (_didIteratorError3) {
-					throw _iteratorError3;
-				}
-			}
+			this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.config);
 		}
 	}
 };
 
 exports.default = Scrollmeister;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1352,7 +1259,7 @@ exports.default = {
 	}
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1377,7 +1284,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":17,"types/NumberType.js":19,"types/StringType.js":20}],19:[function(require,module,exports){
+},{"types/CSSLengthType.js":18,"types/NumberType.js":20,"types/StringType.js":21}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1406,7 +1313,7 @@ exports.default = {
 	}
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

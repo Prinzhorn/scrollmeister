@@ -1,9 +1,30 @@
+import 'lib/CustomEvent.js';
+
 //property:value; pairs (separated by colons) separated by semicolons.
 //TODO: if this isn't the perfect thing to write unit tests for then call me steve.
+//TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
+//However, the right part should allow colons bruh. This also solves the issue with selectors like "target: .foo:not(bar)". The only reserved character is the semicolon.
+//                               /([^:]+):([^;]+)/g;
 const propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
 const whiteSpaceRegex = /\s+/;
 
 export default class Behavior {
+	static get schema() {
+		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the static "schema" getter.`);
+	}
+
+	static get dependencies() {
+		throw new Error(
+			`Your behavior class "${this.constructor.name}" needs to implement the static "dependencies" getter.`
+		);
+	}
+
+	static get behaviorName() {
+		throw new Error(
+			`Your behavior class "${this.constructor.name}" needs to implement the static "behaviorName" getter.`
+		);
+	}
+
 	constructor(element, rawProperties) {
 		this.element = element;
 		this.raw = {};
@@ -15,7 +36,8 @@ export default class Behavior {
 
 	destructor() {
 		if (this.listeners) {
-			for (let listener of this.listeners) {
+			for (let listenerIndex = 0; listenerIndex < this.listeners.length; listenerIndex++) {
+				let listener = this.listeners[listenerIndex];
 				listener.element.removeEventListener(listener.event, listener.callback);
 			}
 		}
@@ -41,7 +63,7 @@ export default class Behavior {
 	}
 
 	emit(name, params) {
-		var event = new Event(this.constructor.behaviorName + ':' + name);
+		var event = new CustomEvent(this.constructor.behaviorName + ':' + name);
 
 		this.element.dispatchEvent(event);
 	}

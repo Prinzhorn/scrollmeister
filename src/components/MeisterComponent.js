@@ -21,8 +21,9 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	disconnectedCallback() {
 		cancelAnimationFrame(this.raf);
 
-		for (let attr of ScrollMeisterComponent.observedAttributes) {
-			console.log('detach all the things');
+		for (let i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
+			let attr = ScrollMeisterComponent.observedAttributes[i];
+
 			Scrollmeister.detachBehavior(this, attr);
 		}
 	}
@@ -40,7 +41,9 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		this._scrollBehaviors.length = 0;
 
 		//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
-		for (let attr of ScrollMeisterComponent.observedAttributes) {
+		for (let i = 0; i < ScrollMeisterComponent.observedAttributes.length; i++) {
+			let attr = ScrollMeisterComponent.observedAttributes[i];
+
 			if (this.hasOwnProperty(attr) && this[attr].scroll) {
 				this._scrollBehaviors.push(this[attr]);
 			}
@@ -48,7 +51,8 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	tick() {
-		for (let behavior of this._scrollBehaviors) {
+		for (let i = 0; i < this._scrollBehaviors.length; i++) {
+			let behavior = this._scrollBehaviors[i];
 			behavior.scroll();
 		}
 

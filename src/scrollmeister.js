@@ -58,15 +58,19 @@ const Scrollmeister = {
 	},
 
 	detachBehavior: function(element, name) {
-		element[name].destructor();
-		delete element[name];
-		element.behaviorsUpdated();
+		if (element.hasOwnProperty(name)) {
+			element[name].destructor();
+			delete element[name];
+			element.behaviorsUpdated();
+		}
 	},
 
 	_checkBehaviorDependencies: function(element, name) {
 		let Behavior = this.behaviors[name];
 
-		for (let dependency of Behavior.dependencies) {
+		for (let dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
+			let dependency = Behavior.dependencies[dependencyIndex];
+
 			if (!element.hasOwnProperty(dependency)) {
 				return false;
 			}
@@ -80,7 +84,9 @@ const Scrollmeister = {
 		let finallyResolved = [];
 
 		//Check if any of the waiting behaviors can now be resolved.
-		for (let waitingBehavior of this.behaviorsWaitingForDependencies) {
+		for (let behaviorIndex = 0; behaviorIndex < this.behaviorsWaitingForDependencies.length; behaviorIndex++) {
+			let waitingBehavior = this.behaviorsWaitingForDependencies[behaviorIndex];
+
 			if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
 				finallyResolved.push(waitingBehavior);
 			} else {
@@ -90,7 +96,9 @@ const Scrollmeister = {
 
 		this.behaviorsWaitingForDependencies = stillWaiting;
 
-		for (let waitingBehavior of finallyResolved) {
+		for (let behaviorIndex = 0; behaviorIndex < finallyResolved.length; behaviorIndex++) {
+			let waitingBehavior = finallyResolved[behaviorIndex];
+
 			this.attachBehavior(element, waitingBehavior.name, waitingBehavior.config);
 		}
 	}
