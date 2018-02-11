@@ -12,6 +12,7 @@ export default class LayoutBehavior extends Behavior {
 		return {
 			guides: {
 				type: [GuideDefinitionType]
+				//TODO: can we default to an empty array here by using an empty string?
 			},
 			width: {
 				type: CSSLengthType,
@@ -38,6 +39,15 @@ export default class LayoutBehavior extends Behavior {
 			this.emit('layout');
 		});
 
+		// The change events of the dimensions behavior bubble up here.
+		this.listen(document, 'dimensions:change', function() {
+			console.log('a dimensions behavior changed');
+		});
+
+		this.listen(document, 'dimensions:intrinsicheightchange', function() {
+			console.log('a thing changed its intrinsic height');
+		});
+
 		this.element.title = 'behavior did this 1';
 	}
 
@@ -47,30 +57,26 @@ export default class LayoutBehavior extends Behavior {
 
 	scroll() {}
 
-	bam() {
-		console.log('in yop face');
-	}
-
 	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
-		var documentElement = document.documentElement;
+		let documentElement = document.documentElement;
 
 		if (!documentElement) {
 			throw new Error('There is no documentElement to get the size of.');
 		}
 
-		var originalOverflow = documentElement.style.overflowY;
+		let originalOverflow = documentElement.style.overflowY;
 
 		//Force a scrollbar to get the inner dimensions.
 		documentElement.style.overflowY = 'scroll';
 
-		var width = documentElement.clientWidth;
-		var height = documentElement.clientHeight;
+		let width = documentElement.clientWidth;
+		let height = documentElement.clientHeight;
 
 		//Force NO scrollbar to get the outer dimensions.
 		documentElement.style.overflowY = 'hidden';
 
-		var outerWidth = documentElement.clientWidth;
-		var outerHeight = documentElement.clientHeight;
+		let outerWidth = documentElement.clientWidth;
+		let outerHeight = documentElement.clientHeight;
 
 		//Restore overflow.
 		documentElement.style.overflowY = originalOverflow;
@@ -83,87 +89,3 @@ export default class LayoutBehavior extends Behavior {
 		};
 	}
 }
-
-/*
-class IndexedExampleSchemaBehavior extends Behavior {
-	static get schema() {
-		return {
-			thing: {
-				//thing: keyword
-				//a.thing = 'keyword'
-				type: StringType,
-				type: {
-					parse: function() {}
-				},
-
-				//thing: keyword, anotherone, and, more
-				//a.thing = ['keyword', 'anotherone', 'and', 'more']
-				type: [StringType],
-
-				//thing: keyword 100px
-				//a.thing = ['keyword', {length: 100, unit: 'px'}]
-				type: [StringType, CSSLengthType],
-
-				//thing: keyword 30px 30px, anotherone 100px 8px
-				//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
-				type: [GuideDefinitionType],
-				type: [[StringType, CSSLengthType, CSSLengthType]]
-			}
-		};
-	}
-}
-
-class NamedExampleSchemaBehavior extends Behavior {
-	static get schema() {
-		return {
-			thing: {
-				//thing: keyword
-				//a.thing = 'keyword'
-				type: StringType,
-				type: {
-					parse: function() {}
-				},
-
-				//thing: keyword, anotherone, and, more
-				//a.thing = ['keyword', 'anotherone', 'and', 'more']
-				type: [StringType],
-				type: [
-					{
-						parse: function() {}
-					}
-				],
-
-				//thing: keyword 100px
-				//a.thing = {first: 'keyword', second: '100px'}
-				type: [{ first: StringType }, { second: CSSLengthType }],
-				type: [
-					{
-						first: { parse: function() {} }
-					},
-					{
-						second: { parse: function() {} }
-					}
-				],
-
-				//thing: keyword 30px 30px, anotherone 100px 8px
-				type: [GuideDefinitionType],
-				type: [
-					{
-						type: [
-							{
-								first: StringType
-							},
-							{
-								second: CSSLengthType
-							},
-							{
-								third: CSSLengthType
-							}
-						]
-					}
-				]
-			}
-		};
-	}
-}
-*/

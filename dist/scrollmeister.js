@@ -384,6 +384,1042 @@ module.exports.polyfill = function(object) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"performance-now":3}],6:[function(require,module,exports){
+(function (global){
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.ResizeObserver = factory());
+}(this, (function () { 'use strict';
+
+/**
+ * A collection of shims that provide minimal functionality of the ES6 collections.
+ *
+ * These implementations are not meant to be used outside of the ResizeObserver
+ * modules as they cover only a limited range of use cases.
+ */
+/* eslint-disable require-jsdoc, valid-jsdoc */
+var MapShim = (function () {
+    if (typeof Map !== 'undefined') {
+        return Map;
+    }
+
+    /**
+     * Returns index in provided array that matches the specified key.
+     *
+     * @param {Array<Array>} arr
+     * @param {*} key
+     * @returns {number}
+     */
+    function getIndex(arr, key) {
+        var result = -1;
+
+        arr.some(function (entry, index) {
+            if (entry[0] === key) {
+                result = index;
+
+                return true;
+            }
+
+            return false;
+        });
+
+        return result;
+    }
+
+    return (function () {
+        function anonymous() {
+            this.__entries__ = [];
+        }
+
+        var prototypeAccessors = { size: { configurable: true } };
+
+        /**
+         * @returns {boolean}
+         */
+        prototypeAccessors.size.get = function () {
+            return this.__entries__.length;
+        };
+
+        /**
+         * @param {*} key
+         * @returns {*}
+         */
+        anonymous.prototype.get = function (key) {
+            var index = getIndex(this.__entries__, key);
+            var entry = this.__entries__[index];
+
+            return entry && entry[1];
+        };
+
+        /**
+         * @param {*} key
+         * @param {*} value
+         * @returns {void}
+         */
+        anonymous.prototype.set = function (key, value) {
+            var index = getIndex(this.__entries__, key);
+
+            if (~index) {
+                this.__entries__[index][1] = value;
+            } else {
+                this.__entries__.push([key, value]);
+            }
+        };
+
+        /**
+         * @param {*} key
+         * @returns {void}
+         */
+        anonymous.prototype.delete = function (key) {
+            var entries = this.__entries__;
+            var index = getIndex(entries, key);
+
+            if (~index) {
+                entries.splice(index, 1);
+            }
+        };
+
+        /**
+         * @param {*} key
+         * @returns {void}
+         */
+        anonymous.prototype.has = function (key) {
+            return !!~getIndex(this.__entries__, key);
+        };
+
+        /**
+         * @returns {void}
+         */
+        anonymous.prototype.clear = function () {
+            this.__entries__.splice(0);
+        };
+
+        /**
+         * @param {Function} callback
+         * @param {*} [ctx=null]
+         * @returns {void}
+         */
+        anonymous.prototype.forEach = function (callback, ctx) {
+            var this$1 = this;
+            if ( ctx === void 0 ) ctx = null;
+
+            for (var i = 0, list = this$1.__entries__; i < list.length; i += 1) {
+                var entry = list[i];
+
+                callback.call(ctx, entry[1], entry[0]);
+            }
+        };
+
+        Object.defineProperties( anonymous.prototype, prototypeAccessors );
+
+        return anonymous;
+    }());
+})();
+
+/**
+ * Detects whether window and document objects are available in current environment.
+ */
+var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && window.document === document;
+
+// Returns global object of a current environment.
+var global$1 = (function () {
+    if (typeof global !== 'undefined' && global.Math === Math) {
+        return global;
+    }
+
+    if (typeof self !== 'undefined' && self.Math === Math) {
+        return self;
+    }
+
+    if (typeof window !== 'undefined' && window.Math === Math) {
+        return window;
+    }
+
+    // eslint-disable-next-line no-new-func
+    return Function('return this')();
+})();
+
+/**
+ * A shim for the requestAnimationFrame which falls back to the setTimeout if
+ * first one is not supported.
+ *
+ * @returns {number} Requests' identifier.
+ */
+var requestAnimationFrame$1 = (function () {
+    if (typeof requestAnimationFrame === 'function') {
+        // It's required to use a bounded function because IE sometimes throws
+        // an "Invalid calling object" error if rAF is invoked without the global
+        // object on the left hand side.
+        return requestAnimationFrame.bind(global$1);
+    }
+
+    return function (callback) { return setTimeout(function () { return callback(Date.now()); }, 1000 / 60); };
+})();
+
+// Defines minimum timeout before adding a trailing call.
+var trailingTimeout = 2;
+
+/**
+ * Creates a wrapper function which ensures that provided callback will be
+ * invoked only once during the specified delay period.
+ *
+ * @param {Function} callback - Function to be invoked after the delay period.
+ * @param {number} delay - Delay after which to invoke callback.
+ * @returns {Function}
+ */
+var throttle = function (callback, delay) {
+    var leadingCall = false,
+        trailingCall = false,
+        lastCallTime = 0;
+
+    /**
+     * Invokes the original callback function and schedules new invocation if
+     * the "proxy" was called during current request.
+     *
+     * @returns {void}
+     */
+    function resolvePending() {
+        if (leadingCall) {
+            leadingCall = false;
+
+            callback();
+        }
+
+        if (trailingCall) {
+            proxy();
+        }
+    }
+
+    /**
+     * Callback invoked after the specified delay. It will further postpone
+     * invocation of the original function delegating it to the
+     * requestAnimationFrame.
+     *
+     * @returns {void}
+     */
+    function timeoutCallback() {
+        requestAnimationFrame$1(resolvePending);
+    }
+
+    /**
+     * Schedules invocation of the original function.
+     *
+     * @returns {void}
+     */
+    function proxy() {
+        var timeStamp = Date.now();
+
+        if (leadingCall) {
+            // Reject immediately following calls.
+            if (timeStamp - lastCallTime < trailingTimeout) {
+                return;
+            }
+
+            // Schedule new call to be in invoked when the pending one is resolved.
+            // This is important for "transitions" which never actually start
+            // immediately so there is a chance that we might miss one if change
+            // happens amids the pending invocation.
+            trailingCall = true;
+        } else {
+            leadingCall = true;
+            trailingCall = false;
+
+            setTimeout(timeoutCallback, delay);
+        }
+
+        lastCallTime = timeStamp;
+    }
+
+    return proxy;
+};
+
+// Minimum delay before invoking the update of observers.
+var REFRESH_DELAY = 20;
+
+// A list of substrings of CSS properties used to find transition events that
+// might affect dimensions of observed elements.
+var transitionKeys = ['top', 'right', 'bottom', 'left', 'width', 'height', 'size', 'weight'];
+
+// Check if MutationObserver is available.
+var mutationObserverSupported = typeof MutationObserver !== 'undefined';
+
+/**
+ * Singleton controller class which handles updates of ResizeObserver instances.
+ */
+var ResizeObserverController = function() {
+    this.connected_ = false;
+    this.mutationEventsAdded_ = false;
+    this.mutationsObserver_ = null;
+    this.observers_ = [];
+
+    this.onTransitionEnd_ = this.onTransitionEnd_.bind(this);
+    this.refresh = throttle(this.refresh.bind(this), REFRESH_DELAY);
+};
+
+/**
+ * Adds observer to observers list.
+ *
+ * @param {ResizeObserverSPI} observer - Observer to be added.
+ * @returns {void}
+ */
+
+
+/**
+ * Holds reference to the controller's instance.
+ *
+ * @private {ResizeObserverController}
+ */
+
+
+/**
+ * Keeps reference to the instance of MutationObserver.
+ *
+ * @private {MutationObserver}
+ */
+
+/**
+ * Indicates whether DOM listeners have been added.
+ *
+ * @private {boolean}
+ */
+ResizeObserverController.prototype.addObserver = function (observer) {
+    if (!~this.observers_.indexOf(observer)) {
+        this.observers_.push(observer);
+    }
+
+    // Add listeners if they haven't been added yet.
+    if (!this.connected_) {
+        this.connect_();
+    }
+};
+
+/**
+ * Removes observer from observers list.
+ *
+ * @param {ResizeObserverSPI} observer - Observer to be removed.
+ * @returns {void}
+ */
+ResizeObserverController.prototype.removeObserver = function (observer) {
+    var observers = this.observers_;
+    var index = observers.indexOf(observer);
+
+    // Remove observer if it's present in registry.
+    if (~index) {
+        observers.splice(index, 1);
+    }
+
+    // Remove listeners if controller has no connected observers.
+    if (!observers.length && this.connected_) {
+        this.disconnect_();
+    }
+};
+
+/**
+ * Invokes the update of observers. It will continue running updates insofar
+ * it detects changes.
+ *
+ * @returns {void}
+ */
+ResizeObserverController.prototype.refresh = function () {
+    var changesDetected = this.updateObservers_();
+
+    // Continue running updates if changes have been detected as there might
+    // be future ones caused by CSS transitions.
+    if (changesDetected) {
+        this.refresh();
+    }
+};
+
+/**
+ * Updates every observer from observers list and notifies them of queued
+ * entries.
+ *
+ * @private
+ * @returns {boolean} Returns "true" if any observer has detected changes in
+ *  dimensions of it's elements.
+ */
+ResizeObserverController.prototype.updateObservers_ = function () {
+    // Collect observers that have active observations.
+    var activeObservers = this.observers_.filter(function (observer) {
+        return observer.gatherActive(), observer.hasActive();
+    });
+
+    // Deliver notifications in a separate cycle in order to avoid any
+    // collisions between observers, e.g. when multiple instances of
+    // ResizeObserver are tracking the same element and the callback of one
+    // of them changes content dimensions of the observed target. Sometimes
+    // this may result in notifications being blocked for the rest of observers.
+    activeObservers.forEach(function (observer) { return observer.broadcastActive(); });
+
+    return activeObservers.length > 0;
+};
+
+/**
+ * Initializes DOM listeners.
+ *
+ * @private
+ * @returns {void}
+ */
+ResizeObserverController.prototype.connect_ = function () {
+    // Do nothing if running in a non-browser environment or if listeners
+    // have been already added.
+    if (!isBrowser || this.connected_) {
+        return;
+    }
+
+    // Subscription to the "Transitionend" event is used as a workaround for
+    // delayed transitions. This way it's possible to capture at least the
+    // final state of an element.
+    document.addEventListener('transitionend', this.onTransitionEnd_);
+
+    window.addEventListener('resize', this.refresh);
+
+    if (mutationObserverSupported) {
+        this.mutationsObserver_ = new MutationObserver(this.refresh);
+
+        this.mutationsObserver_.observe(document, {
+            attributes: true,
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    } else {
+        document.addEventListener('DOMSubtreeModified', this.refresh);
+
+        this.mutationEventsAdded_ = true;
+    }
+
+    this.connected_ = true;
+};
+
+/**
+ * Removes DOM listeners.
+ *
+ * @private
+ * @returns {void}
+ */
+ResizeObserverController.prototype.disconnect_ = function () {
+    // Do nothing if running in a non-browser environment or if listeners
+    // have been already removed.
+    if (!isBrowser || !this.connected_) {
+        return;
+    }
+
+    document.removeEventListener('transitionend', this.onTransitionEnd_);
+    window.removeEventListener('resize', this.refresh);
+
+    if (this.mutationsObserver_) {
+        this.mutationsObserver_.disconnect();
+    }
+
+    if (this.mutationEventsAdded_) {
+        document.removeEventListener('DOMSubtreeModified', this.refresh);
+    }
+
+    this.mutationsObserver_ = null;
+    this.mutationEventsAdded_ = false;
+    this.connected_ = false;
+};
+
+/**
+ * "Transitionend" event handler.
+ *
+ * @private
+ * @param {TransitionEvent} event
+ * @returns {void}
+ */
+ResizeObserverController.prototype.onTransitionEnd_ = function (ref) {
+        var propertyName = ref.propertyName; if ( propertyName === void 0 ) propertyName = '';
+
+    // Detect whether transition may affect dimensions of an element.
+    var isReflowProperty = transitionKeys.some(function (key) {
+        return !!~propertyName.indexOf(key);
+    });
+
+    if (isReflowProperty) {
+        this.refresh();
+    }
+};
+
+/**
+ * Returns instance of the ResizeObserverController.
+ *
+ * @returns {ResizeObserverController}
+ */
+ResizeObserverController.getInstance = function () {
+    if (!this.instance_) {
+        this.instance_ = new ResizeObserverController();
+    }
+
+    return this.instance_;
+};
+
+ResizeObserverController.instance_ = null;
+
+/**
+ * Defines non-writable/enumerable properties of the provided target object.
+ *
+ * @param {Object} target - Object for which to define properties.
+ * @param {Object} props - Properties to be defined.
+ * @returns {Object} Target object.
+ */
+var defineConfigurable = (function (target, props) {
+    for (var i = 0, list = Object.keys(props); i < list.length; i += 1) {
+        var key = list[i];
+
+        Object.defineProperty(target, key, {
+            value: props[key],
+            enumerable: false,
+            writable: false,
+            configurable: true
+        });
+    }
+
+    return target;
+});
+
+/**
+ * Returns the global object associated with provided element.
+ *
+ * @param {Object} target
+ * @returns {Object}
+ */
+var getWindowOf = (function (target) {
+    // Assume that the element is an instance of Node, which means that it
+    // has the "ownerDocument" property from which we can retrieve a
+    // corresponding global object.
+    var ownerGlobal = target && target.ownerDocument && target.ownerDocument.defaultView;
+
+    // Return the local global object if it's not possible extract one from
+    // provided element.
+    return ownerGlobal || global$1;
+});
+
+// Placeholder of an empty content rectangle.
+var emptyRect = createRectInit(0, 0, 0, 0);
+
+/**
+ * Converts provided string to a number.
+ *
+ * @param {number|string} value
+ * @returns {number}
+ */
+function toFloat(value) {
+    return parseFloat(value) || 0;
+}
+
+/**
+ * Extracts borders size from provided styles.
+ *
+ * @param {CSSStyleDeclaration} styles
+ * @param {...string} positions - Borders positions (top, right, ...)
+ * @returns {number}
+ */
+function getBordersSize(styles) {
+    var positions = [], len = arguments.length - 1;
+    while ( len-- > 0 ) positions[ len ] = arguments[ len + 1 ];
+
+    return positions.reduce(function (size, position) {
+        var value = styles['border-' + position + '-width'];
+
+        return size + toFloat(value);
+    }, 0);
+}
+
+/**
+ * Extracts paddings sizes from provided styles.
+ *
+ * @param {CSSStyleDeclaration} styles
+ * @returns {Object} Paddings box.
+ */
+function getPaddings(styles) {
+    var positions = ['top', 'right', 'bottom', 'left'];
+    var paddings = {};
+
+    for (var i = 0, list = positions; i < list.length; i += 1) {
+        var position = list[i];
+
+        var value = styles['padding-' + position];
+
+        paddings[position] = toFloat(value);
+    }
+
+    return paddings;
+}
+
+/**
+ * Calculates content rectangle of provided SVG element.
+ *
+ * @param {SVGGraphicsElement} target - Element content rectangle of which needs
+ *      to be calculated.
+ * @returns {DOMRectInit}
+ */
+function getSVGContentRect(target) {
+    var bbox = target.getBBox();
+
+    return createRectInit(0, 0, bbox.width, bbox.height);
+}
+
+/**
+ * Calculates content rectangle of provided HTMLElement.
+ *
+ * @param {HTMLElement} target - Element for which to calculate the content rectangle.
+ * @returns {DOMRectInit}
+ */
+function getHTMLElementContentRect(target) {
+    // Client width & height properties can't be
+    // used exclusively as they provide rounded values.
+    var clientWidth = target.clientWidth;
+    var clientHeight = target.clientHeight;
+
+    // By this condition we can catch all non-replaced inline, hidden and
+    // detached elements. Though elements with width & height properties less
+    // than 0.5 will be discarded as well.
+    //
+    // Without it we would need to implement separate methods for each of
+    // those cases and it's not possible to perform a precise and performance
+    // effective test for hidden elements. E.g. even jQuery's ':visible' filter
+    // gives wrong results for elements with width & height less than 0.5.
+    if (!clientWidth && !clientHeight) {
+        return emptyRect;
+    }
+
+    var styles = getWindowOf(target).getComputedStyle(target);
+    var paddings = getPaddings(styles);
+    var horizPad = paddings.left + paddings.right;
+    var vertPad = paddings.top + paddings.bottom;
+
+    // Computed styles of width & height are being used because they are the
+    // only dimensions available to JS that contain non-rounded values. It could
+    // be possible to utilize the getBoundingClientRect if only it's data wasn't
+    // affected by CSS transformations let alone paddings, borders and scroll bars.
+    var width = toFloat(styles.width),
+        height = toFloat(styles.height);
+
+    // Width & height include paddings and borders when the 'border-box' box
+    // model is applied (except for IE).
+    if (styles.boxSizing === 'border-box') {
+        // Following conditions are required to handle Internet Explorer which
+        // doesn't include paddings and borders to computed CSS dimensions.
+        //
+        // We can say that if CSS dimensions + paddings are equal to the "client"
+        // properties then it's either IE, and thus we don't need to subtract
+        // anything, or an element merely doesn't have paddings/borders styles.
+        if (Math.round(width + horizPad) !== clientWidth) {
+            width -= getBordersSize(styles, 'left', 'right') + horizPad;
+        }
+
+        if (Math.round(height + vertPad) !== clientHeight) {
+            height -= getBordersSize(styles, 'top', 'bottom') + vertPad;
+        }
+    }
+
+    // Following steps can't be applied to the document's root element as its
+    // client[Width/Height] properties represent viewport area of the window.
+    // Besides, it's as well not necessary as the <html> itself neither has
+    // rendered scroll bars nor it can be clipped.
+    if (!isDocumentElement(target)) {
+        // In some browsers (only in Firefox, actually) CSS width & height
+        // include scroll bars size which can be removed at this step as scroll
+        // bars are the only difference between rounded dimensions + paddings
+        // and "client" properties, though that is not always true in Chrome.
+        var vertScrollbar = Math.round(width + horizPad) - clientWidth;
+        var horizScrollbar = Math.round(height + vertPad) - clientHeight;
+
+        // Chrome has a rather weird rounding of "client" properties.
+        // E.g. for an element with content width of 314.2px it sometimes gives
+        // the client width of 315px and for the width of 314.7px it may give
+        // 314px. And it doesn't happen all the time. So just ignore this delta
+        // as a non-relevant.
+        if (Math.abs(vertScrollbar) !== 1) {
+            width -= vertScrollbar;
+        }
+
+        if (Math.abs(horizScrollbar) !== 1) {
+            height -= horizScrollbar;
+        }
+    }
+
+    return createRectInit(paddings.left, paddings.top, width, height);
+}
+
+/**
+ * Checks whether provided element is an instance of the SVGGraphicsElement.
+ *
+ * @param {Element} target - Element to be checked.
+ * @returns {boolean}
+ */
+var isSVGGraphicsElement = (function () {
+    // Some browsers, namely IE and Edge, don't have the SVGGraphicsElement
+    // interface.
+    if (typeof SVGGraphicsElement !== 'undefined') {
+        return function (target) { return target instanceof getWindowOf(target).SVGGraphicsElement; };
+    }
+
+    // If it's so, then check that element is at least an instance of the
+    // SVGElement and that it has the "getBBox" method.
+    // eslint-disable-next-line no-extra-parens
+    return function (target) { return target instanceof getWindowOf(target).SVGElement && typeof target.getBBox === 'function'; };
+})();
+
+/**
+ * Checks whether provided element is a document element (<html>).
+ *
+ * @param {Element} target - Element to be checked.
+ * @returns {boolean}
+ */
+function isDocumentElement(target) {
+    return target === getWindowOf(target).document.documentElement;
+}
+
+/**
+ * Calculates an appropriate content rectangle for provided html or svg element.
+ *
+ * @param {Element} target - Element content rectangle of which needs to be calculated.
+ * @returns {DOMRectInit}
+ */
+function getContentRect(target) {
+    if (!isBrowser) {
+        return emptyRect;
+    }
+
+    if (isSVGGraphicsElement(target)) {
+        return getSVGContentRect(target);
+    }
+
+    return getHTMLElementContentRect(target);
+}
+
+/**
+ * Creates rectangle with an interface of the DOMRectReadOnly.
+ * Spec: https://drafts.fxtf.org/geometry/#domrectreadonly
+ *
+ * @param {DOMRectInit} rectInit - Object with rectangle's x/y coordinates and dimensions.
+ * @returns {DOMRectReadOnly}
+ */
+function createReadOnlyRect(ref) {
+    var x = ref.x;
+    var y = ref.y;
+    var width = ref.width;
+    var height = ref.height;
+
+    // If DOMRectReadOnly is available use it as a prototype for the rectangle.
+    var Constr = typeof DOMRectReadOnly !== 'undefined' ? DOMRectReadOnly : Object;
+    var rect = Object.create(Constr.prototype);
+
+    // Rectangle's properties are not writable and non-enumerable.
+    defineConfigurable(rect, {
+        x: x, y: y, width: width, height: height,
+        top: y,
+        right: x + width,
+        bottom: height + y,
+        left: x
+    });
+
+    return rect;
+}
+
+/**
+ * Creates DOMRectInit object based on the provided dimensions and the x/y coordinates.
+ * Spec: https://drafts.fxtf.org/geometry/#dictdef-domrectinit
+ *
+ * @param {number} x - X coordinate.
+ * @param {number} y - Y coordinate.
+ * @param {number} width - Rectangle's width.
+ * @param {number} height - Rectangle's height.
+ * @returns {DOMRectInit}
+ */
+function createRectInit(x, y, width, height) {
+    return { x: x, y: y, width: width, height: height };
+}
+
+/**
+ * Class that is responsible for computations of the content rectangle of
+ * provided DOM element and for keeping track of it's changes.
+ */
+var ResizeObservation = function(target) {
+    this.broadcastWidth = 0;
+    this.broadcastHeight = 0;
+    this.contentRect_ = createRectInit(0, 0, 0, 0);
+
+    this.target = target;
+};
+
+/**
+ * Updates content rectangle and tells whether it's width or height properties
+ * have changed since the last broadcast.
+ *
+ * @returns {boolean}
+ */
+
+
+/**
+ * Reference to the last observed content rectangle.
+ *
+ * @private {DOMRectInit}
+ */
+
+
+/**
+ * Broadcasted width of content rectangle.
+ *
+ * @type {number}
+ */
+ResizeObservation.prototype.isActive = function () {
+    var rect = getContentRect(this.target);
+
+    this.contentRect_ = rect;
+
+    return rect.width !== this.broadcastWidth || rect.height !== this.broadcastHeight;
+};
+
+/**
+ * Updates 'broadcastWidth' and 'broadcastHeight' properties with a data
+ * from the corresponding properties of the last observed content rectangle.
+ *
+ * @returns {DOMRectInit} Last observed content rectangle.
+ */
+ResizeObservation.prototype.broadcastRect = function () {
+    var rect = this.contentRect_;
+
+    this.broadcastWidth = rect.width;
+    this.broadcastHeight = rect.height;
+
+    return rect;
+};
+
+var ResizeObserverEntry = function(target, rectInit) {
+    var contentRect = createReadOnlyRect(rectInit);
+
+    // According to the specification following properties are not writable
+    // and are also not enumerable in the native implementation.
+    //
+    // Property accessors are not being used as they'd require to define a
+    // private WeakMap storage which may cause memory leaks in browsers that
+    // don't support this type of collections.
+    defineConfigurable(this, { target: target, contentRect: contentRect });
+};
+
+var ResizeObserverSPI = function(callback, controller, callbackCtx) {
+    this.activeObservations_ = [];
+    this.observations_ = new MapShim();
+
+    if (typeof callback !== 'function') {
+        throw new TypeError('The callback provided as parameter 1 is not a function.');
+    }
+
+    this.callback_ = callback;
+    this.controller_ = controller;
+    this.callbackCtx_ = callbackCtx;
+};
+
+/**
+ * Starts observing provided element.
+ *
+ * @param {Element} target - Element to be observed.
+ * @returns {void}
+ */
+
+
+/**
+ * Registry of the ResizeObservation instances.
+ *
+ * @private {Map<Element, ResizeObservation>}
+ */
+
+
+/**
+ * Public ResizeObserver instance which will be passed to the callback
+ * function and used as a value of it's "this" binding.
+ *
+ * @private {ResizeObserver}
+ */
+
+/**
+ * Collection of resize observations that have detected changes in dimensions
+ * of elements.
+ *
+ * @private {Array<ResizeObservation>}
+ */
+ResizeObserverSPI.prototype.observe = function (target) {
+    if (!arguments.length) {
+        throw new TypeError('1 argument required, but only 0 present.');
+    }
+
+    // Do nothing if current environment doesn't have the Element interface.
+    if (typeof Element === 'undefined' || !(Element instanceof Object)) {
+        return;
+    }
+
+    if (!(target instanceof getWindowOf(target).Element)) {
+        throw new TypeError('parameter 1 is not of type "Element".');
+    }
+
+    var observations = this.observations_;
+
+    // Do nothing if element is already being observed.
+    if (observations.has(target)) {
+        return;
+    }
+
+    observations.set(target, new ResizeObservation(target));
+
+    this.controller_.addObserver(this);
+
+    // Force the update of observations.
+    this.controller_.refresh();
+};
+
+/**
+ * Stops observing provided element.
+ *
+ * @param {Element} target - Element to stop observing.
+ * @returns {void}
+ */
+ResizeObserverSPI.prototype.unobserve = function (target) {
+    if (!arguments.length) {
+        throw new TypeError('1 argument required, but only 0 present.');
+    }
+
+    // Do nothing if current environment doesn't have the Element interface.
+    if (typeof Element === 'undefined' || !(Element instanceof Object)) {
+        return;
+    }
+
+    if (!(target instanceof getWindowOf(target).Element)) {
+        throw new TypeError('parameter 1 is not of type "Element".');
+    }
+
+    var observations = this.observations_;
+
+    // Do nothing if element is not being observed.
+    if (!observations.has(target)) {
+        return;
+    }
+
+    observations.delete(target);
+
+    if (!observations.size) {
+        this.controller_.removeObserver(this);
+    }
+};
+
+/**
+ * Stops observing all elements.
+ *
+ * @returns {void}
+ */
+ResizeObserverSPI.prototype.disconnect = function () {
+    this.clearActive();
+    this.observations_.clear();
+    this.controller_.removeObserver(this);
+};
+
+/**
+ * Collects observation instances the associated element of which has changed
+ * it's content rectangle.
+ *
+ * @returns {void}
+ */
+ResizeObserverSPI.prototype.gatherActive = function () {
+        var this$1 = this;
+
+    this.clearActive();
+
+    this.observations_.forEach(function (observation) {
+        if (observation.isActive()) {
+            this$1.activeObservations_.push(observation);
+        }
+    });
+};
+
+/**
+ * Invokes initial callback function with a list of ResizeObserverEntry
+ * instances collected from active resize observations.
+ *
+ * @returns {void}
+ */
+ResizeObserverSPI.prototype.broadcastActive = function () {
+    // Do nothing if observer doesn't have active observations.
+    if (!this.hasActive()) {
+        return;
+    }
+
+    var ctx = this.callbackCtx_;
+
+    // Create ResizeObserverEntry instance for every active observation.
+    var entries = this.activeObservations_.map(function (observation) {
+        return new ResizeObserverEntry(observation.target, observation.broadcastRect());
+    });
+
+    this.callback_.call(ctx, entries, ctx);
+    this.clearActive();
+};
+
+/**
+ * Clears the collection of active observations.
+ *
+ * @returns {void}
+ */
+ResizeObserverSPI.prototype.clearActive = function () {
+    this.activeObservations_.splice(0);
+};
+
+/**
+ * Tells whether observer has active observations.
+ *
+ * @returns {boolean}
+ */
+ResizeObserverSPI.prototype.hasActive = function () {
+    return this.activeObservations_.length > 0;
+};
+
+// Registry of internal observers. If WeakMap is not available use current shim
+// for the Map collection as it has all required methods and because WeakMap
+// can't be fully polyfilled anyway.
+var observers = typeof WeakMap !== 'undefined' ? new WeakMap() : new MapShim();
+
+/**
+ * ResizeObserver API. Encapsulates the ResizeObserver SPI implementation
+ * exposing only those methods and properties that are defined in the spec.
+ */
+var ResizeObserver = function(callback) {
+    if (!(this instanceof ResizeObserver)) {
+        throw new TypeError('Cannot call a class as a function.');
+    }
+    if (!arguments.length) {
+        throw new TypeError('1 argument required, but only 0 present.');
+    }
+
+    var controller = ResizeObserverController.getInstance();
+    var observer = new ResizeObserverSPI(callback, controller, this);
+
+    observers.set(this, observer);
+};
+
+// Expose public methods of ResizeObserver.
+['observe', 'unobserve', 'disconnect'].forEach(function (method) {
+    ResizeObserver.prototype[method] = function () {
+        return (ref = observers.get(this))[method].apply(ref, arguments);
+        var ref;
+    };
+});
+
+var index = (function () {
+    // Export existing implementation if available.
+    if (typeof global$1.ResizeObserver !== 'undefined') {
+        return global$1.ResizeObserver;
+    }
+
+    return ResizeObserver;
+})();
+
+return index;
+
+})));
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -409,7 +1445,12 @@ var propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
 var whiteSpaceRegex = /\s+/;
 
 var Behavior = function () {
-	_createClass(Behavior, null, [{
+	_createClass(Behavior, [{
+		key: 'attach',
+		value: function attach() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the attach() method.');
+		}
+	}], [{
 		key: 'schema',
 		get: function get() {
 			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "schema" getter.');
@@ -430,8 +1471,6 @@ var Behavior = function () {
 		_classCallCheck(this, Behavior);
 
 		this.element = element;
-		this.raw = {};
-		this.cooked = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
@@ -440,9 +1479,10 @@ var Behavior = function () {
 	_createClass(Behavior, [{
 		key: 'destructor',
 		value: function destructor() {
+			//Clean up all event listeners added using listen/listenAndInvoke.
 			if (this.listeners) {
-				for (var listenerIndex = 0; listenerIndex < this.listeners.length; listenerIndex++) {
-					var listener = this.listeners[listenerIndex];
+				for (var i = 0; i < this.listeners.length; i++) {
+					var listener = this.listeners[i];
 					listener.element.removeEventListener(listener.event, listener.callback);
 				}
 			}
@@ -471,9 +1511,25 @@ var Behavior = function () {
 	}, {
 		key: 'emit',
 		value: function emit(name, params) {
-			var event = new _CustomEvent2.default(this.constructor.behaviorName + ':' + name);
+			//Namespace the event to the name of the behavior.
+			name = this.constructor.behaviorName + ':' + name;
+
+			var event = new _CustomEvent2.default(name, {
+				bubbles: true,
+				cancelable: false,
+				details: params
+			});
 
 			this.element.dispatchEvent(event);
+		}
+	}, {
+		key: 'updateProperties',
+		value: function updateProperties(rawProperties) {
+			var previousProperties = this.parseProperties(rawProperties);
+
+			if (this.update) {
+				this.update(previousProperties);
+			}
 		}
 
 		//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
@@ -483,6 +1539,7 @@ var Behavior = function () {
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
 			var rawPropertiesMap = {};
+			var previousProperties = {};
 			var match = void 0;
 
 			propertiesAndValuesRegex.lastIndex = 0;
@@ -507,6 +1564,8 @@ var Behavior = function () {
 				if (!rawPropertiesMap.hasOwnProperty(key)) {
 					//The schema specifies a property that is currently not defined and no default was specified.
 					//TODO: does that imply they are all required? What if falsy properties are OK?
+					//So far I'm leaning towards yes, they're ALL required. Keywords like "none" or "0" work well as defaults.
+					//This makes parts of the code much easier and consistent. KISS.
 					if (!schema[key].hasOwnProperty('default')) {
 						//TODO: this error message does not help people who only write HTML and don't even know what the class is.
 						//It should simply be something like "The layout attribute misses the required guides property"
@@ -514,13 +1573,17 @@ var Behavior = function () {
 						throw new Error('You are missing the "' + key + '" property for the ' + this.constructor.name + ' class, which has no default value.');
 					} else {
 						//There is a default specified, use it.
+						previousProperties[key] = this[key];
 						this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 						continue;
 					}
 				}
 
+				previousProperties[key] = this[key];
 				this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 			}
+
+			return previousProperties;
 		}
 	}, {
 		key: 'parseProperty',
@@ -588,11 +1651,6 @@ var Behavior = function () {
 				return propertyType.parse(rawValue);
 			}
 		}
-	}, {
-		key: 'attach',
-		value: function attach() {
-			throw new Error('You need to implement the attach() method for your "' + this.constructor.name + '" class.');
-		}
 	}]);
 
 	return Behavior;
@@ -600,7 +1658,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"ponies/CustomEvent.js":18}],7:[function(require,module,exports){
+},{"ponies/CustomEvent.js":18}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -703,7 +1761,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'debugguides';
+			return 'debug-guides';
 		}
 	}]);
 
@@ -712,7 +1770,132 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":6,"types/StringType.js":24}],8:[function(require,module,exports){
+},{"behaviors/Behavior.js":7,"types/StringType.js":25}],9:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _resizeObserverPolyfill = require('resize-observer-polyfill');
+
+var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+var _StringType = require('types/StringType.js');
+
+var _StringType2 = _interopRequireDefault(_StringType);
+
+var _HeightType = require('types/HeightType.js');
+
+var _HeightType2 = _interopRequireDefault(_HeightType);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DimensionsBehavior = function (_Behavior) {
+	_inherits(DimensionsBehavior, _Behavior);
+
+	function DimensionsBehavior() {
+		_classCallCheck(this, DimensionsBehavior);
+
+		return _possibleConstructorReturn(this, (DimensionsBehavior.__proto__ || Object.getPrototypeOf(DimensionsBehavior)).apply(this, arguments));
+	}
+
+	_createClass(DimensionsBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			this.element.innerHTML = 'bam';
+			console.log(this.guides.leftName, this.height);
+
+			if (this.height === 'auto') {
+				this._observeHeight();
+			}
+		}
+	}, {
+		key: 'update',
+		value: function update(prev) {
+			if (this.height !== prev.height) {
+				if (this.height === 'auto') {
+					this._observeHeight();
+				} else if (prev.height === 'auto') {
+					this._unobserveHeight();
+				}
+			}
+
+			//This will bubble up and tell everyone we've just changed dimensions.
+			this.emit('change');
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this.element.innerHTML = 'clean af';
+			this._unobserveHeight();
+		}
+	}, {
+		key: '_observeHeight',
+		value: function _observeHeight() {
+			var _this2 = this;
+
+			console.log('_observeHeight');
+
+			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
+				_this2.emit('intrinsicheightchange', entries[0].contentRect.height);
+			});
+
+			this._resizeObserver.observe(this.element);
+		}
+	}, {
+		key: '_unobserveHeight',
+		value: function _unobserveHeight() {
+			console.log('_unobserveHeight');
+
+			if (this._resizeObserver) {
+				this._resizeObserver.disconnect();
+				this._resizeObserver = null;
+			}
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				guides: {
+					type: [{ leftName: _StringType2.default }, { rightName: _StringType2.default }]
+				},
+				height: {
+					type: _HeightType2.default,
+					default: '100vh'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'dimensions';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return [];
+		}
+	}]);
+
+	return DimensionsBehavior;
+}(_Behavior3.default);
+
+exports.default = DimensionsBehavior;
+
+},{"behaviors/Behavior.js":7,"resize-observer-polyfill":6,"types/HeightType.js":23,"types/StringType.js":25}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -768,6 +1951,15 @@ var LayoutBehavior = function (_Behavior) {
 				_this2.emit('layout');
 			});
 
+			// The change events of the dimensions behavior bubble up here.
+			this.listen(document, 'dimensions:change', function () {
+				console.log('a dimensions behavior changed');
+			});
+
+			this.listen(document, 'dimensions:intrinsicheightchange', function () {
+				console.log('a thing changed its intrinsic height');
+			});
+
 			this.element.title = 'behavior did this 1';
 		}
 	}, {
@@ -778,11 +1970,6 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {}
-	}, {
-		key: 'bam',
-		value: function bam() {
-			console.log('in yop face');
-		}
 	}, {
 		key: '_getViewport',
 		value: function _getViewport() {
@@ -822,6 +2009,7 @@ var LayoutBehavior = function (_Behavior) {
 			return {
 				guides: {
 					type: [_GuideDefinitionType2.default]
+					//TODO: can we default to an empty array here by using an empty string?
 				},
 				width: {
 					type: _CSSLengthType2.default,
@@ -844,149 +2032,9 @@ var LayoutBehavior = function (_Behavior) {
 	return LayoutBehavior;
 }(_Behavior3.default);
 
-/*
-class IndexedExampleSchemaBehavior extends Behavior {
-	static get schema() {
-		return {
-			thing: {
-				//thing: keyword
-				//a.thing = 'keyword'
-				type: StringType,
-				type: {
-					parse: function() {}
-				},
-
-				//thing: keyword, anotherone, and, more
-				//a.thing = ['keyword', 'anotherone', 'and', 'more']
-				type: [StringType],
-
-				//thing: keyword 100px
-				//a.thing = ['keyword', {length: 100, unit: 'px'}]
-				type: [StringType, CSSLengthType],
-
-				//thing: keyword 30px 30px, anotherone 100px 8px
-				//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
-				type: [GuideDefinitionType],
-				type: [[StringType, CSSLengthType, CSSLengthType]]
-			}
-		};
-	}
-}
-
-class NamedExampleSchemaBehavior extends Behavior {
-	static get schema() {
-		return {
-			thing: {
-				//thing: keyword
-				//a.thing = 'keyword'
-				type: StringType,
-				type: {
-					parse: function() {}
-				},
-
-				//thing: keyword, anotherone, and, more
-				//a.thing = ['keyword', 'anotherone', 'and', 'more']
-				type: [StringType],
-				type: [
-					{
-						parse: function() {}
-					}
-				],
-
-				//thing: keyword 100px
-				//a.thing = {first: 'keyword', second: '100px'}
-				type: [{ first: StringType }, { second: CSSLengthType }],
-				type: [
-					{
-						first: { parse: function() {} }
-					},
-					{
-						second: { parse: function() {} }
-					}
-				],
-
-				//thing: keyword 30px 30px, anotherone 100px 8px
-				type: [GuideDefinitionType],
-				type: [
-					{
-						type: [
-							{
-								first: StringType
-							},
-							{
-								second: CSSLengthType
-							},
-							{
-								third: CSSLengthType
-							}
-						]
-					}
-				]
-			}
-		};
-	}
-}
-*/
-
-
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":6,"lib/GuideLayoutEngine.js":17,"types/CSSLengthType.js":21,"types/GuideDefinitionType.js":22}],9:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var BetterPositionBehavior = function () {
-	_createClass(BetterPositionBehavior, null, [{
-		key: 'schema',
-		get: function get() {
-			return {};
-		}
-	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['position'];
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'betterposition';
-		}
-	}]);
-
-	function BetterPositionBehavior(element) {
-		_classCallCheck(this, BetterPositionBehavior);
-
-		this.element = element;
-		this.element.position.wup();
-		this.element.style.background = 'red';
-	}
-
-	_createClass(BetterPositionBehavior, [{
-		key: 'detach',
-		value: function detach() {
-			this.element.style.background = '';
-			this.element.style.transform = '';
-		}
-	}, {
-		key: 'scroll',
-		value: function scroll() {
-			this.element.style.transform = 'rotate(' + (Date.now() - 1517925133289) / 100 + 'deg)';
-		}
-	}]);
-
-	return BetterPositionBehavior;
-}();
-
-exports.default = BetterPositionBehavior;
-
-},{}],10:[function(require,module,exports){
+},{"behaviors/Behavior.js":7,"lib/GuideLayoutEngine.js":17,"types/CSSLengthType.js":21,"types/GuideDefinitionType.js":22}],11:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -1001,77 +2049,18 @@ var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
 
 var _DebugGuidesBehavior2 = _interopRequireDefault(_DebugGuidesBehavior);
 
-var _position = require('behaviors/position.js');
+var _DimensionsBehavior = require('behaviors/DimensionsBehavior.js');
 
-var _position2 = _interopRequireDefault(_position);
-
-var _betterposition = require('behaviors/betterposition.js');
-
-var _betterposition2 = _interopRequireDefault(_betterposition);
+var _DimensionsBehavior2 = _interopRequireDefault(_DimensionsBehavior);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 
-_scrollmeister2.default.defineBehavior(_position2.default);
-_scrollmeister2.default.defineBehavior(_betterposition2.default);
+_scrollmeister2.default.defineBehavior(_DimensionsBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":7,"behaviors/LayoutBehavior.js":8,"behaviors/betterposition.js":9,"behaviors/position.js":11,"scrollmeister.js":20}],11:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var PositionBehavior = function () {
-	_createClass(PositionBehavior, null, [{
-		key: 'schema',
-		get: function get() {
-			return {};
-		}
-	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['layout'];
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'position';
-		}
-	}]);
-
-	function PositionBehavior(element) {
-		_classCallCheck(this, PositionBehavior);
-
-		this.element = element;
-		this.element.layout.bam();
-	}
-
-	_createClass(PositionBehavior, [{
-		key: 'detach',
-		value: function detach() {}
-	}, {
-		key: 'scroll',
-		value: function scroll() {}
-	}, {
-		key: 'wup',
-		value: function wup() {
-			console.log('dup');
-		}
-	}]);
-
-	return PositionBehavior;
-}();
-
-exports.default = PositionBehavior;
-
-},{}],12:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":8,"behaviors/DimensionsBehavior.js":9,"behaviors/LayoutBehavior.js":10,"scrollmeister.js":20}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1145,6 +2134,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var ScrollMeisterComponent = function (_HTMLElement) {
 	_inherits(ScrollMeisterComponent, _HTMLElement);
 
+	// Note: if you feel clever and think you can just define
+	// the static `observedAttributes` getter on the super class: IE 9/10.
+
 	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
 	function ScrollMeisterComponent(_) {
 		var _this, _ret;
@@ -1162,7 +2154,6 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'connectedCallback',
 		value: function connectedCallback() {
-			console.log('connectedCallback');
 			this._rafHandle = (0, _raf2.default)(this.tick.bind(this));
 		}
 	}, {
@@ -1181,7 +2172,6 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'attributeChangedCallback',
 		value: function attributeChangedCallback(attr, oldValue, newValue) {
-			console.log('attributeChangedCallback');
 			if (newValue === null) {
 				_scrollmeister2.default.detachBehavior(this, attr);
 			} else {
@@ -1297,7 +2287,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":10,"./components":15,"./scrollmeister.css":19,"./scrollmeister.js":20}],17:[function(require,module,exports){
+},{"./behaviors":11,"./components":15,"./scrollmeister.css":19,"./scrollmeister.js":20}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1347,7 +2337,6 @@ var GuideLayoutEngine = function () {
 	}, {
 		key: 'doLayout',
 		value: function doLayout(rawGuides, contentWidth) {
-			console.log('did the layout');
 			this._computeGuides(rawGuides, contentWidth);
 		}
 
@@ -1436,8 +2425,10 @@ if (typeof window.CustomEvent === 'function') {
 } else {
 	CustomEvent = function CustomEvent(event, params) {
 		params = params || { bubbles: false, cancelable: false, detail: undefined };
+
 		var evt = document.createEvent('CustomEvent');
 		evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+
 		return evt;
 	};
 
@@ -1447,7 +2438,7 @@ if (typeof window.CustomEvent === 'function') {
 exports.default = CustomEvent;
 
 },{}],19:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;width:100%;height:2000px;overflow:visible}el-meister{display:block;position:fixed;left:50%;top:50%;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:fixed;top:0;left:0;width:100%;height:2000px;overflow:hidden}el-meister{display:block;position:absolute;left:50vw;top:50vh;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
 },{"browserify-css":1}],20:[function(require,module,exports){
 "use strict";
 
@@ -1478,33 +2469,31 @@ var Scrollmeister = {
 		this.behaviors[name] = classDefinition;
 	},
 
-	attachBehavior: function attachBehavior(element, name, config) {
+	attachBehavior: function attachBehavior(element, name, rawProperties) {
 		if (!this.behaviors.hasOwnProperty(name)) {
 			throw new Error("Tried to attach an unknown behavior \"" + name + "\". This should never happen since we only track attributes which correspond to defined behaviors.");
 		}
 
 		var Behavior = this.behaviors[name];
 
-		console.log(name);
-
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
-			element[name].doTheThing();
+			element[name].updateProperties(rawProperties);
 			element.behaviorsUpdated();
 		} else {
 			if (this._checkBehaviorDependencies(element, name)) {
 				//Make the behavior available as a property on the DOM node.
-				//TODO: What if people assign a plain config to the property?
+				//TODO: What if people assign a plain rawProperties to the property?
 				//Maybe this should not be allowed at all, but instead always use the attribute?
 				//BUT: if we can make it work then it should work for UX reasons.
 				//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-				element[name] = new Behavior(element, config);
+				element[name] = new Behavior(element, rawProperties);
 
 				this._updateWaitingBehaviors(element);
 
 				element.behaviorsUpdated();
 			} else {
-				this.behaviorsWaitingForDependencies.push({ name: name, config: config });
+				this.behaviorsWaitingForDependencies.push({ name: name, rawProperties: rawProperties });
 			}
 		}
 	},
@@ -1551,7 +2540,7 @@ var Scrollmeister = {
 		for (var _behaviorIndex = 0; _behaviorIndex < finallyResolved.length; _behaviorIndex++) {
 			var _waitingBehavior = finallyResolved[_behaviorIndex];
 
-			this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.config);
+			this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.rawProperties);
 		}
 	}
 };
@@ -1625,7 +2614,53 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":21,"types/NumberType.js":23,"types/StringType.js":24}],23:[function(require,module,exports){
+},{"types/CSSLengthType.js":21,"types/NumberType.js":24,"types/StringType.js":25}],23:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _CSSLengthType = require('types/CSSLengthType.js');
+
+var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var ratioRegex = /^(\d+)\s*\/\s*(\d+)$/;
+
+exports.default = {
+	parse: function parse(value) {
+		value = value.trim();
+
+		if (value === 'auto') {
+			return value;
+		} else {
+			var match = value.match(ratioRegex);
+
+			if (match) {
+				//E.g. "16/9" is the same as "56.25%". Just some sugar.
+				return {
+					length: 100 * (parseInt(match[2], 10) / parseInt(match[1], 10)),
+					unit: '%'
+				};
+			} else {
+				return _CSSLengthType2.default.parse(value);
+			}
+		}
+	},
+	stringify: function stringify(value) {
+		if (value === 'auto') {
+			return value;
+		} else {
+			//Parsing turns ratios into percentages. We do not try to do the opposite.
+			//Finding nominator/denominator for arbitrary floats is no fun.
+			return _CSSLengthType2.default.stringify(value);
+		}
+	}
+};
+
+},{"types/CSSLengthType.js":21}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1654,7 +2689,7 @@ exports.default = {
 	}
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

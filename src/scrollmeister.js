@@ -24,7 +24,7 @@ const Scrollmeister = {
 		this.behaviors[name] = classDefinition;
 	},
 
-	attachBehavior: function(element, name, config) {
+	attachBehavior: function(element, name, rawProperties) {
 		if (!this.behaviors.hasOwnProperty(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes which correspond to defined behaviors.`
@@ -33,26 +33,24 @@ const Scrollmeister = {
 
 		let Behavior = this.behaviors[name];
 
-		console.log(name);
-
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
-			element[name].doTheThing();
+			element[name].updateProperties(rawProperties);
 			element.behaviorsUpdated();
 		} else {
 			if (this._checkBehaviorDependencies(element, name)) {
 				//Make the behavior available as a property on the DOM node.
-				//TODO: What if people assign a plain config to the property?
+				//TODO: What if people assign a plain rawProperties to the property?
 				//Maybe this should not be allowed at all, but instead always use the attribute?
 				//BUT: if we can make it work then it should work for UX reasons.
 				//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-				element[name] = new Behavior(element, config);
+				element[name] = new Behavior(element, rawProperties);
 
 				this._updateWaitingBehaviors(element);
 
 				element.behaviorsUpdated();
 			} else {
-				this.behaviorsWaitingForDependencies.push({ name, config });
+				this.behaviorsWaitingForDependencies.push({ name, rawProperties });
 			}
 		}
 	},
@@ -99,7 +97,7 @@ const Scrollmeister = {
 		for (let behaviorIndex = 0; behaviorIndex < finallyResolved.length; behaviorIndex++) {
 			let waitingBehavior = finallyResolved[behaviorIndex];
 
-			this.attachBehavior(element, waitingBehavior.name, waitingBehavior.config);
+			this.attachBehavior(element, waitingBehavior.name, waitingBehavior.rawProperties);
 		}
 	}
 };

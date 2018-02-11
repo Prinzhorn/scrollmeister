@@ -7,8 +7,10 @@
 		<script src="../dist/scrollmeister.js"></script>
 	</head>
 	<body>
+		<nav>Won't work because of mobile fake scrolling :/. Should just scroll like regular</nav>
+
 		<scroll-meister
-			debugguides
+			debug-guides
 
 			layout="
 				guides:
@@ -20,7 +22,10 @@
 					1200px;
 			"
 		>
+			<el-meister dimensions="guides: contentleft center; height: 16/9"></el-meister>
 
 		</scroll-meister>
+
+		<footer>Should just scroll like regular</footer>
 	</body>
 </html>

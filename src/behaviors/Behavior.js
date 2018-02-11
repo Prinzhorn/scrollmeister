@@ -25,19 +25,22 @@ export default class Behavior {
 		);
 	}
 
+	attach() {
+		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the attach() method.`);
+	}
+
 	constructor(element, rawProperties) {
 		this.element = element;
-		this.raw = {};
-		this.cooked = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
 	}
 
 	destructor() {
+		//Clean up all event listeners added using listen/listenAndInvoke.
 		if (this.listeners) {
-			for (let listenerIndex = 0; listenerIndex < this.listeners.length; listenerIndex++) {
-				let listener = this.listeners[listenerIndex];
+			for (let i = 0; i < this.listeners.length; i++) {
+				let listener = this.listeners[i];
 				listener.element.removeEventListener(listener.event, listener.callback);
 			}
 		}
@@ -63,15 +66,31 @@ export default class Behavior {
 	}
 
 	emit(name, params) {
-		var event = new CustomEvent(this.constructor.behaviorName + ':' + name);
+		//Namespace the event to the name of the behavior.
+		name = this.constructor.behaviorName + ':' + name;
+
+		let event = new CustomEvent(name, {
+			bubbles: true,
+			cancelable: false,
+			details: params
+		});
 
 		this.element.dispatchEvent(event);
+	}
+
+	updateProperties(rawProperties) {
+		const previousProperties = this.parseProperties(rawProperties);
+
+		if (this.update) {
+			this.update(previousProperties);
+		}
 	}
 
 	//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
 	parseProperties(rawProperties) {
 		const schema = this.constructor.schema;
 		const rawPropertiesMap = {};
+		const previousProperties = {};
 		let match;
 
 		propertiesAndValuesRegex.lastIndex = 0;
@@ -99,6 +118,8 @@ export default class Behavior {
 			if (!rawPropertiesMap.hasOwnProperty(key)) {
 				//The schema specifies a property that is currently not defined and no default was specified.
 				//TODO: does that imply they are all required? What if falsy properties are OK?
+				//So far I'm leaning towards yes, they're ALL required. Keywords like "none" or "0" work well as defaults.
+				//This makes parts of the code much easier and consistent. KISS.
 				if (!schema[key].hasOwnProperty('default')) {
 					//TODO: this error message does not help people who only write HTML and don't even know what the class is.
 					//It should simply be something like "The layout attribute misses the required guides property"
@@ -108,13 +129,17 @@ export default class Behavior {
 					);
 				} else {
 					//There is a default specified, use it.
+					previousProperties[key] = this[key];
 					this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 					continue;
 				}
 			}
 
+			previousProperties[key] = this[key];
 			this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 		}
+
+		return previousProperties;
 	}
 
 	parseProperty(property, rawValue, propertyType) {
@@ -186,9 +211,5 @@ export default class Behavior {
 			//a.thing = 'keyword'
 			return propertyType.parse(rawValue);
 		}
-	}
-
-	attach() {
-		throw new Error(`You need to implement the attach() method for your "${this.constructor.name}" class.`);
 	}
 }

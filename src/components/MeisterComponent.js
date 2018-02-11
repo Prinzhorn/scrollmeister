@@ -3,6 +3,9 @@ import raf from 'raf';
 import Scrollmeister from 'scrollmeister.js';
 
 export default class ScrollMeisterComponent extends HTMLElement {
+	// Note: if you feel clever and think you can just define
+	// the static `observedAttributes` getter on the super class: IE 9/10.
+
 	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
 	constructor(_) {
 		return (_ = super(_)).init(), _;
@@ -13,7 +16,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	connectedCallback() {
-		console.log('connectedCallback');
 		this._rafHandle = raf(this.tick.bind(this));
 	}
 
@@ -30,7 +32,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	attributeChangedCallback(attr, oldValue, newValue) {
-		console.log('attributeChangedCallback');
 		if (newValue === null) {
 			Scrollmeister.detachBehavior(this, attr);
 		} else {

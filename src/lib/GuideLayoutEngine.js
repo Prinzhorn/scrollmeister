@@ -35,15 +35,20 @@ export default class GuideLayoutEngine {
 		}
 	}
 
-	doLayout(rawGuides: Array<{}>, contentWidth: { length: number, unit: string }) {
-		console.log('did the layout');
+	doLayout(
+		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,
+		contentWidth: { length: number, unit: string }
+	) {
 		this._computeGuides(rawGuides, contentWidth);
 	}
 
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
 	_doItemLayout() {}
 
-	_computeGuides(rawGuides: Array<{}>, contentWidth: { length: number, unit: string }) {
+	_computeGuides(
+		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,
+		contentWidth: { length: number, unit: string }
+	) {
 		let pixelWidth = this.lengthToPixel(contentWidth, this.viewport.width);
 
 		//If the wrapper element does not have enough room, make it full width fluid.

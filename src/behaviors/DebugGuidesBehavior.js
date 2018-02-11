@@ -19,7 +19,7 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'debugguides';
+		return 'debug-guides';
 	}
 
 	attach() {
