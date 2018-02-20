@@ -2261,11 +2261,13 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	// the static `observedAttributes` getter on the super class: IE 9/10.
 
 	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
+	// $FlowFixMe: Won't be fixed ;)
 	function ScrollMeisterComponent(_) {
 		var _this, _ret;
 
 		_classCallCheck(this, ScrollMeisterComponent);
 
+		// $FlowFixMe: Won't be fixed ;)
 		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (ScrollMeisterComponent.__proto__ || Object.getPrototypeOf(ScrollMeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret);
 	}
 
@@ -2273,17 +2275,24 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		key: 'init',
 		value: function init() {
 			this._scrollBehaviors = [];
+			this._scheduledBatchUpdate = false;
+			this._scheduledBehaviors = {
+				attach: {},
+				detach: {}
+			};
 		}
 	}, {
 		key: 'connectedCallback',
 		value: function connectedCallback() {
-			this._rafHandle = (0, _raf2.default)(this.tick.bind(this));
+			this._tickHandle = (0, _raf2.default)(this.tick.bind(this));
 		}
 	}, {
 		key: 'disconnectedCallback',
 		value: function disconnectedCallback() {
-			cancelAnimationFrame(this._rafHandle);
+			_raf2.default.cancel(this._tickHandle);
+			_raf2.default.cancel(this._batchHandle);
 
+			// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
 			var observedAttributes = this.constructor.observedAttributes;
 
 			for (var i = 0; i < observedAttributes.length; i++) {
@@ -2295,10 +2304,17 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'attributeChangedCallback',
 		value: function attributeChangedCallback(attr, oldValue, newValue) {
+			if (!this._scheduledBatchUpdate) {
+				this._scheduledBatchUpdate = true;
+				this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
+			}
+
 			if (newValue === null) {
-				_scrollmeister2.default.detachBehavior(this, attr);
+				this._scheduledBehaviors.detach[attr] = true;
+				delete this._scheduledBehaviors.attach[attr];
 			} else {
-				_scrollmeister2.default.attachBehavior(this, attr, newValue);
+				this._scheduledBehaviors.attach[attr] = newValue;
+				delete this._scheduledBehaviors.detach[attr];
 			}
 		}
 	}, {
@@ -2307,12 +2323,14 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			//Clear the array.
 			this._scrollBehaviors.length = 0;
 
+			// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
 			var observedAttributes = this.constructor.observedAttributes;
 
 			//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
 			for (var i = 0; i < observedAttributes.length; i++) {
 				var attr = observedAttributes[i];
 
+				// $FlowFixMe: Flow doesn't know about the this[attr] access.
 				if (this.hasOwnProperty(attr) && this[attr].scroll) {
 					this._scrollBehaviors.push(this[attr]);
 				}
@@ -2331,6 +2349,25 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			}
 
 			(0, _raf2.default)(this.tick.bind(this));
+		}
+	}, {
+		key: '_batchUpdateBehaviors',
+		value: function _batchUpdateBehaviors() {
+			this._scheduledBatchUpdate = false;
+
+			for (var key in this._scheduledBehaviors.detach) {
+				if (this._scheduledBehaviors.detach.hasOwnProperty(key)) {
+					_scrollmeister2.default.detachBehavior(this, key);
+					delete this._scheduledBehaviors.detach[key];
+				}
+			}
+
+			for (var _key in this._scheduledBehaviors.attach) {
+				if (this._scheduledBehaviors.attach.hasOwnProperty(_key)) {
+					_scrollmeister2.default.attachBehavior(this, _key, this._scheduledBehaviors.attach[_key]);
+					delete this._scheduledBehaviors.attach[_key];
+				}
+			}
 		}
 	}]);
 
@@ -3131,6 +3168,8 @@ function findPreviousFlowElement(element) {
 			return element;
 		}
 	}
+
+	return null;
 }
 
 //TODO: do we need stringify at all?

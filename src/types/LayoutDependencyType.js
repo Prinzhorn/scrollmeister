@@ -1,6 +1,4 @@
-// @flow
-
-function findPreviousFlowElement(element) {
+function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
 	while (element.previousSibling) {
 		element = element.previousSibling;
 
@@ -12,6 +10,8 @@ function findPreviousFlowElement(element) {
 			return element;
 		}
 	}
+
+	return null;
 }
 
 //TODO: do we need stringify at all?
