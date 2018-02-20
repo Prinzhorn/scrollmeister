@@ -7,7 +7,10 @@
     "test": "npm run flow && npm run jest",
     "jest": "NODE_PATH='./src' jest",
     "flow": "flow check",
+    "server": "http-server",
+    "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/index.html, dist/scrollmeister.js'",
     "watch": "NODE_PATH='./src' watchify ./src/index.js -o ./dist/scrollmeister.js -v",
+    "start": "npm run server & npm run reload & npm run watch",
     "build": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js"
   },
   "repository": {
@@ -15,16 +18,10 @@
     "url": "git+ssh://git@github.com/Prinzhorn/scrollmeister.git"
   },
   "browserify": {
-    "transform": [
-      "babelify",
-      "browserify-css"
-    ]
+    "transform": ["babelify", "browserify-css"]
   },
   "babel": {
-    "presets": [
-      "env",
-      "flow"
-    ]
+    "presets": ["env", "flow"]
   },
   "browserify-css": {
     "autoInject": true,
@@ -32,6 +29,10 @@
       "verbose": false
     },
     "minify": true
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 120
   },
   "keywords": [
     "scrolling",
@@ -65,9 +66,12 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
+    "browser-sync": "^2.23.6",
     "browserify-css": "^0.14.0",
-    "flow-bin": "^0.65.0",
+    "flow-bin": "^0.66.0",
+    "http-server": "^0.11.1",
     "jest": "^22.1.4",
+    "prettier": "^1.10.2",
     "tinyify": "^2.4.0",
     "watchify": "^3.10.0"
   }

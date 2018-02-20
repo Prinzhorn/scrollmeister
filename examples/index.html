@@ -5,14 +5,18 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Scrollmeister</title>
 		<script src="../dist/scrollmeister.js"></script>
+		<style>
+			el-meister {
+				background: rgba(0, 255, 0, 0.5);
+				outline: 1px solid rgba(255, 0, 0, 0.5);
+			}
+		</style>
 	</head>
 	<body>
-		<nav>Won't work because of mobile fake scrolling :/. Should just scroll like regular</nav>
-
 		<scroll-meister
-			debug-guides
+			debugguides
 
-			layout="
+			guidelayout="
 				guides:
 					contentleft 0 2vmin,
 					center 0.5 2vmin,
@@ -22,10 +26,29 @@
 					1200px;
 			"
 		>
-			<el-meister dimensions="guides: contentleft center; height: 16/9"></el-meister>
+			<el-meister
+				layout="
+					guides: contentleft center;
+					height: 16/9;
+					spacing: 10vh 0;
+				"
+			></el-meister>
 
+			<el-meister
+				layout="
+					guides: centercollapsed contentright;
+					spacing: 10vh 0;
+				"
+			>Wussenäh</el-meister>
+
+			<el-meister
+				layout="
+					guides: contentleft contentright;
+					height: 50vh;
+					spacing: 10vh 0;
+					dependencies: inherit;
+				"
+			></el-meister>
 		</scroll-meister>
-
-		<footer>Should just scroll like regular</footer>
 	</body>
 </html>

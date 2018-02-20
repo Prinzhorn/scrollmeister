@@ -55,6 +55,8 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		}
 	}
 
+	//TODO: do we really need a raf loop for EVERY SINGLE custom element?
+	//There should be a single loop, e.g. inside the LayoutBehavior at the root.
 	tick() {
 		for (let i = 0; i < this._scrollBehaviors.length; i++) {
 			let behavior = this._scrollBehaviors[i];

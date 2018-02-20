@@ -1,3 +1,4 @@
+import assign from 'ponies/Object.assign.js';
 import CustomEvent from 'ponies/CustomEvent.js';
 
 //property:value; pairs (separated by colons) separated by semicolons.
@@ -31,9 +32,12 @@ export default class Behavior {
 
 	constructor(element, rawProperties) {
 		this.element = element;
+		this.props = {};
+		this.state = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
+		this.emit('attach');
 	}
 
 	destructor() {
@@ -48,20 +52,46 @@ export default class Behavior {
 		if (this.detach) {
 			this.detach();
 		}
+
+		this.emit('detach');
 	}
 
-	listen(element, event, callback) {
-		element.addEventListener(event, callback);
+	setState(newState) {
+		const prevState = assign({}, this.state);
+
+		assign(this.state, newState);
+
+		if (this.update) {
+			this.update(this.props, prevState);
+		}
+
+		this.emit('update');
+	}
+
+	listen(element, eventName, callback) {
+		//Space separated list of event names for the same element and callback.
+		if (eventName.indexOf(' ') !== -1) {
+			eventName
+				.split(' ')
+				.map(s => s.trim())
+				.forEach(s => {
+					this.listen(element, s, callback);
+				});
+
+			return;
+		}
+
+		element.addEventListener(eventName, callback);
 
 		if (!this.listeners) {
 			this.listeners = [];
 		}
 
-		this.listeners.push({ element, event, callback });
+		this.listeners.push({ element, eventName, callback });
 	}
 
-	listenAndInvoke(element, event, callback) {
-		this.listen(element, event, callback);
+	listenAndInvoke(element, eventName, callback) {
+		this.listen(element, eventName, callback);
 		callback();
 	}
 
@@ -79,18 +109,21 @@ export default class Behavior {
 	}
 
 	updateProperties(rawProperties) {
-		const previousProperties = this.parseProperties(rawProperties);
+		const prevProps = assign({}, this.props);
+
+		this.parseProperties(rawProperties);
 
 		if (this.update) {
-			this.update(previousProperties);
+			this.update(prevProps, this.state);
 		}
+
+		this.emit('update');
 	}
 
 	//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
 	parseProperties(rawProperties) {
 		const schema = this.constructor.schema;
 		const rawPropertiesMap = {};
-		const previousProperties = {};
 		let match;
 
 		propertiesAndValuesRegex.lastIndex = 0;
@@ -100,10 +133,10 @@ export default class Behavior {
 			let rawValue = match[2];
 
 			if (!schema.hasOwnProperty(property)) {
-				debugger;
 				throw new Error(
-					`You have defined a property "${property}" in your HTML that "${this.constructor
-						.name}" is not expecting. The value was "${rawValue}".`
+					`You have defined a property "${property}" in your HTML that "${
+						this.constructor.name
+					}" is not expecting. The value was "${rawValue}".`
 				);
 			}
 
@@ -129,17 +162,13 @@ export default class Behavior {
 					);
 				} else {
 					//There is a default specified, use it.
-					previousProperties[key] = this[key];
-					this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
+					this.props[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 					continue;
 				}
 			}
 
-			previousProperties[key] = this[key];
-			this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
+			this.props[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 		}
-
-		return previousProperties;
 	}
 
 	parseProperty(property, rawValue, propertyType) {
@@ -176,10 +205,9 @@ export default class Behavior {
 
 				if (rawValuesList.length !== propertyType.length) {
 					throw new Error(
-						`The schema for the "${property}" property of the "${this.constructor
-							.name}" class expects ${propertyType.length} values. Got ${rawValuesList.length}, namely "${rawValuesList.join(
-							' '
-						)}".`
+						`The schema for the "${property}" property of the "${this.constructor.name}" class expects ${
+							propertyType.length
+						} values. Got ${rawValuesList.length}, namely "${rawValuesList.join(' ')}".`
 					);
 				}
 
@@ -196,20 +224,21 @@ export default class Behavior {
 					let name = keys[0];
 					let rawValue = rawValuesList[rawValueIndex];
 
-					map[name] = namedPropertyType[name].parse(rawValue);
+					map[name] = namedPropertyType[name].parse(rawValue, this.element);
 				}
 
 				return map;
 			} else {
 				throw new Error(
-					`You have defined an empty array as schema type for the "${property}"" property of the "${this.constructor
-						.name}" class.`
+					`You have defined an empty array as schema type for the "${property}"" property of the "${
+						this.constructor.name
+					}" class.`
 				);
 			}
 		} else {
 			//thing: keyword
 			//a.thing = 'keyword'
-			return propertyType.parse(rawValue);
+			return propertyType.parse(rawValue, this.element);
 		}
 	}
 }

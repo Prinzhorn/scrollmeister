@@ -1,11 +1,11 @@
 import Scrollmeister from 'scrollmeister.js';
 
-import LayoutBehavior from 'behaviors/LayoutBehavior.js';
+import GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
 import DebugGuidesBehavior from 'behaviors/DebugGuidesBehavior.js';
 
-import DimensionsBehavior from 'behaviors/DimensionsBehavior.js';
+import LayoutBehavior from 'behaviors/LayoutBehavior.js';
 
-Scrollmeister.defineBehavior(LayoutBehavior);
+Scrollmeister.defineBehavior(GuideLayoutBehavior);
 Scrollmeister.defineBehavior(DebugGuidesBehavior);
 
-Scrollmeister.defineBehavior(DimensionsBehavior);
+Scrollmeister.defineBehavior(LayoutBehavior);

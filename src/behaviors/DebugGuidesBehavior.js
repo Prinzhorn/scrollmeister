@@ -6,26 +6,26 @@ import Behavior from 'behaviors/Behavior.js';
 export default class DebugGuidesBehavior extends Behavior {
 	static get schema(): any {
 		return {
-			/*
 			color: {
-				type: StringType
+				type: StringType,
+				default: '#0cf'
 			}
-			*/
 		};
 	}
 
 	static get dependencies(): Array<string> {
-		return ['layout'];
+		return ['guidelayout'];
 	}
 
 	static get behaviorName(): string {
-		return 'debug-guides';
+		return 'debugguides';
 	}
 
 	attach() {
 		this._createElement();
 
-		this.listenAndInvoke(this.element, 'layout:layout', () => {
+		//Whenever the guide layout updates, render the guides.
+		this.listenAndInvoke(this.element, 'guidelayout:layout', () => {
 			this._renderGuides();
 		});
 	}
@@ -33,8 +33,6 @@ export default class DebugGuidesBehavior extends Behavior {
 	detach() {
 		this._removeElement();
 	}
-
-	scroll() {}
 
 	_createElement() {
 		this._guidesWrapper = document.createElement('div');
@@ -59,17 +57,21 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	_renderGuides() {
-		let guides = this.element.layout.engine.guides;
+		let guides = this.element.guidelayout.engine.guides;
 		let html = guides.map(guide => {
+			let width = guide.width;
+			let opacity = 0.2;
+
 			if (guide.width === 0) {
-				return `
-					<div title="${guide.name}" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 0, 255, 1); left: ${guide.rightPosition}px; width: 1px;"></div>
-				`;
-			} else {
-				return `
-					<div title="${guide.name}" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 255, 255, 0.5); left: ${guide.rightPosition}px; width: ${guide.width}px;"></div>
-				`;
+				width = 1;
+				opacity = 1;
 			}
+
+			return `
+				<div title="${guide.name}" style="position: absolute; top: 0; bottom: 0; background:${this.props.color}; left: ${
+				guide.rightPosition
+			}px; opacity: ${opacity}; px; width: ${width}px;"></div>
+			`;
 		});
 
 		this._guidesWrapper.innerHTML = html.join('');

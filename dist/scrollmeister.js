@@ -1428,6 +1428,10 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _ObjectAssign = require('ponies/Object.assign.js');
+
+var _ObjectAssign2 = _interopRequireDefault(_ObjectAssign);
+
 var _CustomEvent = require('ponies/CustomEvent.js');
 
 var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
@@ -1471,9 +1475,12 @@ var Behavior = function () {
 		_classCallCheck(this, Behavior);
 
 		this.element = element;
+		this.props = {};
+		this.state = {};
 
 		this.parseProperties(rawProperties);
 		this.attach();
+		this.emit('attach');
 	}
 
 	_createClass(Behavior, [{
@@ -1490,22 +1497,50 @@ var Behavior = function () {
 			if (this.detach) {
 				this.detach();
 			}
+
+			this.emit('detach');
+		}
+	}, {
+		key: 'setState',
+		value: function setState(newState) {
+			var prevState = (0, _ObjectAssign2.default)({}, this.state);
+
+			(0, _ObjectAssign2.default)(this.state, newState);
+
+			if (this.update) {
+				this.update(this.props, prevState);
+			}
+
+			this.emit('update');
 		}
 	}, {
 		key: 'listen',
-		value: function listen(element, event, callback) {
-			element.addEventListener(event, callback);
+		value: function listen(element, eventName, callback) {
+			var _this = this;
+
+			//Space separated list of event names for the same element and callback.
+			if (eventName.indexOf(' ') !== -1) {
+				eventName.split(' ').map(function (s) {
+					return s.trim();
+				}).forEach(function (s) {
+					_this.listen(element, s, callback);
+				});
+
+				return;
+			}
+
+			element.addEventListener(eventName, callback);
 
 			if (!this.listeners) {
 				this.listeners = [];
 			}
 
-			this.listeners.push({ element: element, event: event, callback: callback });
+			this.listeners.push({ element: element, eventName: eventName, callback: callback });
 		}
 	}, {
 		key: 'listenAndInvoke',
-		value: function listenAndInvoke(element, event, callback) {
-			this.listen(element, event, callback);
+		value: function listenAndInvoke(element, eventName, callback) {
+			this.listen(element, eventName, callback);
 			callback();
 		}
 	}, {
@@ -1525,11 +1560,15 @@ var Behavior = function () {
 	}, {
 		key: 'updateProperties',
 		value: function updateProperties(rawProperties) {
-			var previousProperties = this.parseProperties(rawProperties);
+			var prevProps = (0, _ObjectAssign2.default)({}, this.props);
+
+			this.parseProperties(rawProperties);
 
 			if (this.update) {
-				this.update(previousProperties);
+				this.update(prevProps, this.state);
 			}
+
+			this.emit('update');
 		}
 
 		//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
@@ -1539,7 +1578,6 @@ var Behavior = function () {
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
 			var rawPropertiesMap = {};
-			var previousProperties = {};
 			var match = void 0;
 
 			propertiesAndValuesRegex.lastIndex = 0;
@@ -1549,7 +1587,6 @@ var Behavior = function () {
 				var rawValue = match[2];
 
 				if (!schema.hasOwnProperty(property)) {
-					debugger;
 					throw new Error('You have defined a property "' + property + '" in your HTML that "' + this.constructor.name + '" is not expecting. The value was "' + rawValue + '".');
 				}
 
@@ -1573,22 +1610,18 @@ var Behavior = function () {
 						throw new Error('You are missing the "' + key + '" property for the ' + this.constructor.name + ' class, which has no default value.');
 					} else {
 						//There is a default specified, use it.
-						previousProperties[key] = this[key];
-						this[key] = this.parseProperty(key, schema[key].default, schema[key].type);
+						this.props[key] = this.parseProperty(key, schema[key].default, schema[key].type);
 						continue;
 					}
 				}
 
-				previousProperties[key] = this[key];
-				this[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
+				this.props[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
 			}
-
-			return previousProperties;
 		}
 	}, {
 		key: 'parseProperty',
 		value: function parseProperty(property, rawValue, propertyType) {
-			var _this = this;
+			var _this2 = this;
 
 			if (propertyType instanceof Array) {
 				//thing: keyword, anotherone, and, more
@@ -1605,7 +1638,7 @@ var Behavior = function () {
 						var rawValuesList = rawValue.split(',');
 
 						return rawValuesList.map(function (rawValue, index) {
-							return _this.parseProperty(property, rawValue, propertyType);
+							return _this2.parseProperty(property, rawValue, propertyType);
 						});
 					} else {
 						//thing: keyword, anotherone, and, more
@@ -1638,7 +1671,7 @@ var Behavior = function () {
 						var name = keys[0];
 						var _rawValue = _rawValuesList2[rawValueIndex];
 
-						map[name] = namedPropertyType[name].parse(_rawValue);
+						map[name] = namedPropertyType[name].parse(_rawValue, this.element);
 					}
 
 					return map;
@@ -1648,7 +1681,7 @@ var Behavior = function () {
 			} else {
 				//thing: keyword
 				//a.thing = 'keyword'
-				return propertyType.parse(rawValue);
+				return propertyType.parse(rawValue, this.element);
 			}
 		}
 	}]);
@@ -1658,7 +1691,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"ponies/CustomEvent.js":18}],8:[function(require,module,exports){
+},{"ponies/CustomEvent.js":18,"ponies/Object.assign.js":19}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1699,7 +1732,8 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 			this._createElement();
 
-			this.listenAndInvoke(this.element, 'layout:layout', function () {
+			//Whenever the guide layout updates, render the guides.
+			this.listenAndInvoke(this.element, 'guidelayout:layout', function () {
 				_this2._renderGuides();
 			});
 		}
@@ -1708,9 +1742,6 @@ var DebugGuidesBehavior = function (_Behavior) {
 		value: function detach() {
 			this._removeElement();
 		}
-	}, {
-		key: 'scroll',
-		value: function scroll() {}
 	}, {
 		key: '_createElement',
 		value: function _createElement() {
@@ -1731,13 +1762,19 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}, {
 		key: '_renderGuides',
 		value: function _renderGuides() {
-			var guides = this.element.layout.engine.guides;
+			var _this3 = this;
+
+			var guides = this.element.guidelayout.engine.guides;
 			var html = guides.map(function (guide) {
+				var width = guide.width;
+				var opacity = 0.2;
+
 				if (guide.width === 0) {
-					return '\n\t\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 0, 255, 1); left: ' + guide.rightPosition + 'px; width: 1px;"></div>\n\t\t\t\t';
-				} else {
-					return '\n\t\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background: rgba(0, 255, 255, 0.5); left: ' + guide.rightPosition + 'px; width: ' + guide.width + 'px;"></div>\n\t\t\t\t';
+					width = 1;
+					opacity = 1;
 				}
+
+				return '\n\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background:' + _this3.props.color + '; left: ' + guide.rightPosition + 'px; opacity: ' + opacity + '; px; width: ' + width + 'px;"></div>\n\t\t\t';
 			});
 
 			this._guidesWrapper.innerHTML = html.join('');
@@ -1746,22 +1783,21 @@ var DebugGuidesBehavior = function (_Behavior) {
 		key: 'schema',
 		get: function get() {
 			return {
-				/*
-    color: {
-    	type: StringType
-    }
-    */
+				color: {
+					type: _StringType2.default,
+					default: '#0cf'
+				}
 			};
 		}
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['layout'];
+			return ['guidelayout'];
 		}
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'debug-guides';
+			return 'debugguides';
 		}
 	}]);
 
@@ -1770,7 +1806,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":7,"types/StringType.js":25}],9:[function(require,module,exports){
+},{"behaviors/Behavior.js":7,"types/StringType.js":28}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1779,130 +1815,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _resizeObserverPolyfill = require('resize-observer-polyfill');
+var _raf = require('raf');
 
-var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
-
-var _StringType = require('types/StringType.js');
-
-var _StringType2 = _interopRequireDefault(_StringType);
-
-var _HeightType = require('types/HeightType.js');
-
-var _HeightType2 = _interopRequireDefault(_HeightType);
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var DimensionsBehavior = function (_Behavior) {
-	_inherits(DimensionsBehavior, _Behavior);
-
-	function DimensionsBehavior() {
-		_classCallCheck(this, DimensionsBehavior);
-
-		return _possibleConstructorReturn(this, (DimensionsBehavior.__proto__ || Object.getPrototypeOf(DimensionsBehavior)).apply(this, arguments));
-	}
-
-	_createClass(DimensionsBehavior, [{
-		key: 'attach',
-		value: function attach() {
-			this.element.innerHTML = 'bam';
-			console.log(this.guides.leftName, this.height);
-
-			if (this.height === 'auto') {
-				this._observeHeight();
-			}
-		}
-	}, {
-		key: 'update',
-		value: function update(prev) {
-			if (this.height !== prev.height) {
-				if (this.height === 'auto') {
-					this._observeHeight();
-				} else if (prev.height === 'auto') {
-					this._unobserveHeight();
-				}
-			}
-
-			//This will bubble up and tell everyone we've just changed dimensions.
-			this.emit('change');
-		}
-	}, {
-		key: 'detach',
-		value: function detach() {
-			this.element.innerHTML = 'clean af';
-			this._unobserveHeight();
-		}
-	}, {
-		key: '_observeHeight',
-		value: function _observeHeight() {
-			var _this2 = this;
-
-			console.log('_observeHeight');
-
-			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
-				_this2.emit('intrinsicheightchange', entries[0].contentRect.height);
-			});
-
-			this._resizeObserver.observe(this.element);
-		}
-	}, {
-		key: '_unobserveHeight',
-		value: function _unobserveHeight() {
-			console.log('_unobserveHeight');
-
-			if (this._resizeObserver) {
-				this._resizeObserver.disconnect();
-				this._resizeObserver = null;
-			}
-		}
-	}], [{
-		key: 'schema',
-		get: function get() {
-			return {
-				guides: {
-					type: [{ leftName: _StringType2.default }, { rightName: _StringType2.default }]
-				},
-				height: {
-					type: _HeightType2.default,
-					default: '100vh'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'dimensions';
-		}
-	}, {
-		key: 'dependencies',
-		get: function get() {
-			return [];
-		}
-	}]);
-
-	return DimensionsBehavior;
-}(_Behavior3.default);
-
-exports.default = DimensionsBehavior;
-
-},{"behaviors/Behavior.js":7,"resize-observer-polyfill":6,"types/HeightType.js":23,"types/StringType.js":25}],10:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _raf2 = _interopRequireDefault(_raf);
 
 var _GuideDefinitionType = require('types/GuideDefinitionType.js');
 
@@ -1942,22 +1857,20 @@ var LayoutBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
+			this._layoutScheduled = false;
+
 			this.engine = new _GuideLayoutEngine2.default();
 
 			this.listenAndInvoke(window, 'resize', function () {
 				var viewport = _this2._getViewport();
 				_this2.engine.updateViewport(viewport);
-				_this2.engine.doLayout(_this2.guides, _this2.width);
-				_this2.emit('layout');
+				_this2._scheduleLayout();
 			});
 
-			// The change events of the dimensions behavior bubble up here.
-			this.listen(document, 'dimensions:change', function () {
-				console.log('a dimensions behavior changed');
-			});
-
-			this.listen(document, 'dimensions:intrinsicheightchange', function () {
-				console.log('a thing changed its intrinsic height');
+			//Whenever a new dimensions/position behavior is attached or changed, we need to do layout.
+			this.listen(document, 'layout:attach layout:update', function () {
+				_this2._scheduleLayout();
+				console.log('a layout behavior changed or attached');
 			});
 
 			this.element.title = 'behavior did this 1';
@@ -2003,6 +1916,29 @@ var LayoutBehavior = function (_Behavior) {
 				outerHeight: outerHeight
 			};
 		}
+	}, {
+		key: '_scheduleLayout',
+		value: function _scheduleLayout() {
+			if (!this._layoutScheduled) {
+				(0, _raf2.default)(this._doLayout.bind(this));
+				this._layoutScheduled = true;
+			}
+		}
+
+		//TODO: do we also need to clean up here if the dimensions/position behavior is removed?
+		//Or do the behaviors handle this (they should)? Do they listen to the layout event on this node?
+
+	}, {
+		key: '_doLayout',
+		value: function _doLayout() {
+			var elements = this.element.querySelectorAll('[layout]');
+
+			this.engine.doLayout(elements, this.props.guides, this.props.width);
+
+			this._layoutScheduled = false;
+
+			this.emit('layout');
+		}
 	}], [{
 		key: 'schema',
 		get: function get() {
@@ -2025,7 +1961,7 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'layout';
+			return 'guidelayout';
 		}
 	}]);
 
@@ -2034,33 +1970,220 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":7,"lib/GuideLayoutEngine.js":17,"types/CSSLengthType.js":21,"types/GuideDefinitionType.js":22}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":7,"lib/GuideLayoutEngine.js":17,"raf":5,"types/CSSLengthType.js":22,"types/GuideDefinitionType.js":24}],10:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _resizeObserverPolyfill = require('resize-observer-polyfill');
+
+var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+var _StringType = require('types/StringType.js');
+
+var _StringType2 = _interopRequireDefault(_StringType);
+
+var _LayoutDependencyType = require('types/LayoutDependencyType.js');
+
+var _LayoutDependencyType2 = _interopRequireDefault(_LayoutDependencyType);
+
+var _HeightType = require('types/HeightType.js');
+
+var _HeightType2 = _interopRequireDefault(_HeightType);
+
+var _FollowerModeType = require('types/FollowerModeType.js');
+
+var _FollowerModeType2 = _interopRequireDefault(_FollowerModeType);
+
+var _CSSLengthType = require('types/CSSLengthType.js');
+
+var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DimensionsBehavior = function (_Behavior) {
+	_inherits(DimensionsBehavior, _Behavior);
+
+	function DimensionsBehavior() {
+		_classCallCheck(this, DimensionsBehavior);
+
+		return _possibleConstructorReturn(this, (DimensionsBehavior.__proto__ || Object.getPrototypeOf(DimensionsBehavior)).apply(this, arguments));
+	}
+
+	_createClass(DimensionsBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			var _this2 = this;
+
+			this.state = {
+				height: 0
+			};
+
+			this.element.innerHTML = 'bam';
+
+			//Listen to the layout event of the layout behavior.
+			//TODO: is gut? We can always refactor, but does this make sense though?
+			//This means possibly hundreds of DimensionsBehaviors will react to this event.
+			//We could instead reverse the responsibility and have the layout behavior
+			//Call a method on each of the children.
+			//Maybe we should just merge Dimensions+PositionBehavior because they belong together anyway.
+			this.listen(document, 'guidelayout:layout', function () {
+				_this2._render();
+			});
+
+			if (this.props.height === 'auto') {
+				this._observeHeight();
+			}
+		}
+	}, {
+		key: 'update',
+		value: function update(prevProps) {
+			if (this.props.height !== prevProps.height) {
+				if (this.props.height === 'auto') {
+					this._observeHeight();
+				} else if (prevProps.height === 'auto') {
+					this._unobserveHeight();
+				}
+			}
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this.element.innerHTML = 'clean af';
+			this._unobserveHeight();
+		}
+	}, {
+		key: '_observeHeight',
+		value: function _observeHeight() {
+			var _this3 = this;
+
+			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
+				_this3.setState({
+					height: entries[0].contentRect.height
+				});
+			});
+
+			this._resizeObserver.observe(this.element);
+		}
+	}, {
+		key: '_unobserveHeight',
+		value: function _unobserveHeight() {
+			if (this._resizeObserver) {
+				this._resizeObserver.disconnect();
+				this._resizeObserver = null;
+			}
+		}
+	}, {
+		key: '_render',
+		value: function _render() {
+			var style = this.element.style;
+
+			style.transform = 'translate3d(' + Math.round(this.left) + 'px, ' + Math.round(this.top) + 'px, 0)';
+			style.width = Math.round(this.width) + 'px';
+
+			style.height = this.props.height === 'auto' ? 'auto' : Math.round(this.height) + 'px';
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				guides: {
+					type: [{ left: _StringType2.default }, { right: _StringType2.default }]
+				},
+				height: {
+					type: _HeightType2.default,
+					default: 'auto'
+				},
+				mode: {
+					type: _StringType2.default.createEnum('mode', ['flow', 'follow']),
+					default: 'flow'
+				},
+				followerMode: {
+					type: _StringType2.default.createEnum('followerMode', ['none', 'parallax', 'pin']),
+					default: 'none'
+				},
+				pinAnchor: {
+					type: _StringType2.default.createEnum('pinAnchor', ['none', 'top', 'center', 'bottom']),
+					default: 'none'
+				},
+				pinOffset: {
+					type: _CSSLengthType2.default,
+					default: '0'
+				},
+				dependencies: {
+					type: _LayoutDependencyType2.default,
+					default: 'inherit'
+				},
+				spacing: {
+					type: [{ top: _CSSLengthType2.default }, { bottom: _CSSLengthType2.default }],
+					//TODO: in cases like this we might want to accept "100vh" and automatically expand it to "100vh 100vh" (for arity 2 and 4).
+					//When arity is 2, expand 100vh to 100vh 100vh. If it is 4, do the CSS dance.
+					//E.g. 100vh 40vh expands to 100vh 40vh 100vh 40vh
+					//and 100vh 30vh 40vh to 100vh 30vh 40vh 30vh
+					//expand: true,
+					//For now KISS
+					default: '0 0'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'layout';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return [];
+		}
+	}]);
+
+	return DimensionsBehavior;
+}(_Behavior3.default);
+
+exports.default = DimensionsBehavior;
+
+},{"behaviors/Behavior.js":7,"resize-observer-polyfill":6,"types/CSSLengthType.js":22,"types/FollowerModeType.js":23,"types/HeightType.js":25,"types/LayoutDependencyType.js":26,"types/StringType.js":28}],11:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
 
 var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 
-var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
+var _GuideLayoutBehavior = require('behaviors/GuideLayoutBehavior.js');
 
-var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
+var _GuideLayoutBehavior2 = _interopRequireDefault(_GuideLayoutBehavior);
 
 var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
 
 var _DebugGuidesBehavior2 = _interopRequireDefault(_DebugGuidesBehavior);
 
-var _DimensionsBehavior = require('behaviors/DimensionsBehavior.js');
+var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
 
-var _DimensionsBehavior2 = _interopRequireDefault(_DimensionsBehavior);
+var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 
-_scrollmeister2.default.defineBehavior(_DimensionsBehavior2.default);
+_scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":8,"behaviors/DimensionsBehavior.js":9,"behaviors/LayoutBehavior.js":10,"scrollmeister.js":20}],12:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":8,"behaviors/GuideLayoutBehavior.js":9,"behaviors/LayoutBehavior.js":10,"scrollmeister.js":21}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2106,7 +2229,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":13,"scrollmeister.js":20}],13:[function(require,module,exports){
+},{"./MeisterComponent.js":13,"scrollmeister.js":21}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2195,6 +2318,10 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 				}
 			}
 		}
+
+		//TODO: do we really need a raf loop for EVERY SINGLE custom element?
+		//There should be a single loop, e.g. inside the LayoutBehavior at the root.
+
 	}, {
 		key: 'tick',
 		value: function tick() {
@@ -2212,7 +2339,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":5,"scrollmeister.js":20}],14:[function(require,module,exports){
+},{"raf":5,"scrollmeister.js":21}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2258,7 +2385,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":13,"scrollmeister.js":20}],15:[function(require,module,exports){
+},{"./MeisterComponent.js":13,"scrollmeister.js":21}],15:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -2287,7 +2414,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":11,"./components":15,"./scrollmeister.css":19,"./scrollmeister.js":20}],17:[function(require,module,exports){
+},{"./behaviors":11,"./components":15,"./scrollmeister.css":20,"./scrollmeister.js":21}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2303,6 +2430,7 @@ var GuideLayoutEngine = function () {
 		_classCallCheck(this, GuideLayoutEngine);
 
 		this.guides = [];
+		this.requiredHeight = 0;
 	}
 
 	_createClass(GuideLayoutEngine, [{
@@ -2336,15 +2464,277 @@ var GuideLayoutEngine = function () {
 		}
 	}, {
 		key: 'doLayout',
-		value: function doLayout(rawGuides, contentWidth) {
+		value: function doLayout(nodes, rawGuides, contentWidth) {
 			this._computeGuides(rawGuides, contentWidth);
+
+			//First we invalidate all existing layout for each node so we know which ones we touched.
+			//We need to know this to figure out if the dependencies of a given node have been updated yet.
+			for (var i = 0; i < nodes.length; i++) {
+				var node = nodes[i];
+
+				node.layout.dirty = true;
+			}
+
+			this.requiredHeight = 0;
+
+			var skippedNode = void 0;
+
+			//We could do some fancy acyclic directed graph thing (our layout is not a tree) and use topological sorting.
+			//But this is fast enough and easy to follow. We simply loop until all nodes have been updated, eventually resolving all dependencies.
+			do {
+				skippedNode = false;
+
+				var didANewLayout = false;
+
+				//I felt like using labels instead of moving stuff to a function ¯\_(ツ)_/¯.
+				outer: for (var _i = 0; _i < nodes.length; _i++) {
+					var _node = nodes[_i];
+
+					//We already computed layout for this node.
+					if (!_node.layout.dirty) {
+						continue;
+					}
+
+					var dependencies = _node.layout.props.dependencies;
+
+					//Check if any of the dependencies is still dirty.
+					for (var j = 0; j < dependencies.length; j++) {
+						var otherNode = dependencies[j];
+
+						if (otherNode.layout.dirty) {
+							skippedNode = true;
+
+							//We encountered a dirty dependency, there is no need to find a second one.
+							//Just continue with the outer loop.
+							continue outer;
+						}
+					}
+
+					this._doNodeLayout(_node, dependencies);
+
+					//We found a layout we can compute, yay!
+					_node.layout.dirty = false;
+					didANewLayout = true;
+
+					//This node requires more height than the previous ones we've enountered.
+					if (_node.layout.requiredHeight > this.requiredHeight) {
+						this.requiredHeight = _node.layout.requiredHeight;
+					}
+				}
+
+				if (nodes.length > 0 && !didANewLayout) {
+					throw new Error('The layout engine did a whole loop of just skipping. It seems like some dependencies cannot be resolved.');
+				}
+			} while (skippedNode);
 		}
 
 		//This will attach the layout info directly to each dom node. No need for a lookup map.
 
 	}, {
-		key: '_doItemLayout',
-		value: function _doItemLayout() {}
+		key: '_doNodeLayout',
+		value: function _doNodeLayout(node, dependencies) {
+			var layout = node.layout;
+			var props = layout.props;
+			var state = layout.state;
+			var layoutMode = props.mode;
+
+			layout.spacingTop = this.lengthToPixel(props.spacing.top);
+			layout.spacingBottom = this.lengthToPixel(props.spacing.bottom);
+
+			/*
+   if (layoutMode === 'follower') {
+   	//A follower can have one or more leaders.
+   	//Here we normalize it to always have two, the top and bottom most.
+   	dependencies = Immutable.List([
+   		dependencies.minBy(function(leader) {
+   			return leader.get('top');
+   		}),
+   		dependencies.maxBy(function(leader) {
+   			return leader.get('bottom');
+   		})
+   	]);
+   		layout.set('leaderHeight', dependencies.get(1).get('bottom') - dependencies.get(0).get('top'));
+   }
+   */
+
+			//
+			//left
+			//
+
+			if (props.guides.left === 'viewport') {
+				layout.left = 0;
+			} else {
+				layout.left = this._getGuideByName(props.guides.left).leftPosition;
+			}
+
+			//
+			//right + width
+			//
+
+			if (props.guides.right === 'viewport') {
+				layout.right = this.viewport.width;
+			} else {
+				layout.right = this._getGuideByName(props.guides.right).rightPosition;
+			}
+
+			layout.width = layout.right - layout.left;
+
+			//
+			//height
+			//
+
+			if (props.height === 'auto') {
+				layout.height = state.height;
+			} else {
+				layout.height = this.lengthToPixel(props.height, layout.width);
+			}
+
+			/*
+   if (heightMode === 'ratio') {
+   	layout.set('height', layout.get('width') / item.get('heightRatio'));
+   } else if (heightMode === 'length') {
+   	layout.set('height', this.lengthToPixel(item.get('heightLength')));
+   } else if (heightMode === 'inherit') {
+   	layout.set('height', dependencies.last().get('outerBottom') - dependencies.get(0).get('outerTop'));
+   } else if (heightMode === 'auto') {
+   	//"auto" means we query the DOM for the height.
+   	//This is something a normal "layout engine" wouldn't do, but we delegate some stuff do the browser.
+   	//In order for this to work we get a list of heights passed to this method.
+   	layout.set('height', intrinsicHeights.get(item.get('id'), this.viewportHeight));
+   } else {
+   	throw new Error('Unknown height mode "' + heightMode + '"');
+   }
+   	layout.set('outerHeight', layout.get('height') + layout.get('spacingTop') + layout.get('spacingBottom'));
+   */
+
+			//
+			//top
+			//
+
+			layout.outerTop = layout.top + layout.spacingTop;
+
+			if (layoutMode === 'flow') {
+				/*
+    let predecessorBottom = 0;
+    	if (dependencies.length > 0) {
+    	predecessorBottom = dependencies
+    		.map(function(dependency) {
+    			return dependency.get('outerBottom');
+    		})
+    		.max();
+    }
+    	layout.set('top', predecessorBottom + layout.get('spacingTop'));
+    */
+				var predecessorBottom = 0;
+
+				if (dependencies.length > 0) {
+					predecessorBottom = dependencies[0].layout.outerBottom;
+				}
+
+				layout.top = predecessorBottom + layout.spacingTop;
+			} /* else if (layoutMode === 'follower') {
+     //When the follower is larger than the leader it follows the bottom of its leader, not the top.
+     if (item.get('followerMode') === 'pin' && layout.get('outerHeight') > layout.get('leaderHeight')) {
+     layout.set('top', dependencies.get(1).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
+     } else {
+     layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
+     }
+     } else if (layoutMode === 'attachment') {
+     switch (item.get('attachmentAnchor')) {
+     case 'top':
+     	layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
+     	break;
+     case 'center':
+     	layout.set(
+     		'top',
+     		(dependencies.get(0).get('top') + dependencies.get(0).get('bottom') - layout.get('height')) / 2 +
+     			layout.get('spacingTop') -
+     			layout.get('spacingBottom')
+     	);
+     	break;
+     case 'bottom':
+     	layout.set('top', dependencies.get(0).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
+     	break;
+     default:
+     	throw new Error('Unknown attachment anchor "' + item.get('attachmentAnchor') + '"');
+     }
+     }
+     layout.set('outerTop', layout.get('top') - layout.get('spacingTop'));
+     */
+
+			//
+			//bottom (for the sake of simpler to follow computations at later points)
+			//
+
+			layout.bottom = layout.height + layout.top;
+			layout.outerBottom = layout.bottom + layout.spacingBottom;
+
+			//
+			//required height
+			//
+
+			/*
+   if (layoutMode === 'follower') {
+   	layout.set('requiredHeight', 0);
+   } else {
+   	layout.set('requiredHeight', layout.get('outerBottom'));
+   }
+   */
+
+			//
+			//transform the scroll position
+			//
+
+			/*
+   if (layoutMode === 'follower') {
+   	layout.set('transformTopPosition', this.createFollowerTopPositionTransformer(item, layout, dependencies));
+   		var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
+   		layout
+   		.set('progressScrollStart', progressAnchors.progressScrollStart)
+   		.set('progressScrollDuration', progressAnchors.progressScrollDuration);
+   		layout.set('calculateScrollProgress', this.createFollowerScrollProgressCalculator(layout));
+   } else if (layoutMode === 'attachment') {
+   	if (dependencies.get(0).has('transformTopPosition')) {
+   		layout.set('transformTopPosition', this.createNestedTopPositionTransformer(layout, dependencies.get(0)));
+   	}
+   		//If the parent is clipped, clip the attachment as well.
+   	if (dependencies.get(0).has('clipRect')) {
+   		layout.set('clipRect', dependencies.get(0).get('clipRect'));
+   	}
+   }
+   */
+
+			//
+			//clipping
+			//
+
+			/*
+   if (item.get('clip')) {
+   	if (layoutMode === 'follower') {
+   		layout.set(
+   			'clipRect',
+   			Immutable.Map({
+   				top: dependencies.get(0).get('top'),
+   				bottom: dependencies.get(1).get('bottom'),
+   				height: layout.get('leaderHeight')
+   			})
+   		);
+   	} else {
+   		layout.set(
+   			'clipRect',
+   			Immutable.Map({
+   				top: layout.get('top'),
+   				bottom: layout.get('bottom'),
+   				height: layout.get('height')
+   			})
+   		);
+   	}
+   }
+   	if (item.get('appear') && item.get('appear').size > 0) {
+   	layout.set('calculateAppear', this.createAppearCalculator(item, dependencies, layout));
+   }
+   */
+		}
 	}, {
 		key: '_computeGuides',
 		value: function _computeGuides(rawGuides, contentWidth) {
@@ -2404,6 +2794,19 @@ var GuideLayoutEngine = function () {
 				}
 			}
 		}
+	}, {
+		key: '_getGuideByName',
+		value: function _getGuideByName(name) {
+			for (var i = 0; i < this.guides.length; i++) {
+				var guide = this.guides[i];
+
+				if (guide.name === name) {
+					return guide;
+				}
+			}
+
+			throw new Error('Looks like you\'ve used a guide called "' + name + '" without defining it.');
+		}
 	}]);
 
 	return GuideLayoutEngine;
@@ -2417,19 +2820,16 @@ exports.default = GuideLayoutEngine;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-// https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
-var CustomEvent = void 0;
+var CustomEvent = window.CustomEvent;
 
-if (typeof window.CustomEvent === 'function') {
-	CustomEvent = window.CustomEvent;
-} else {
-	CustomEvent = function CustomEvent(event, params) {
-		params = params || { bubbles: false, cancelable: false, detail: undefined };
+if (typeof CustomEvent !== 'function') {
+	CustomEvent = function CustomEvent(name) {
+		var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { bubbles: false, cancelable: false };
 
-		var evt = document.createEvent('CustomEvent');
-		evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+		var event = document.createEvent('CustomEvent');
+		event.initCustomEvent(name, params.bubbles, params.cancelable, params.detail);
 
-		return evt;
+		return event;
 	};
 
 	CustomEvent.prototype = window.Event.prototype;
@@ -2438,8 +2838,46 @@ if (typeof window.CustomEvent === 'function') {
 exports.default = CustomEvent;
 
 },{}],19:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:fixed;top:0;left:0;width:100%;height:2000px;overflow:hidden}el-meister{display:block;position:absolute;left:50vw;top:50vh;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var assign = Object.assign;
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+if (typeof assign !== 'function') {
+	assign = function assign() {
+		if (target == null) {
+			// TypeError if undefined or null
+			throw new TypeError('Cannot convert undefined or null to object');
+		}
+
+		var to = Object(target);
+
+		for (var index = 1; index < arguments.length; index++) {
+			var nextSource = arguments[index];
+
+			if (nextSource != null) {
+				// Skip over if undefined or null
+				for (var nextKey in nextSource) {
+					// Avoid bugs when hasOwnProperty is shadowed
+					if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+						to[nextKey] = nextSource[nextKey];
+					}
+				}
+			}
+		}
+
+		return to;
+	};
+}
+
+exports.default = assign;
+
+},{}],20:[function(require,module,exports){
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;height:2000px;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+},{"browserify-css":1}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2547,7 +2985,7 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2589,7 +3027,22 @@ exports.default = {
 	}
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = {
+	parse: function parse(value) {
+		return value.trim();
+	},
+	stringify: function stringify(value) {
+		return value;
+	}
+};
+
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2614,7 +3067,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":21,"types/NumberType.js":24,"types/StringType.js":25}],23:[function(require,module,exports){
+},{"types/CSSLengthType.js":22,"types/NumberType.js":27,"types/StringType.js":28}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2660,7 +3113,75 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":21}],24:[function(require,module,exports){
+},{"types/CSSLengthType.js":22}],26:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+function findPreviousFlowElement(element) {
+	while (element.previousSibling) {
+		element = element.previousSibling;
+
+		if (element.nodeType !== Node.ELEMENT_NODE) {
+			continue;
+		}
+
+		if (element.hasAttribute('layout') && element.layout.props.mode === 'flow') {
+			return element;
+		}
+	}
+}
+
+//TODO: do we need stringify at all?
+//Also I believe SelectorType needs to be reavaluated all the time!
+//https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
+//We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
+exports.default = {
+	parse: function parse(value, element) {
+		value = value.trim();
+
+		if (value === 'none') {
+			return [];
+		}
+
+		//"inherit" mimics a regular document flow by rendering the element behind the previous one.
+		if (value === 'inherit') {
+			element = findPreviousFlowElement(element);
+
+			if (element) {
+				return [element];
+			} else {
+				return [];
+			}
+		}
+
+		if (value.indexOf('skip') === 0) {
+			var numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
+
+			if (numberOfSkips < 0) {
+				throw new Error('You\'ve specified a negative number of skips (' + numberOfSkips + ') for the layout dependencies.');
+			}
+
+			do {
+				element = findPreviousFlowElement(element);
+			} while (element && numberOfSkips--);
+
+			if (element) {
+				return [element];
+			} else {
+				return [];
+			}
+		}
+
+		return Array.prototype.slice.call(document.querySelectorAll(value));
+	},
+	stringify: function stringify(value) {
+		return value;
+	}
+};
+
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2689,18 +3210,36 @@ exports.default = {
 	}
 };
 
-},{}],25:[function(require,module,exports){
-"use strict";
+},{}],28:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+var _parse = function _parse(value) {
+	return value.trim();
+};
+
+var stringify = function stringify(value) {
+	return value;
+};
+
 exports.default = {
-	parse: function parse(value) {
-		return value.trim();
-	},
-	stringify: function stringify(value) {
-		return value;
+	parse: _parse,
+	stringify: stringify,
+	createEnum: function createEnum(propertyName, values) {
+		return {
+			parse: function parse(value) {
+				value = _parse(value);
+
+				if (values.indexOf(value) === -1) {
+					throw new Error('Got "' + value + '" as value for property "' + propertyName + '". Expected one of "' + values.join('", "') + '".');
+				}
+
+				return value;
+			},
+			stringify: stringify
+		};
 	}
 };
 
