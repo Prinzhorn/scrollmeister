@@ -1,6 +1,8 @@
 import assign from 'ponies/Object.assign.js';
 import CustomEvent from 'ponies/CustomEvent.js';
 
+import scrollStatus from 'lib/scrollStatus.js';
+
 //property:value; pairs (separated by colons) separated by semicolons.
 //TODO: if this isn't the perfect thing to write unit tests for then call me steve.
 //TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
@@ -8,6 +10,28 @@ import CustomEvent from 'ponies/CustomEvent.js';
 //                               /([^:]+):([^;]+)/g;
 const propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
 const whiteSpaceRegex = /\s+/;
+
+const supportsPassiveEvents = (function() {
+	let passiveSupported;
+
+	try {
+		const options = Object.defineProperty({}, 'passive', {
+			get: function() {
+				passiveSupported = true;
+			}
+		});
+
+		window.addEventListener('test', options, options);
+		window.removeEventListener('test', options, options);
+	} catch (ignore) {
+		passiveSupported = false;
+	}
+
+	return passiveSupported;
+})();
+
+//Chrome makes touchmove passive by default. We don't want none of that.
+const thirdEventListenerArgument = supportsPassiveEvents ? { passive: false } : false;
 
 export default class Behavior {
 	static get schema() {
@@ -36,6 +60,11 @@ export default class Behavior {
 		this.state = {};
 
 		this.parseProperties(rawProperties);
+
+		if (this.scroll) {
+			this.listen(scrollStatus, 'scroll', this.scroll.bind(this));
+		}
+
 		this.attach();
 		this.emit('attach');
 	}
@@ -45,7 +74,13 @@ export default class Behavior {
 		if (this.listeners) {
 			for (let i = 0; i < this.listeners.length; i++) {
 				let listener = this.listeners[i];
-				listener.element.removeEventListener(listener.event, listener.callback);
+
+				//listen works for both DOM elements and event emitters using on/off.
+				if (typeof listener.element.removeEventListener === 'function') {
+					listener.element.removeEventListener(listener.event, listener.callback);
+				} else {
+					listener.element.off(listener.event, listener.callback);
+				}
 			}
 		}
 
@@ -81,7 +116,12 @@ export default class Behavior {
 			return;
 		}
 
-		element.addEventListener(eventName, callback);
+		//listen works for both DOM elements and event emitters using on/off.
+		if (typeof element.addEventListener === 'function') {
+			element.addEventListener(eventName, callback, thirdEventListenerArgument);
+		} else {
+			element.on(eventName, callback);
+		}
 
 		if (!this.listeners) {
 			this.listeners = [];

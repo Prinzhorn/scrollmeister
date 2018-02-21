@@ -36,7 +36,6 @@ const Scrollmeister = {
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].updateProperties(rawProperties);
-			element.behaviorsUpdated();
 		} else {
 			if (this._checkBehaviorDependencies(element, name)) {
 				//Make the behavior available as a property on the DOM node.
@@ -47,8 +46,6 @@ const Scrollmeister = {
 				element[name] = new Behavior(element, rawProperties);
 
 				this._updateWaitingBehaviors(element);
-
-				element.behaviorsUpdated();
 			} else {
 				this.behaviorsWaitingForDependencies.push({ name, rawProperties });
 			}
@@ -59,7 +56,6 @@ const Scrollmeister = {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
-			element.behaviorsUpdated();
 		}
 	},
 

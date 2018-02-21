@@ -1,3 +1,7 @@
+function isFlowElement(element) {
+	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
+}
+
 function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
 	while (element.previousSibling) {
 		element = element.previousSibling;
@@ -6,7 +10,7 @@ function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
 			continue;
 		}
 
-		if (element.hasAttribute('layout') && element.layout.props.mode === 'flow') {
+		if (isFlowElement(element)) {
 			return element;
 		}
 	}
@@ -55,7 +59,7 @@ export default {
 			}
 		}
 
-		return Array.prototype.slice.call(document.querySelectorAll(value));
+		return Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
 	},
 	stringify: function(value: string): string {
 		return value;

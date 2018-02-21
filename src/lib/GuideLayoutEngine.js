@@ -107,6 +107,18 @@ export default class GuideLayoutEngine {
 		} while (skippedNode);
 	}
 
+	doScroll(layout, scrollPosition) {
+		let contentTop;
+
+		if (layout.transformTopPosition) {
+			contentTop = layout.transformTopPosition(scrollPosition);
+		} else {
+			contentTop = layout.top - scrollPosition;
+		}
+
+		return contentTop;
+	}
+
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
 	_doNodeLayout(node: { layout: any }, dependencies: Array<{ layout: any }>) {
 		let layout = node.layout;
@@ -117,22 +129,33 @@ export default class GuideLayoutEngine {
 		layout.spacingTop = this.lengthToPixel(props.spacing.top);
 		layout.spacingBottom = this.lengthToPixel(props.spacing.bottom);
 
-		/*
-		if (layoutMode === 'follower') {
+		if (layoutMode === 'follow') {
 			//A follower can have one or more leaders.
 			//Here we normalize it to always have two, the top and bottom most.
-			dependencies = Immutable.List([
-				dependencies.minBy(function(leader) {
-					return leader.get('top');
-				}),
-				dependencies.maxBy(function(leader) {
-					return leader.get('bottom');
-				})
-			]);
+			//These are the only two that are relevant for the follower.
+			let topDependency = dependencies[0];
+			let bottomDependency = dependencies[0];
 
-			layout.set('leaderHeight', dependencies.get(1).get('bottom') - dependencies.get(0).get('top'));
+			//We could use Array.reduce and create something like a minBy/maxBy.
+			//But this gives us the min and max element with a simple single loop.
+			for (let i = 0; i < dependencies.length; i++) {
+				let otherNode = dependencies[i];
+
+				//Found a new top node which is even higher than the current.
+				if (otherNode.layout.top < topDependency.layout.top) {
+					topDependency = otherNode;
+				}
+
+				//Found a new bottom node which is even lower than the current.
+				if (otherNode.layout.bottom > bottomDependency.layout.bottom) {
+					bottomDependency = otherNode;
+				}
+			}
+
+			dependencies = [topDependency, bottomDependency];
+
+			layout.leaderHeight = bottomDependency.layout.bottom - topDependency.layout.top;
 		}
-		*/
 
 		//
 		//left
@@ -166,6 +189,8 @@ export default class GuideLayoutEngine {
 			layout.height = this.lengthToPixel(props.height, layout.width);
 		}
 
+		layout.outerHeight = layout.height + layout.spacingTop + layout.spacingBottom;
+
 		/*
 		if (heightMode === 'ratio') {
 			layout.set('height', layout.get('width') / item.get('heightRatio'));
@@ -189,30 +214,31 @@ export default class GuideLayoutEngine {
 		//top
 		//
 
-		layout.outerTop = layout.top + layout.spacingTop;
-
 		if (layoutMode === 'flow') {
-			/*
 			let predecessorBottom = 0;
 
-			if (dependencies.length > 0) {
-				predecessorBottom = dependencies
-					.map(function(dependency) {
-						return dependency.get('outerBottom');
-					})
-					.max();
-			}
+			//Yes, we could Math.max.apply(Math, ) but what's wrong with this simple loop?
+			for (let i = 0; i < dependencies.length; i++) {
+				let otherNode = dependencies[i];
 
-			layout.set('top', predecessorBottom + layout.get('spacingTop'));
-			*/
-			let predecessorBottom = 0;
-
-			if (dependencies.length > 0) {
-				predecessorBottom = dependencies[0].layout.outerBottom;
+				if (otherNode.layout.outerBottom > predecessorBottom) {
+					predecessorBottom = otherNode.layout.outerBottom;
+				}
 			}
 
 			layout.top = predecessorBottom + layout.spacingTop;
-		} /* else if (layoutMode === 'follower') {
+		} else if (layoutMode === 'follow') {
+			//When the follower is larger than the leader it follows the bottom of its leader, not the top.
+			if (props.followerMode === 'pin' && layout.outerHeight > layout.leaderHeight) {
+				layout.top = dependencies[1].layout.bottom - layout.height - layout.spacingBottom;
+			} else {
+				layout.top = dependencies[0].layout.top + layout.spacingTop;
+			}
+		}
+
+		layout.outerTop = layout.top + layout.spacingTop;
+
+		/* else if (layoutMode === 'follow') {
 			//When the follower is larger than the leader it follows the bottom of its leader, not the top.
 			if (item.get('followerMode') === 'pin' && layout.get('outerHeight') > layout.get('leaderHeight')) {
 				layout.set('top', dependencies.get(1).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
@@ -254,20 +280,32 @@ export default class GuideLayoutEngine {
 		//required height
 		//
 
-		/*
-		if (layoutMode === 'follower') {
-			layout.set('requiredHeight', 0);
+		if (layoutMode === 'flow') {
+			layout.requiredHeight = layout.outerBottom;
 		} else {
-			layout.set('requiredHeight', layout.get('outerBottom'));
+			layout.requiredHeight = 0;
 		}
-		*/
 
 		//
 		//transform the scroll position
 		//
 
+		if (layoutMode === 'follow') {
+			layout.transformTopPosition = this._createFollowerTopPositionTransformer(layout, props);
+		}
 		/*
-		if (layoutMode === 'follower') {
+			var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
+
+			layout
+				.set('progressScrollStart', progressAnchors.progressScrollStart)
+				.set('progressScrollDuration', progressAnchors.progressScrollDuration);
+
+			layout.set('calculateScrollProgress', this.createFollowerScrollProgressCalculator(layout));
+			*7
+		}
+
+		/*
+		if (layoutMode === 'follow') {
 			layout.set('transformTopPosition', this.createFollowerTopPositionTransformer(item, layout, dependencies));
 
 			var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
@@ -295,7 +333,7 @@ export default class GuideLayoutEngine {
 
 		/*
 		if (item.get('clip')) {
-			if (layoutMode === 'follower') {
+			if (layoutMode === 'follow') {
 				layout.set(
 					'clipRect',
 					Immutable.Map({
@@ -320,6 +358,71 @@ export default class GuideLayoutEngine {
 			layout.set('calculateAppear', this.createAppearCalculator(item, dependencies, layout));
 		}
 		*/
+	}
+
+	//Parallax and pinning is achieved by simply transforming the top position for those (follower-) elements.
+	_createFollowerTopPositionTransformer(layout, props) {
+		if (props.followerMode === 'pin') {
+			let pinTopPosition;
+
+			//Calculate the spacing from top of the viewport (where the pinned element will be positioned).
+			switch (props.pinAnchor) {
+				case 'top':
+					pinTopPosition = 0;
+					break;
+				case 'center':
+					pinTopPosition = (this.viewport.height - layout.height) / 2;
+					break;
+				case 'bottom':
+					pinTopPosition = this.viewport.height - layout.height;
+					break;
+			}
+
+			//The scroll position at which the element starts being pinned and does not move anymore.
+			let pinStartScroll = layout.top - pinTopPosition;
+
+			let pinDuration = Math.abs(layout.leaderHeight - layout.outerHeight);
+			let pinStopScroll = pinStartScroll + pinDuration;
+
+			return scrollPosition => {
+				let transformedTop;
+
+				//Pinning hasn't started, scroll normally.
+				if (scrollPosition < pinStartScroll) {
+					transformedTop = layout.top - scrollPosition;
+				} else if (scrollPosition < pinStopScroll) {
+					//Pinning is currently happening.
+					transformedTop = pinTopPosition;
+				} else {
+					//Pinning is finished, scroll normally plus the amount it was pinned.
+					transformedTop = layout.top - scrollPosition + pinDuration;
+				}
+
+				return Math.round(transformedTop);
+			};
+		} else if (props.followerMode === 'parallax') {
+			//The distance the leader and the follower need to travel inside the viewport
+			//from top-bottom to bottom-top.
+			var leaderScrollDistance = this.viewport.height + layout.leaderHeight;
+			var scrollDistance = this.viewport.height + layout.outerHeight;
+
+			//The follower needs to move a little slower/faster than 1.0
+			//to travel the viewport in the same time the leader does.
+			var speedFactor = scrollDistance / leaderScrollDistance;
+
+			//This is the scroll position where the outer top spacing of the
+			//follower enters the viewport. It's not necessarily visible then
+			//as you need to scroll for a bit (spacingTop) before it actually enters.
+			var enterScroll = layout.outerTop - this.viewport.height;
+
+			return scrollPosition => {
+				//The distance the follower would have travelled from the bottom of the viewport
+				//at a speed of 1.0.
+				let distanceTravelled = scrollPosition - enterScroll;
+
+				return this.viewport.height + layout.spacingTop - distanceTravelled * speedFactor;
+			};
+		}
 	}
 
 	_computeGuides(

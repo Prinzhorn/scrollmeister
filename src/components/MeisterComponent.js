@@ -8,7 +8,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	_scrollBehaviors: Array<{ scroll: Function }>;
 	_scheduledBatchUpdate: boolean;
 	_scheduledBehaviors: { attach: any, detach: any };
-	_tickHandle: number;
 	_batchHandle: number;
 
 	// Note: if you feel clever and think you can just define
@@ -31,16 +30,18 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	connectedCallback() {
-		this._tickHandle = raf(this.tick.bind(this));
+		//TODO: the layout behavior requires a single child node inside the custom element.
+		//Check if it has a single child of type element.
+		//If not then wrap all children in a div and append it https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment
 	}
 
 	disconnectedCallback() {
-		raf.cancel(this._tickHandle);
 		raf.cancel(this._batchHandle);
 
 		// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
 		let observedAttributes = this.constructor.observedAttributes;
 
+		//Remove all attached behaviors so they can be garbage collected.
 		for (let i = 0; i < observedAttributes.length; i++) {
 			let attr = observedAttributes[i];
 
@@ -61,35 +62,6 @@ export default class ScrollMeisterComponent extends HTMLElement {
 			this._scheduledBehaviors.attach[attr] = newValue;
 			delete this._scheduledBehaviors.detach[attr];
 		}
-	}
-
-	behaviorsUpdated() {
-		//Clear the array.
-		this._scrollBehaviors.length = 0;
-
-		// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
-		let observedAttributes = this.constructor.observedAttributes;
-
-		//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
-		for (let i = 0; i < observedAttributes.length; i++) {
-			let attr = observedAttributes[i];
-
-			// $FlowFixMe: Flow doesn't know about the this[attr] access.
-			if (this.hasOwnProperty(attr) && this[attr].scroll) {
-				this._scrollBehaviors.push(this[attr]);
-			}
-		}
-	}
-
-	//TODO: do we really need a raf loop for EVERY SINGLE custom element?
-	//There should be a single loop, e.g. inside the LayoutBehavior at the root.
-	tick() {
-		for (let i = 0; i < this._scrollBehaviors.length; i++) {
-			let behavior = this._scrollBehaviors[i];
-			behavior.scroll();
-		}
-
-		raf(this.tick.bind(this));
 	}
 
 	_batchUpdateBehaviors() {

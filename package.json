@@ -18,10 +18,16 @@
     "url": "git+ssh://git@github.com/Prinzhorn/scrollmeister.git"
   },
   "browserify": {
-    "transform": ["babelify", "browserify-css"]
+    "transform": [
+      "babelify",
+      "browserify-css"
+    ]
   },
   "babel": {
-    "presets": ["env", "flow"]
+    "presets": [
+      "env",
+      "flow"
+    ]
   },
   "browserify-css": {
     "autoInject": true,
@@ -59,7 +65,9 @@
   "dependencies": {
     "document-register-element": "^1.7.2",
     "raf": "^3.4.0",
-    "resize-observer-polyfill": "^1.5.0"
+    "resize-observer-polyfill": "^1.5.0",
+    "scroll-logic": "^1.0.1",
+    "tiny-emitter": "^2.0.2"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

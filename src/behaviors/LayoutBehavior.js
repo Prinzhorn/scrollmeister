@@ -11,6 +11,8 @@ import CSSLengthType from 'types/CSSLengthType.js';
 import Behavior from 'behaviors/Behavior.js';
 
 export default class DimensionsBehavior extends Behavior {
+	//TODO: instead of StringType or LayoutDependencyType we need to give them names such as "string" and "layout-dependency".
+	//Otherwise you cannot just create a custom behavior in a <script> tag without importing the types.
 	static get schema(): any {
 		return {
 			guides: {
@@ -25,12 +27,12 @@ export default class DimensionsBehavior extends Behavior {
 				default: 'flow'
 			},
 			followerMode: {
-				type: StringType.createEnum('followerMode', ['none', 'parallax', 'pin']),
-				default: 'none'
+				type: StringType.createEnum('followerMode', ['parallax', 'pin']),
+				default: 'parallax'
 			},
 			pinAnchor: {
-				type: StringType.createEnum('pinAnchor', ['none', 'top', 'center', 'bottom']),
-				default: 'none'
+				type: StringType.createEnum('pinAnchor', ['top', 'center', 'bottom']),
+				default: 'center'
 			},
 			pinOffset: {
 				type: CSSLengthType,
@@ -66,8 +68,6 @@ export default class DimensionsBehavior extends Behavior {
 			height: 0
 		};
 
-		this.element.innerHTML = 'bam';
-
 		//Listen to the layout event of the layout behavior.
 		//TODO: is gut? We can always refactor, but does this make sense though?
 		//This means possibly hundreds of DimensionsBehaviors will react to this event.
@@ -88,7 +88,7 @@ export default class DimensionsBehavior extends Behavior {
 		height: 'auto' | { length: number, unit: string },
 		mode: 'flow' | 'follow',
 		dependencies: string,
-		followerMode: 'none' | 'parallax' | 'pin',
+		followerMode: 'parallax' | 'pin',
 		pinAnchor: 'top' | 'center' | 'bottom',
 		pinOffset: { length: number, unit: string },
 		spacing: { top: { length: number, unit: string }, bottom: { length: number, unit: string } }
@@ -103,8 +103,14 @@ export default class DimensionsBehavior extends Behavior {
 	}
 
 	detach() {
-		this.element.innerHTML = 'clean af';
 		this._unobserveHeight();
+	}
+
+	scroll(status, engine) {
+		let transformedTop = engine.doScroll(this, status.position);
+		this.element.style.transform = `translate3d(${Math.round(this.left)}px, ${transformedTop}px, 0)`;
+
+		//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 	}
 
 	_observeHeight() {
@@ -126,10 +132,15 @@ export default class DimensionsBehavior extends Behavior {
 
 	_render() {
 		let style = this.element.style;
+		let left = Math.round(this.left);
+		let top = Math.round(this.top);
 
-		style.transform = `translate3d(${Math.round(this.left)}px, ${Math.round(this.top)}px, 0)`;
+		style.msTransform = `translate(${left}px, ${top}px)`;
+		style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
+
 		style.width = Math.round(this.width) + 'px';
-
 		style.height = this.props.height === 'auto' ? 'auto' : Math.round(this.height) + 'px';
+
+		style.overflow = 'hidden';
 	}
 }

@@ -2,7 +2,7 @@ let assign = Object.assign;
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 if (typeof assign !== 'function') {
-	assign = function() {
+	assign = function(target) {
 		if (target == null) {
 			// TypeError if undefined or null
 			throw new TypeError('Cannot convert undefined or null to object');

@@ -1420,6 +1420,663 @@ return index;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],7:[function(require,module,exports){
+/*
+ * scroll-logic
+ * http://github.com/prinzhorn/scroll-logic
+ *
+ * Copyright 2011, Zynga Inc.
+ * Modifications by Alexander Prinzhorn (@Prinzhorn)
+ * Licensed under the MIT License.
+ * https://github.com/Prinzhorn/scroll-logic/blob/master/LICENSE.txt
+ *
+ * Based on the work of: Unify Project (unify-project.org)
+ * http://unify-project.org
+ * Copyright 2011, Deutsche Telekom AG
+ * License: MIT + Apache (V2)
+ */
+
+(function() {
+	// How much velocity is required to start the deceleration.
+	// This keeps the scroller from animating if the user is just slowly scrolling through.
+	var MIN_VELOCITY_FOR_DECELERATION = 1;
+
+	// The minimum distance before we start dragging.
+	// This keeps small taps from moving the scroller.
+	var MIN_DRAG_DISTANCE = 5;
+
+	// The minimum velocity (in pixels per frame) after which we terminate the deceleration.
+	var MIN_VELOCITY_BEFORE_TERMINATING = 0.1;
+
+	// ScrollLogic doesn't care about fps, but this contant makes some of the math easier to understand.
+	var FPS = 60;
+
+	// The velocity changes by this amount every frame.
+	var FRICTION_PER_FRAME = 0.95;
+
+	// This means overscrolling is twice as hard than normal scrolling.
+	var EDGE_RESISTANCE = 3;
+
+	/**
+	 * A pure logic 'component' for 'virtual' scrolling.
+	 */
+	var ScrollLogic = function(options) {
+		this.options = {
+
+			/** Enable animations for deceleration, snap back and scrolling */
+			animating: true,
+
+			/** duration for animations triggered by scrollTo */
+			animationDuration: 250,
+
+			/** Enable bouncing (content can be slowly moved outside and jumps back after releasing) */
+			bouncing: true
+
+		};
+
+		for (var key in options) {
+			this.options[key] = options[key];
+		}
+	};
+
+
+	// Easing Equations (c) 2003 Robert Penner, all rights reserved.
+	// Open source under the BSD License.
+	// Optimized and refactored by @Prinzhorn. Also I don't think you can apply a license to such a tiny bit of math.
+
+	var easeOutCubic = function(pos) {
+		pos = pos - 1;
+
+		return pos * pos * pos + 1;
+	};
+
+	var easeInOutCubic = function(pos) {
+		if (pos < 0.5) {
+			return 4 * pos * pos * pos;
+		}
+
+		//The >= 0.5 case is the same as easeOutCubic, but I'm not interested in a function call here.
+		//It would simply be return easeOutCubic(p); if you want to.
+		pos = pos - 1;
+
+		return 4 * pos * pos * pos + 1;
+	};
+
+	var easeOutExpo = function(p) {
+		//Make sure to map 1.0 to 1.0, because the formula below doesn't exactly yield 1.0 but 0.999023
+		if(p === 1) {
+			return 1;
+		}
+
+		return 1 - Math.pow(2, -10 * p);
+	};
+
+	var easeOutBack = function(pos) {
+		var s = EDGE_RESISTANCE;
+
+		pos = pos - 1;
+
+		return (pos * pos * ((s + 1) * pos + s) + 1);
+	};
+
+
+	var members = {
+
+		/*
+		---------------------------------------------------------------------------
+			INTERNAL FIELDS :: STATUS
+		---------------------------------------------------------------------------
+		*/
+
+		// Whether a touch event sequence is in progress.
+		__isInteracting: false,
+
+		// Whether the user has moved by such a distance that we have enabled dragging mode.
+		__isDragging: false,
+
+		// Contains the animation configuration, if one is running.
+		__animation: null,
+
+
+		/*
+		---------------------------------------------------------------------------
+			INTERNAL FIELDS :: DIMENSIONS
+		---------------------------------------------------------------------------
+		*/
+
+		/** {Integer} Available container length */
+		__containerLength: 0,
+
+		/** {Integer} Outer length of content */
+		__contentLength: 0,
+
+		/** {Number} Scroll position */
+		__scrollOffset: 0,
+
+		/** {Integer} Maximum allowed scroll position */
+		__maxScrollOffset: 0,
+
+
+		/*
+		---------------------------------------------------------------------------
+			INTERNAL FIELDS :: LAST POSITIONS
+		---------------------------------------------------------------------------
+		*/
+
+		/** {Number} Position of finger at start */
+		__lastTouchOffset: null,
+
+		/** {Date} Timestamp of last move of finger. Used to limit tracking range for deceleration speed. */
+		__lastTouchMove: null,
+
+		/** {Array} List of positions, uses two indexes for each state: offset and timestamp */
+		__positions: null,
+
+
+		/*
+		---------------------------------------------------------------------------
+			PUBLIC API
+		---------------------------------------------------------------------------
+		*/
+
+		/**
+		 * Configures the dimensions of the client (outer) and content (inner) elements.
+		 * Requires the available space for the outer element and the outer size of the inner element.
+		 * All values which are falsy (null or zero etc.) are ignored and the old value is kept.
+		 *
+		 * @param containerLength {Integer ? null} Inner width of outer element
+		 * @param contentLength {Integer ? null} Outer width of inner element
+		 */
+		setLengths: function(containerLength, contentLength) {
+
+			var self = this;
+
+			containerLength = Math.round(containerLength);
+			contentLength = Math.round(contentLength);
+
+			// Do nothing when the lengths are the same
+			if(containerLength === self.__containerLength && contentLength === self.__contentLength) {
+				return;
+			}
+
+			self.__containerLength = containerLength;
+			self.__contentLength = contentLength;
+
+			// Refresh maximums
+			self.__maxScrollOffset = Math.max(contentLength - containerLength, 0);
+
+			// Refresh scroll position
+			self.scrollTo(self.__scrollOffset, true);
+
+		},
+
+		setContainerLength: function(containerLength) {
+
+			var self = this;
+			self.setLengths(containerLength, self.__contentLength);
+
+		},
+
+		setContentLength: function(contentLength) {
+
+			var self = this;
+			self.setLengths(self.__containerLength, contentLength);
+
+		},
+
+
+		/**
+		 * Calculates and returns the current scroll position.
+		 */
+		getOffset: function() {
+			var animation = this.__animation;
+			var now;
+			var percentage;
+			var newOffset;
+
+			if(animation) {
+				//An animation is currently running, this is the trickier part.
+				//Based on the current time, the start/end time of the animation and the easing function,
+				//we can calculate the desired offset.
+				now = Date.now();
+				percentage = (now - animation.start) / animation.duration;
+
+				//The animation is finished by now, clear the animation and use the animation's target offset.
+				if(percentage >= 1) {
+					this.__scrollOffset = animation.from + animation.distance;
+					this.__animation = null;
+				}
+				//The animation is still running, calculate the current position.
+				else {
+					percentage = animation.easing(percentage);
+
+					newOffset = animation.from + (animation.distance * percentage);
+
+					//Without bouncing we need to prevent overscrolling and make a hard cut.
+					if(!this.options.bouncing) {
+						if(newOffset < 0) {
+							this.__animation = null;
+							newOffset = 0;
+						} else if(newOffset > this.__maxScrollOffset) {
+							this.__animation = null;
+							newOffset = this.__maxScrollOffset;
+						}
+					}
+
+					//We only want integer offsets, anything else does not make sense.
+					this.__scrollOffset = (newOffset + 0.5) | 0;
+				}
+			}
+
+			return this.__scrollOffset;
+		},
+
+
+		/**
+		 * Returns the maximum scroll values
+		 */
+		getScrollMax: function() {
+			return this.__maxScrollOffset;
+		},
+
+
+		/**
+		 * Is scroll-logic currently doing anything?
+		 */
+		isResting: function() {
+			return !this.__isInteracting && !this.__animation;
+		},
+
+
+		/**
+		 * Scrolls to the given position. Respects bounds automatically.
+		 */
+		scrollTo: function(offset, animate) {
+
+			var self = this;
+
+			// Stop deceleration
+			if (self.__animation) {
+				self.__animation = null;
+			}
+
+			// Limit for allowed ranges
+			offset = Math.max(Math.min(self.__maxScrollOffset, offset), 0);
+
+			// Don't animate when no change detected, still call publish to make sure
+			// that rendered position is really in-sync with internal data
+			if (offset === self.__scrollOffset) {
+				animate = false;
+			}
+
+			// Publish new values
+			self.__publish(offset, animate);
+
+		},
+
+
+		/**
+		 * Begin a new interaction with the scroller.
+		 */
+		beginInteraction: function(offset, timeStamp) {
+			var self = this;
+
+			// Stop animation
+			if (self.__animation) {
+				self.__animation = null;
+			}
+
+			// Store initial positions
+			self.__initialTouchOffset = offset;
+
+			// Store initial touch positions
+			self.__lastTouchOffset = offset;
+
+			// Store initial move time stamp
+			self.__lastTouchMove = timeStamp;
+
+			// Reset tracking flag
+			self.__isInteracting = true;
+
+			// Dragging starts lazy with an offset
+			self.__isDragging = false;
+
+			// Clearing data structure
+			self.__positions = [];
+		},
+
+
+		/**
+		 * A new user interaction with the scroller
+		 */
+		interact: function(offset, timeStamp) {
+
+			var self = this;
+
+			// Ignore event when tracking is not enabled (event might be outside of element)
+			if (!self.__isInteracting) {
+				return;
+			}
+
+			var positions = self.__positions;
+			var currentOffset = self.__scrollOffset;
+
+			// Are we already is dragging mode?
+			if (self.__isDragging) {
+
+				// Compute move distance
+				var distance = offset - self.__lastTouchOffset;
+
+				// Update the position
+				var newOffset = currentOffset - distance;
+
+				// Scrolling past one of the edges.
+				if (newOffset < 0 || newOffset > self.__maxScrollOffset) {
+
+					// Slow down on the edges
+					if (self.options.bouncing) {
+
+						// While overscrolling, apply the EDGE_RESISTANCE to make it move slower.
+						newOffset = currentOffset - (distance / EDGE_RESISTANCE);
+
+					}
+					// Bouncing is disabled, prevent overscrolling.
+					else {
+						if (newOffset < 0) {
+
+							newOffset = 0;
+
+						} else {
+
+							newOffset = self.__maxScrollOffset;
+
+						}
+					}
+				}
+
+				// Keep list from growing infinitely (holding min 10, max 20 measure points)
+				if (positions.length > 60) {
+					positions.splice(0, 30);
+				}
+
+				// Make sure this is an integer
+				newOffset = (newOffset + 0.5) | 0;
+
+				// Track scroll movement for deceleration
+				positions.push(newOffset, timeStamp);
+
+				// Sync scroll position
+				self.__publish(newOffset);
+
+			// Otherwise figure out whether we are switching into dragging mode now.
+			} else {
+				var completeDistance = Math.abs(offset - self.__initialTouchOffset);
+
+				positions.push(currentOffset, timeStamp);
+
+				self.__isDragging = (completeDistance >= MIN_DRAG_DISTANCE);
+			}
+
+			// Update last touch positions and time stamp for next event
+			self.__lastTouchOffset = offset;
+			self.__lastTouchMove = timeStamp;
+
+		},
+
+
+		/**
+		 * Stop the user interaction
+		 */
+		endInteraction: function(timeStamp) {
+
+			var self = this;
+
+			if (!self.__isInteracting || !self.__isDragging) {
+				return;
+			}
+
+			self.__isInteracting = false;
+			self.__isDragging = false;
+
+			var scrollOffset = self.__scrollOffset;
+
+			// If the user dragged past the bounds, just snap back.
+			if(scrollOffset < 0 || scrollOffset > self.__maxScrollOffset) {
+				return self.scrollTo(scrollOffset, true);
+			}
+
+			if (self.options.animating) {
+
+				var lastTouchMove = self.__lastTouchMove;
+
+				// Start deceleration
+				// Verify that the last move detected was in some relevant time frame
+				//TODO: remove magic number 100
+				if(timeStamp - lastTouchMove <= 100) {
+
+					// Then figure out what the scroll position was about 100ms ago
+					var positions = self.__positions;
+					var positionsIndexEnd = positions.length - 1;
+					var positionsIndexStart = positionsIndexEnd;
+					var positionsIndex = positionsIndexEnd;
+
+					// Move pointer to position measured 100ms ago
+					// The positions array contains alternating offset/timeStamp pairs.
+					for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
+						// Did we go back far enough and found the position 100ms ago?
+						if(positions[positionsIndex] <= (lastTouchMove - 100)) {
+							break;
+						}
+
+						positionsIndexStart = positionsIndex;
+					}
+
+					// If start and stop position is identical in a 100ms timeframe,
+					// we cannot compute any useful deceleration.
+					if (positionsIndexStart !== positionsIndexEnd) {
+
+						// Compute relative movement between these two points
+						var timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
+						var movedOffset = scrollOffset - positions[positionsIndexStart - 1];
+
+						// Based on 50ms compute the movement to apply for each render step
+						var velocity = movedOffset / timeOffset * (1000 / 60);
+
+						// Verify that we have enough velocity to start deceleration
+						if (Math.abs(velocity) > MIN_VELOCITY_FOR_DECELERATION) {
+							self.__startDeceleration(velocity);
+						}
+					}
+				}
+			}
+
+			// Fully cleanup list
+			self.__positions.length = 0;
+
+		},
+
+
+
+		/*
+		---------------------------------------------------------------------------
+			PRIVATE API
+		---------------------------------------------------------------------------
+		*/
+
+		/**
+		 * Applies the scroll position to the content element
+		 *
+		 * @param left {Number} Left scroll position
+		 * @param top {Number} Top scroll position
+		 * @param animate {Boolean?false} Whether animation should be used to move to the new coordinates
+		 */
+		__publish: function(newOffset, animate) {
+
+			var self = this;
+
+			// Remember whether we had an animation, then we try to continue based on the current "drive" of the animation
+			var wasAnimating = !!self.__animation;
+
+			if (wasAnimating) {
+				self.__animation = null;
+			}
+
+			if (animate && self.options.animating) {
+
+				var oldOffset = self.__scrollOffset;
+				var distance = newOffset - oldOffset;
+
+				self.__animation = {
+					start: Date.now(),
+					duration: self.options.animationDuration,
+					// When continuing based on previous animation we choose an ease-out animation instead of ease-in-out
+					easing: wasAnimating ? easeOutCubic : easeInOutCubic,
+					from: oldOffset,
+					distance: distance
+				};
+
+			} else {
+
+				self.__scrollOffset = newOffset;
+
+			}
+		},
+
+
+		/*
+		---------------------------------------------------------------------------
+			ANIMATION (DECELERATION) SUPPORT
+		---------------------------------------------------------------------------
+		*/
+
+		/**
+		 * Called when a touch sequence end and the speed of the finger was high enough
+		 * to switch into deceleration mode.
+		 */
+		__startDeceleration: function(velocity) {
+
+			var self = this;
+
+			// Calculate the duration for the deceleration animation, which is a function of the start velocity.
+			// This formula simply means we apply FRICTION_PER_FRAME to the velocity every frame, until it is lower than MIN_VELOCITY_BEFORE_TERMINATING.
+			var durationInFrames = (Math.log(MIN_VELOCITY_BEFORE_TERMINATING) - Math.log(Math.abs(velocity))) / Math.log(FRICTION_PER_FRAME);
+			var duration = (durationInFrames / FPS) * 1000;
+
+			// Calculate the distance that the scroller will move during this duration.
+			// http://en.wikipedia.org/wiki/Geometric_series#Formula where N is the number of frames,
+			// because we terminate the series when the velocity drop below a minimum.
+			// This formula simply means that we add up the decelarating velocity (or the distance) every frame until we reach MIN_VELOCITY_BEFORE_TERMINATING.
+			var distance = velocity * ((1 - Math.pow(FRICTION_PER_FRAME, durationInFrames)) / (1 - FRICTION_PER_FRAME));
+
+			var offset = self.__scrollOffset;
+			var newOffset = offset + distance;
+			var distanceFromBounds;
+
+			var animation = self.__animation = {
+				start: Date.now(),
+				duration: duration,
+				easing: easeOutExpo,
+				from: self.__scrollOffset,
+				distance: (distance + 0.5) | 0
+			};
+
+			var overscrolled = (newOffset < 0 || newOffset > self.__maxScrollOffset);
+
+			if(self.options.bouncing && overscrolled) {
+				if(newOffset < 0) {
+					animation.distance = -offset;
+				} else {
+					animation.distance = self.__maxScrollOffset - offset;
+				}
+
+				animation.easing = easeOutBack;
+				animation.duration = animation.duration / EDGE_RESISTANCE;
+			}
+		}
+	};
+
+	// Copy over members to prototype.
+	for(var key in members) {
+		ScrollLogic.prototype[key] = members[key];
+	}
+
+	if(typeof exports !== 'undefined') {
+		if(typeof module !== 'undefined' && module.exports) {
+			exports = module.exports = ScrollLogic;
+		}
+	} else {
+		window.ScrollLogic = ScrollLogic;
+	}
+})();
+
+},{}],8:[function(require,module,exports){
+function E () {
+  // Keep this empty so it's easier to inherit from
+  // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
+}
+
+E.prototype = {
+  on: function (name, callback, ctx) {
+    var e = this.e || (this.e = {});
+
+    (e[name] || (e[name] = [])).push({
+      fn: callback,
+      ctx: ctx
+    });
+
+    return this;
+  },
+
+  once: function (name, callback, ctx) {
+    var self = this;
+    function listener () {
+      self.off(name, listener);
+      callback.apply(ctx, arguments);
+    };
+
+    listener._ = callback
+    return this.on(name, listener, ctx);
+  },
+
+  emit: function (name) {
+    var data = [].slice.call(arguments, 1);
+    var evtArr = ((this.e || (this.e = {}))[name] || []).slice();
+    var i = 0;
+    var len = evtArr.length;
+
+    for (i; i < len; i++) {
+      evtArr[i].fn.apply(evtArr[i].ctx, data);
+    }
+
+    return this;
+  },
+
+  off: function (name, callback) {
+    var e = this.e || (this.e = {});
+    var evts = e[name];
+    var liveEvents = [];
+
+    if (evts && callback) {
+      for (var i = 0, len = evts.length; i < len; i++) {
+        if (evts[i].fn !== callback && evts[i].fn._ !== callback)
+          liveEvents.push(evts[i]);
+      }
+    }
+
+    // Remove event from queue to prevent memory leak
+    // Suggested by https://github.com/lazd
+    // Ref: https://github.com/scottcorgan/tiny-emitter/commit/c6ebfaa9bc973b33d110a84a307742b7cf94c953#commitcomment-5024910
+
+    (liveEvents.length)
+      ? e[name] = liveEvents
+      : delete e[name];
+
+    return this;
+  }
+};
+
+module.exports = E;
+
+},{}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1436,6 +2093,10 @@ var _CustomEvent = require('ponies/CustomEvent.js');
 
 var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
 
+var _scrollStatus = require('lib/scrollStatus.js');
+
+var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1447,6 +2108,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 //                               /([^:]+):([^;]+)/g;
 var propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
 var whiteSpaceRegex = /\s+/;
+
+var supportsPassiveEvents = function () {
+	var passiveSupported = void 0;
+
+	try {
+		var options = Object.defineProperty({}, 'passive', {
+			get: function get() {
+				passiveSupported = true;
+			}
+		});
+
+		window.addEventListener('test', options, options);
+		window.removeEventListener('test', options, options);
+	} catch (ignore) {
+		passiveSupported = false;
+	}
+
+	return passiveSupported;
+}();
+
+//Chrome makes touchmove passive by default. We don't want none of that.
+var thirdEventListenerArgument = supportsPassiveEvents ? { passive: false } : false;
 
 var Behavior = function () {
 	_createClass(Behavior, [{
@@ -1479,6 +2162,11 @@ var Behavior = function () {
 		this.state = {};
 
 		this.parseProperties(rawProperties);
+
+		if (this.scroll) {
+			this.listen(_scrollStatus2.default, 'scroll', this.scroll.bind(this));
+		}
+
 		this.attach();
 		this.emit('attach');
 	}
@@ -1490,7 +2178,13 @@ var Behavior = function () {
 			if (this.listeners) {
 				for (var i = 0; i < this.listeners.length; i++) {
 					var listener = this.listeners[i];
-					listener.element.removeEventListener(listener.event, listener.callback);
+
+					//listen works for both DOM elements and event emitters using on/off.
+					if (typeof listener.element.removeEventListener === 'function') {
+						listener.element.removeEventListener(listener.event, listener.callback);
+					} else {
+						listener.element.off(listener.event, listener.callback);
+					}
 				}
 			}
 
@@ -1529,7 +2223,12 @@ var Behavior = function () {
 				return;
 			}
 
-			element.addEventListener(eventName, callback);
+			//listen works for both DOM elements and event emitters using on/off.
+			if (typeof element.addEventListener === 'function') {
+				element.addEventListener(eventName, callback, thirdEventListenerArgument);
+			} else {
+				element.on(eventName, callback);
+			}
 
 			if (!this.listeners) {
 				this.listeners = [];
@@ -1691,7 +2390,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"ponies/CustomEvent.js":18,"ponies/Object.assign.js":19}],8:[function(require,module,exports){
+},{"lib/scrollStatus.js":22,"ponies/CustomEvent.js":23,"ponies/Object.assign.js":24}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1806,7 +2505,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":7,"types/StringType.js":28}],9:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"types/StringType.js":33}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1818,6 +2517,26 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
+
+var _scrollLogic = require('scroll-logic');
+
+var _scrollLogic2 = _interopRequireDefault(_scrollLogic);
+
+var _scrollStatus = require('lib/scrollStatus.js');
+
+var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
+
+var _fakeClick = require('lib/fakeClick.js');
+
+var _fakeClick2 = _interopRequireDefault(_fakeClick);
+
+var _isTextInput = require('lib/isTextInput.js');
+
+var _isTextInput2 = _interopRequireDefault(_isTextInput);
+
+var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
+
+var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
 
 var _GuideDefinitionType = require('types/GuideDefinitionType.js');
 
@@ -1831,10 +2550,6 @@ var _Behavior2 = require('behaviors/Behavior.js');
 
 var _Behavior3 = _interopRequireDefault(_Behavior2);
 
-var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
-
-var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1842,6 +2557,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
+var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
+var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 var LayoutBehavior = function (_Behavior) {
 	_inherits(LayoutBehavior, _Behavior);
@@ -1855,34 +2574,215 @@ var LayoutBehavior = function (_Behavior) {
 	_createClass(LayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
+			this.state = {
+				scrollMode: 'touch'
+			};
 
 			this._layoutScheduled = false;
+			this._lastRenderTime = -1;
+
+			this._setupScrolling();
+			this._initLayoutEngine();
+			(0, _raf2.default)(this._scrollLoop.bind(this));
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._updateScrollHeight();
+		}
+	}, {
+		key: '_setupScrolling',
+		value: function _setupScrolling() {
+			this._setupMobileScrolling();
+			this._handleScrollModes();
+		}
+	}, {
+		key: '_setupMobileScrolling',
+		value: function _setupMobileScrolling() {
+			var _this2 = this;
+
+			this._scrollLogic = new _scrollLogic2.default({
+				bouncing: true
+			});
+
+			this.listen(document, 'touchstart', function (e) {
+				//For caret positioning on mobile.
+				//On "bad" Android (stock browser) preventing touchstart will cause touchmove to not fire.
+				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
+					e.preventDefault();
+					_fakeClick2.default.start(e);
+				}
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.beginInteraction(e.changedTouches[0].pageY, e.timeStamp);
+			});
+
+			this.listen(document, 'touchmove', function (e) {
+				e.preventDefault();
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.interact(e.changedTouches[0].pageY, e.timeStamp);
+			});
+
+			this.listen(document, 'touchend touchcancel', function (e) {
+				//For caret positioning on mobile.
+				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
+					e.preventDefault();
+					_fakeClick2.default.end(e);
+				}
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.endInteraction(e.timeStamp);
+			});
+		}
+
+		//This thing intelligently switches between fake and native scrolling.
+		//It does not do any sniffing and instead relies on scroll, mousemove and touchstart events.
+		//It also preserves scroll position when switching.
+
+	}, {
+		key: '_handleScrollModes',
+		value: function _handleScrollModes() {
+			var _this3 = this;
+
+			var waitForNativeAction = function waitForNativeAction() {
+				var oneNative = function oneNative(e) {
+					window.removeEventListener('mousemove', threeMousemove, false);
+					window.removeEventListener('scroll', oneNative, false);
+
+					//Move the scroll offset over from fake to native scrolling.
+					var scrollPosition = _this3._scrollLogic.getOffset();
+
+					//This compensates the amount scrolling that JUST happened.
+					//Imagine using pageup/down keys, we would lose the first jump otherwise.
+					var delta = _this3._getNativeScrollPosition() - _this3._lastNativeScrollPosition;
+
+					window.scrollTo(0, scrollPosition + delta);
+
+					_this3.setState({
+						scrollMode: 'native'
+					});
+
+					waitForFakeAction();
+				};
+
+				var threeMousemove = function threeMousemove(e) {
+					//Cheez. Some mobile browsers (*cough* Android *cough*) trigger mousemove before ANYTHING else.
+					//Even before touchstart. But they will only trigger a single mousemove for any touch sequence.
+					//To make sure we only get real mousemoves, we wait for three consecutive events.
+					//We reset this counter every time we receive a touch event.
+					//Note: it was 2 before, now 3. Because Android Firefox does weird things inside a textarea.
+					_this3._mousemoveCounter++;
+
+					if (_this3._mousemoveCounter !== 3) {
+						return;
+					}
+
+					_this3._mousemoveCounter = 0;
+
+					oneNative(e);
+				};
+
+				//A "mousemove" event is a strong indicator that we're on a desktop device.
+				//"mousemove" makes sure that we switch to native scrolling even if we haven't scrolled yet.
+				//In reality this means stuff like iframes are immediately accessible on desktop.
+				window.addEventListener('mousemove', threeMousemove, false);
+
+				//We should never get a scroll event on mobile because we prevent it.
+				//So that's the strongest desktop indicator you can get.
+				window.addEventListener('scroll', oneNative, false);
+			};
+
+			var waitForFakeAction = function waitForFakeAction() {
+				var oneTouchStart = function oneTouchStart() {
+					document.removeEventListener('touchstart', oneTouchStart, false);
+
+					//Move the scroll offset over from native to fake scrolling.
+					var scrollPosition = Math.round(_this3._getNativeScrollPosition());
+					_this3._scrollLogic.scrollTo(scrollPosition);
+
+					_this3._mousemoveCounter = 0;
+
+					_this3.setState({
+						scrollMode: 'touch'
+					});
+
+					waitForNativeAction();
+				};
+
+				document.addEventListener('touchstart', oneTouchStart, false);
+			};
+
+			//By default we assume we're in fake scrolling mode.
+			//This makes sure the user can scroll on iframes if this happens to be the first thing she touches.
+			this._mousemoveCounter = 0;
+			waitForNativeAction();
+		}
+	}, {
+		key: '_getNativeScrollPosition',
+		value: function _getNativeScrollPosition() {
+			return document.documentElement.scrollTop || document.body.scrollTop;
+		}
+	}, {
+		key: 'scrollTo',
+		value: function scrollTo(position) {
+			position = Math.round(position);
+
+			if (this.state.scrollMode === 'native') {
+				window.scrollTo(0, position);
+			} else {
+				this._scrollLogic.scrollTo(position);
+			}
+		}
+	}, {
+		key: '_initLayoutEngine',
+		value: function _initLayoutEngine() {
+			var _this4 = this;
 
 			this.engine = new _GuideLayoutEngine2.default();
 
 			this.listenAndInvoke(window, 'resize', function () {
-				var viewport = _this2._getViewport();
-				_this2.engine.updateViewport(viewport);
-				_this2._scheduleLayout();
+				var viewport = _this4._getViewport();
+				_this4.engine.updateViewport(viewport);
+				_this4._scheduleLayout();
 			});
 
-			//Whenever a new dimensions/position behavior is attached or changed, we need to do layout.
-			this.listen(document, 'layout:attach layout:update', function () {
-				_this2._scheduleLayout();
-				console.log('a layout behavior changed or attached');
-			});
+			//Whenever a new layout behavior is attached or changed, we need to do layout.
+			this.listen(document, 'layout:attach layout:update', this._scheduleLayout.bind(this));
+		}
+	}, {
+		key: '_scrollLoop',
+		value: function _scrollLoop(now) {
+			//The very first frame doesn't have a previous one.
+			if (this._lastRenderTime === -1) {
+				this._lastRenderTime = now;
+			}
 
-			this.element.title = 'behavior did this 1';
+			this._pollScrollPosition(now, this._lastRenderTime);
+
+			this._lastRenderTime = now;
+			(0, _raf2.default)(this._scrollLoop.bind(this));
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
-			this.element.title = 'clean af';
+		key: '_pollScrollPosition',
+		value: function _pollScrollPosition(now, lastRenderTime) {
+			var currentScrollPosition = void 0;
+
+			if (this._scrollAnimation) {
+				currentScrollPosition = this._getScrollPositionFromAnimation();
+			} else {
+				if (this.state.scrollMode === 'touch') {
+					currentScrollPosition = this._scrollLogic.getOffset();
+				} else {
+					currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
+				}
+			}
+
+			_scrollStatus2.default.tick(now, currentScrollPosition, this.engine);
 		}
-	}, {
-		key: 'scroll',
-		value: function scroll() {}
 	}, {
 		key: '_getViewport',
 		value: function _getViewport() {
@@ -1931,13 +2831,48 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_doLayout',
 		value: function _doLayout() {
+			this._layoutScheduled = false;
+
 			var elements = this.element.querySelectorAll('[layout]');
 
 			this.engine.doLayout(elements, this.props.guides, this.props.width);
 
-			this._layoutScheduled = false;
+			this._updateScrollHeight();
 
 			this.emit('layout');
+		}
+	}, {
+		key: '_updateScrollHeight',
+		value: function _updateScrollHeight() {
+			var requiredHeight = this.engine.requiredHeight;
+			var documentElement = document.documentElement;
+
+			if (!documentElement) {
+				throw new Error('There is no documentElement to get the size of.');
+			}
+
+			//Firefox on Android will scroll natively to remove the addressbar.
+			//This can not be prevented, even with preventDefault on the touch events.
+			//Since moving the addressbar causes doLayout calls, it performs bad.
+			//http://stackoverflow.com/questions/28129663/firefox-on-android-prevent-adressbar-from-disappearing
+			//It's also causing trouble on Android stock browser with scrollMode detection.
+			//We also recently added this for iOS because it was the only thing breaking iframe embeds.
+			//On iOS the iframe will scale to the height of its content, but we query the window height.
+			//So basically it was growing ENDLESSLY (100vh kept getting larger)!
+			if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
+				documentElement.style.overflow = 'visible';
+				this.element.style.height = 0;
+			} else {
+				this.element.style.height = Math.round(requiredHeight) + 'px';
+			}
+
+			this._scrollLogic.setContainerLength(this.engine.viewport.height);
+			this._scrollLogic.setContentLength(requiredHeight);
+
+			_scrollStatus2.default.maxPosition = requiredHeight - this.engine.viewport.height;
+
+			//Make sure we don't lose our relative scroll position.
+			this.scrollTo(_scrollStatus2.default.maxPosition * _scrollStatus2.default.progress);
 		}
 	}], [{
 		key: 'schema',
@@ -1949,7 +2884,7 @@ var LayoutBehavior = function (_Behavior) {
 				},
 				width: {
 					type: _CSSLengthType2.default,
-					default: '1400px'
+					default: '1280px'
 				}
 			};
 		}
@@ -1970,7 +2905,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":7,"lib/GuideLayoutEngine.js":17,"raf":5,"types/CSSLengthType.js":22,"types/GuideDefinitionType.js":24}],10:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":19,"lib/fakeClick.js":20,"lib/isTextInput.js":21,"lib/scrollStatus.js":22,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":27,"types/GuideDefinitionType.js":29}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2033,8 +2968,6 @@ var DimensionsBehavior = function (_Behavior) {
 				height: 0
 			};
 
-			this.element.innerHTML = 'bam';
-
 			//Listen to the layout event of the layout behavior.
 			//TODO: is gut? We can always refactor, but does this make sense though?
 			//This means possibly hundreds of DimensionsBehaviors will react to this event.
@@ -2063,8 +2996,15 @@ var DimensionsBehavior = function (_Behavior) {
 	}, {
 		key: 'detach',
 		value: function detach() {
-			this.element.innerHTML = 'clean af';
 			this._unobserveHeight();
+		}
+	}, {
+		key: 'scroll',
+		value: function scroll(status, engine) {
+			var transformedTop = engine.doScroll(this, status.position);
+			this.element.style.transform = 'translate3d(' + Math.round(this.left) + 'px, ' + transformedTop + 'px, 0)';
+
+			//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 		}
 	}, {
 		key: '_observeHeight',
@@ -2091,14 +3031,22 @@ var DimensionsBehavior = function (_Behavior) {
 		key: '_render',
 		value: function _render() {
 			var style = this.element.style;
+			var left = Math.round(this.left);
+			var top = Math.round(this.top);
 
-			style.transform = 'translate3d(' + Math.round(this.left) + 'px, ' + Math.round(this.top) + 'px, 0)';
+			style.msTransform = 'translate(' + left + 'px, ' + top + 'px)';
+			style.transform = style.WebkitTransform = 'translate3d(' + left + 'px, ' + top + 'px, 0)';
+
 			style.width = Math.round(this.width) + 'px';
-
 			style.height = this.props.height === 'auto' ? 'auto' : Math.round(this.height) + 'px';
+
+			style.overflow = 'hidden';
 		}
 	}], [{
 		key: 'schema',
+
+		//TODO: instead of StringType or LayoutDependencyType we need to give them names such as "string" and "layout-dependency".
+		//Otherwise you cannot just create a custom behavior in a <script> tag without importing the types.
 		get: function get() {
 			return {
 				guides: {
@@ -2113,12 +3061,12 @@ var DimensionsBehavior = function (_Behavior) {
 					default: 'flow'
 				},
 				followerMode: {
-					type: _StringType2.default.createEnum('followerMode', ['none', 'parallax', 'pin']),
-					default: 'none'
+					type: _StringType2.default.createEnum('followerMode', ['parallax', 'pin']),
+					default: 'parallax'
 				},
 				pinAnchor: {
-					type: _StringType2.default.createEnum('pinAnchor', ['none', 'top', 'center', 'bottom']),
-					default: 'none'
+					type: _StringType2.default.createEnum('pinAnchor', ['top', 'center', 'bottom']),
+					default: 'center'
 				},
 				pinOffset: {
 					type: _CSSLengthType2.default,
@@ -2157,7 +3105,7 @@ var DimensionsBehavior = function (_Behavior) {
 
 exports.default = DimensionsBehavior;
 
-},{"behaviors/Behavior.js":7,"resize-observer-polyfill":6,"types/CSSLengthType.js":22,"types/FollowerModeType.js":23,"types/HeightType.js":25,"types/LayoutDependencyType.js":26,"types/StringType.js":28}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/CSSLengthType.js":27,"types/FollowerModeType.js":28,"types/HeightType.js":30,"types/LayoutDependencyType.js":31,"types/StringType.js":33}],13:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -2183,7 +3131,7 @@ _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":8,"behaviors/GuideLayoutBehavior.js":9,"behaviors/LayoutBehavior.js":10,"scrollmeister.js":21}],12:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/LayoutBehavior.js":12,"scrollmeister.js":26}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2229,7 +3177,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":13,"scrollmeister.js":21}],13:[function(require,module,exports){
+},{"./MeisterComponent.js":15,"scrollmeister.js":26}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2284,17 +3232,19 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'connectedCallback',
 		value: function connectedCallback() {
-			this._tickHandle = (0, _raf2.default)(this.tick.bind(this));
+			//TODO: the layout behavior requires a single child node inside the custom element.
+			//Check if it has a single child of type element.
+			//If not then wrap all children in a div and append it https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment
 		}
 	}, {
 		key: 'disconnectedCallback',
 		value: function disconnectedCallback() {
-			_raf2.default.cancel(this._tickHandle);
 			_raf2.default.cancel(this._batchHandle);
 
 			// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
 			var observedAttributes = this.constructor.observedAttributes;
 
+			//Remove all attached behaviors so they can be garbage collected.
 			for (var i = 0; i < observedAttributes.length; i++) {
 				var attr = observedAttributes[i];
 
@@ -2316,39 +3266,6 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 				this._scheduledBehaviors.attach[attr] = newValue;
 				delete this._scheduledBehaviors.detach[attr];
 			}
-		}
-	}, {
-		key: 'behaviorsUpdated',
-		value: function behaviorsUpdated() {
-			//Clear the array.
-			this._scrollBehaviors.length = 0;
-
-			// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
-			var observedAttributes = this.constructor.observedAttributes;
-
-			//We keep a list of behaviors that implement the scroll interface so we can loop over it faster.
-			for (var i = 0; i < observedAttributes.length; i++) {
-				var attr = observedAttributes[i];
-
-				// $FlowFixMe: Flow doesn't know about the this[attr] access.
-				if (this.hasOwnProperty(attr) && this[attr].scroll) {
-					this._scrollBehaviors.push(this[attr]);
-				}
-			}
-		}
-
-		//TODO: do we really need a raf loop for EVERY SINGLE custom element?
-		//There should be a single loop, e.g. inside the LayoutBehavior at the root.
-
-	}, {
-		key: 'tick',
-		value: function tick() {
-			for (var i = 0; i < this._scrollBehaviors.length; i++) {
-				var behavior = this._scrollBehaviors[i];
-				behavior.scroll();
-			}
-
-			(0, _raf2.default)(this.tick.bind(this));
 		}
 	}, {
 		key: '_batchUpdateBehaviors',
@@ -2376,7 +3293,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":5,"scrollmeister.js":21}],14:[function(require,module,exports){
+},{"raf":5,"scrollmeister.js":26}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2422,7 +3339,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":13,"scrollmeister.js":21}],15:[function(require,module,exports){
+},{"./MeisterComponent.js":15,"scrollmeister.js":26}],17:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -2440,7 +3357,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":12,"components/ScrollMeisterComponent.js":14,"document-register-element":2}],16:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":14,"components/ScrollMeisterComponent.js":16,"document-register-element":2}],18:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.css');
@@ -2451,7 +3368,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":11,"./components":15,"./scrollmeister.css":20,"./scrollmeister.js":21}],17:[function(require,module,exports){
+},{"./behaviors":13,"./components":17,"./scrollmeister.css":25,"./scrollmeister.js":26}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2564,6 +3481,19 @@ var GuideLayoutEngine = function () {
 				}
 			} while (skippedNode);
 		}
+	}, {
+		key: 'doScroll',
+		value: function doScroll(layout, scrollPosition) {
+			var contentTop = void 0;
+
+			if (layout.transformTopPosition) {
+				contentTop = layout.transformTopPosition(scrollPosition);
+			} else {
+				contentTop = layout.top - scrollPosition;
+			}
+
+			return contentTop;
+		}
 
 		//This will attach the layout info directly to each dom node. No need for a lookup map.
 
@@ -2578,21 +3508,33 @@ var GuideLayoutEngine = function () {
 			layout.spacingTop = this.lengthToPixel(props.spacing.top);
 			layout.spacingBottom = this.lengthToPixel(props.spacing.bottom);
 
-			/*
-   if (layoutMode === 'follower') {
-   	//A follower can have one or more leaders.
-   	//Here we normalize it to always have two, the top and bottom most.
-   	dependencies = Immutable.List([
-   		dependencies.minBy(function(leader) {
-   			return leader.get('top');
-   		}),
-   		dependencies.maxBy(function(leader) {
-   			return leader.get('bottom');
-   		})
-   	]);
-   		layout.set('leaderHeight', dependencies.get(1).get('bottom') - dependencies.get(0).get('top'));
-   }
-   */
+			if (layoutMode === 'follow') {
+				//A follower can have one or more leaders.
+				//Here we normalize it to always have two, the top and bottom most.
+				//These are the only two that are relevant for the follower.
+				var topDependency = dependencies[0];
+				var bottomDependency = dependencies[0];
+
+				//We could use Array.reduce and create something like a minBy/maxBy.
+				//But this gives us the min and max element with a simple single loop.
+				for (var i = 0; i < dependencies.length; i++) {
+					var otherNode = dependencies[i];
+
+					//Found a new top node which is even higher than the current.
+					if (otherNode.layout.top < topDependency.layout.top) {
+						topDependency = otherNode;
+					}
+
+					//Found a new bottom node which is even lower than the current.
+					if (otherNode.layout.bottom > bottomDependency.layout.bottom) {
+						bottomDependency = otherNode;
+					}
+				}
+
+				dependencies = [topDependency, bottomDependency];
+
+				layout.leaderHeight = bottomDependency.layout.bottom - topDependency.layout.top;
+			}
 
 			//
 			//left
@@ -2626,6 +3568,8 @@ var GuideLayoutEngine = function () {
 				layout.height = this.lengthToPixel(props.height, layout.width);
 			}
 
+			layout.outerHeight = layout.height + layout.spacingTop + layout.spacingBottom;
+
 			/*
    if (heightMode === 'ratio') {
    	layout.set('height', layout.get('width') / item.get('heightRatio'));
@@ -2648,56 +3592,59 @@ var GuideLayoutEngine = function () {
 			//top
 			//
 
-			layout.outerTop = layout.top + layout.spacingTop;
-
 			if (layoutMode === 'flow') {
-				/*
-    let predecessorBottom = 0;
-    	if (dependencies.length > 0) {
-    	predecessorBottom = dependencies
-    		.map(function(dependency) {
-    			return dependency.get('outerBottom');
-    		})
-    		.max();
-    }
-    	layout.set('top', predecessorBottom + layout.get('spacingTop'));
-    */
 				var predecessorBottom = 0;
 
-				if (dependencies.length > 0) {
-					predecessorBottom = dependencies[0].layout.outerBottom;
+				//Yes, we could Math.max.apply(Math, ) but what's wrong with this simple loop?
+				for (var _i2 = 0; _i2 < dependencies.length; _i2++) {
+					var _otherNode = dependencies[_i2];
+
+					if (_otherNode.layout.outerBottom > predecessorBottom) {
+						predecessorBottom = _otherNode.layout.outerBottom;
+					}
 				}
 
 				layout.top = predecessorBottom + layout.spacingTop;
-			} /* else if (layoutMode === 'follower') {
-     //When the follower is larger than the leader it follows the bottom of its leader, not the top.
-     if (item.get('followerMode') === 'pin' && layout.get('outerHeight') > layout.get('leaderHeight')) {
-     layout.set('top', dependencies.get(1).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
-     } else {
-     layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
-     }
-     } else if (layoutMode === 'attachment') {
-     switch (item.get('attachmentAnchor')) {
-     case 'top':
-     	layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
-     	break;
-     case 'center':
-     	layout.set(
-     		'top',
-     		(dependencies.get(0).get('top') + dependencies.get(0).get('bottom') - layout.get('height')) / 2 +
-     			layout.get('spacingTop') -
-     			layout.get('spacingBottom')
-     	);
-     	break;
-     case 'bottom':
-     	layout.set('top', dependencies.get(0).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
-     	break;
-     default:
-     	throw new Error('Unknown attachment anchor "' + item.get('attachmentAnchor') + '"');
-     }
-     }
-     layout.set('outerTop', layout.get('top') - layout.get('spacingTop'));
-     */
+			} else if (layoutMode === 'follow') {
+				//When the follower is larger than the leader it follows the bottom of its leader, not the top.
+				if (props.followerMode === 'pin' && layout.outerHeight > layout.leaderHeight) {
+					layout.top = dependencies[1].layout.bottom - layout.height - layout.spacingBottom;
+				} else {
+					layout.top = dependencies[0].layout.top + layout.spacingTop;
+				}
+			}
+
+			layout.outerTop = layout.top + layout.spacingTop;
+
+			/* else if (layoutMode === 'follow') {
+   	//When the follower is larger than the leader it follows the bottom of its leader, not the top.
+   	if (item.get('followerMode') === 'pin' && layout.get('outerHeight') > layout.get('leaderHeight')) {
+   		layout.set('top', dependencies.get(1).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
+   	} else {
+   		layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
+   	}
+   } else if (layoutMode === 'attachment') {
+   	switch (item.get('attachmentAnchor')) {
+   		case 'top':
+   			layout.set('top', dependencies.get(0).get('top') + layout.get('spacingTop'));
+   			break;
+   		case 'center':
+   			layout.set(
+   				'top',
+   				(dependencies.get(0).get('top') + dependencies.get(0).get('bottom') - layout.get('height')) / 2 +
+   					layout.get('spacingTop') -
+   					layout.get('spacingBottom')
+   			);
+   			break;
+   		case 'bottom':
+   			layout.set('top', dependencies.get(0).get('bottom') - layout.get('height') - layout.get('spacingBottom'));
+   			break;
+   		default:
+   			throw new Error('Unknown attachment anchor "' + item.get('attachmentAnchor') + '"');
+   	}
+   }
+   	layout.set('outerTop', layout.get('top') - layout.get('spacingTop'));
+   */
 
 			//
 			//bottom (for the sake of simpler to follow computations at later points)
@@ -2710,20 +3657,29 @@ var GuideLayoutEngine = function () {
 			//required height
 			//
 
-			/*
-   if (layoutMode === 'follower') {
-   	layout.set('requiredHeight', 0);
-   } else {
-   	layout.set('requiredHeight', layout.get('outerBottom'));
-   }
-   */
+			if (layoutMode === 'flow') {
+				layout.requiredHeight = layout.outerBottom;
+			} else {
+				layout.requiredHeight = 0;
+			}
 
 			//
 			//transform the scroll position
 			//
 
+			if (layoutMode === 'follow') {
+				layout.transformTopPosition = this._createFollowerTopPositionTransformer(layout, props);
+			}
 			/*
-   if (layoutMode === 'follower') {
+   	var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
+   		layout
+   		.set('progressScrollStart', progressAnchors.progressScrollStart)
+   		.set('progressScrollDuration', progressAnchors.progressScrollDuration);
+   		layout.set('calculateScrollProgress', this.createFollowerScrollProgressCalculator(layout));
+   	*7
+   }
+   	/*
+   if (layoutMode === 'follow') {
    	layout.set('transformTopPosition', this.createFollowerTopPositionTransformer(item, layout, dependencies));
    		var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
    		layout
@@ -2747,7 +3703,7 @@ var GuideLayoutEngine = function () {
 
 			/*
    if (item.get('clip')) {
-   	if (layoutMode === 'follower') {
+   	if (layoutMode === 'follow') {
    		layout.set(
    			'clipRect',
    			Immutable.Map({
@@ -2771,6 +3727,76 @@ var GuideLayoutEngine = function () {
    	layout.set('calculateAppear', this.createAppearCalculator(item, dependencies, layout));
    }
    */
+		}
+
+		//Parallax and pinning is achieved by simply transforming the top position for those (follower-) elements.
+
+	}, {
+		key: '_createFollowerTopPositionTransformer',
+		value: function _createFollowerTopPositionTransformer(layout, props) {
+			var _this = this;
+
+			if (props.followerMode === 'pin') {
+				var pinTopPosition = void 0;
+
+				//Calculate the spacing from top of the viewport (where the pinned element will be positioned).
+				switch (props.pinAnchor) {
+					case 'top':
+						pinTopPosition = 0;
+						break;
+					case 'center':
+						pinTopPosition = (this.viewport.height - layout.height) / 2;
+						break;
+					case 'bottom':
+						pinTopPosition = this.viewport.height - layout.height;
+						break;
+				}
+
+				//The scroll position at which the element starts being pinned and does not move anymore.
+				var pinStartScroll = layout.top - pinTopPosition;
+
+				var pinDuration = Math.abs(layout.leaderHeight - layout.outerHeight);
+				var pinStopScroll = pinStartScroll + pinDuration;
+
+				return function (scrollPosition) {
+					var transformedTop = void 0;
+
+					//Pinning hasn't started, scroll normally.
+					if (scrollPosition < pinStartScroll) {
+						transformedTop = layout.top - scrollPosition;
+					} else if (scrollPosition < pinStopScroll) {
+						//Pinning is currently happening.
+						transformedTop = pinTopPosition;
+					} else {
+						//Pinning is finished, scroll normally plus the amount it was pinned.
+						transformedTop = layout.top - scrollPosition + pinDuration;
+					}
+
+					return Math.round(transformedTop);
+				};
+			} else if (props.followerMode === 'parallax') {
+				//The distance the leader and the follower need to travel inside the viewport
+				//from top-bottom to bottom-top.
+				var leaderScrollDistance = this.viewport.height + layout.leaderHeight;
+				var scrollDistance = this.viewport.height + layout.outerHeight;
+
+				//The follower needs to move a little slower/faster than 1.0
+				//to travel the viewport in the same time the leader does.
+				var speedFactor = scrollDistance / leaderScrollDistance;
+
+				//This is the scroll position where the outer top spacing of the
+				//follower enters the viewport. It's not necessarily visible then
+				//as you need to scroll for a bit (spacingTop) before it actually enters.
+				var enterScroll = layout.outerTop - this.viewport.height;
+
+				return function (scrollPosition) {
+					//The distance the follower would have travelled from the bottom of the viewport
+					//at a speed of 1.0.
+					var distanceTravelled = scrollPosition - enterScroll;
+
+					return _this.viewport.height + layout.spacingTop - distanceTravelled * speedFactor;
+				};
+			}
 		}
 	}, {
 		key: '_computeGuides',
@@ -2851,7 +3877,169 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var initialTouchX = void 0;
+var initialTouchY = void 0;
+var initialTouchElement = void 0;
+
+exports.default = {
+	start: function start(e) {
+		var touch = e.changedTouches[0];
+		initialTouchX = touch.clientX;
+		initialTouchY = touch.clientY;
+		initialTouchElement = e.target;
+
+		//We don't want text nodes.
+		while (initialTouchElement.nodeType === Node.TEXT_NODE) {
+			initialTouchElement = initialTouchElement.parentNode;
+		}
+	},
+
+	end: function end(e) {
+		var touch = e.changedTouches[0];
+		var currentTouchX = touch.clientX;
+		var currentTouchY = touch.clientY;
+		var distanceX = initialTouchX - currentTouchX;
+		var distanceY = initialTouchY - currentTouchY;
+		var distance2 = distanceX * distanceX + distanceY * distanceY;
+		var element = initialTouchElement;
+
+		//Check if it was more like a tap (moved less than 7px).
+		if (distance2 < 49 && element.tagName === 'A') {
+			//It was a tap, click the element.
+			var clickEvent = document.createEvent('MouseEvents');
+			clickEvent.initMouseEvent('click', true, true, e.view, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, 0, null);
+			element.dispatchEvent(clickEvent);
+			element.focus();
+		}
+	}
+};
+
+},{}],21:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+exports.default = function (node) {
+	if (node.tagName === 'TEXTAREA') {
+		return true;
+	}
+
+	if (node.tagName === 'INPUT' && node.type === 'text') {
+		return true;
+	}
+
+	return false;
+};
+
+},{}],22:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+//TODO: this has not been migrated to classes yet.
+
+var Emitter = require('tiny-emitter');
+
+var PAUSE_DELAY = 300; //ms
+var MAX_HISTORY_LENGTH = 30;
+var MAX_HISTORY_AGE = 300; //ms
+
+var ScrollStatus = function ScrollStatus() {
+	this.position = 0;
+	this.maxPosition = 0;
+	this.velocity = 0;
+	this.progress = 0;
+	this.direction = 'down';
+	this.history = [];
+};
+
+ScrollStatus.prototype = new Emitter();
+
+ScrollStatus.prototype.tick = function (now, newPosition, layoutEngine) {
+	var direction;
+
+	//We keep track of the position and time for calculating an accurate velocity in later frames.
+	this.history.push(this.position, now);
+
+	//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
+	if (this.history.length > MAX_HISTORY_LENGTH * 2) {
+		this.history.splice(0, MAX_HISTORY_LENGTH);
+	}
+
+	this.velocity = this._calculateScrollVelocity(now);
+
+	if (this.position !== newPosition) {
+		direction = newPosition > this.position ? 'down' : 'up';
+
+		this.position = newPosition;
+		this.progress = newPosition / this.maxPosition;
+
+		//When the direction changed, we clear the history.
+		//This way we get better scroll velocity calculations
+		//when the users moves up/down very fast (e.g. touch display scratching).
+		if (this.direction !== direction) {
+			this.direction = direction;
+			this.history.length = 0;
+		}
+
+		if (this.pauseTimer) {
+			clearTimeout(this.pauseTimer);
+			this.pauseTimer = null;
+		}
+
+		this.emit('scroll', this, layoutEngine);
+	} else {
+		if (!this.pauseTimer) {
+			this.pauseTimer = setTimeout(this.emit.bind(this, 'pause', this), PAUSE_DELAY);
+		}
+	}
+};
+
+ScrollStatus.prototype._calculateScrollVelocity = function (now) {
+	//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
+	//We do this because using just the past two frames for calculating the veloctiy
+	//gives very jumpy results.
+	var positions = this.history;
+	var positionsIndexEnd = positions.length - 1;
+	var positionsIndexStart = positionsIndexEnd;
+	var positionsIndex = positionsIndexEnd;
+	var timeOffset;
+	var movedOffset;
+
+	//Move pointer to position measured MAX_HISTORY_AGE ago
+	//The positions array contains alternating offset/timeStamp pairs.
+	for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
+		//Did we go back far enough and found the position MAX_HISTORY_AGE ago?
+		if (positions[positionsIndex] <= now - MAX_HISTORY_AGE) {
+			break;
+		}
+
+		positionsIndexStart = positionsIndex;
+	}
+
+	//Compute relative movement between these two points.
+	timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
+	movedOffset = positions[positionsIndexEnd - 1] - positions[positionsIndexStart - 1];
+
+	if (timeOffset > 0 && Math.abs(movedOffset) > 0) {
+		return movedOffset / timeOffset;
+	} else {
+		return 0;
+	}
+};
+
+exports.default = new ScrollStatus();
+
+},{"tiny-emitter":8}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2874,7 +4062,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],19:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2884,7 +4072,7 @@ var assign = Object.assign;
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 if (typeof assign !== 'function') {
-	assign = function assign() {
+	assign = function assign(target) {
 		if (target == null) {
 			// TypeError if undefined or null
 			throw new TypeError('Cannot convert undefined or null to object');
@@ -2912,9 +4100,9 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],20:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;height:2000px;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],21:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+},{"browserify-css":1}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2954,7 +4142,6 @@ var Scrollmeister = {
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].updateProperties(rawProperties);
-			element.behaviorsUpdated();
 		} else {
 			if (this._checkBehaviorDependencies(element, name)) {
 				//Make the behavior available as a property on the DOM node.
@@ -2965,8 +4152,6 @@ var Scrollmeister = {
 				element[name] = new Behavior(element, rawProperties);
 
 				this._updateWaitingBehaviors(element);
-
-				element.behaviorsUpdated();
 			} else {
 				this.behaviorsWaitingForDependencies.push({ name: name, rawProperties: rawProperties });
 			}
@@ -2977,7 +4162,6 @@ var Scrollmeister = {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
-			element.behaviorsUpdated();
 		}
 	},
 
@@ -3022,7 +4206,7 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],22:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3064,7 +4248,7 @@ exports.default = {
 	}
 };
 
-},{}],23:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3079,7 +4263,7 @@ exports.default = {
 	}
 };
 
-},{}],24:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3104,7 +4288,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":22,"types/NumberType.js":27,"types/StringType.js":28}],25:[function(require,module,exports){
+},{"types/CSSLengthType.js":27,"types/NumberType.js":32,"types/StringType.js":33}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3150,12 +4334,16 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":22}],26:[function(require,module,exports){
+},{"types/CSSLengthType.js":27}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+function isFlowElement(element) {
+	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
+}
+
 function findPreviousFlowElement(element) {
 	while (element.previousSibling) {
 		element = element.previousSibling;
@@ -3164,7 +4352,7 @@ function findPreviousFlowElement(element) {
 			continue;
 		}
 
-		if (element.hasAttribute('layout') && element.layout.props.mode === 'flow') {
+		if (isFlowElement(element)) {
 			return element;
 		}
 	}
@@ -3213,14 +4401,14 @@ exports.default = {
 			}
 		}
 
-		return Array.prototype.slice.call(document.querySelectorAll(value));
+		return Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
 	},
 	stringify: function stringify(value) {
 		return value;
 	}
 };
 
-},{}],27:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3249,7 +4437,7 @@ exports.default = {
 	}
 };
 
-},{}],28:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3282,4 +4470,4 @@ exports.default = {
 	}
 };
 
-},{}]},{},[16]);
+},{}]},{},[18]);
