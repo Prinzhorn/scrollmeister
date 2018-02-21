@@ -6,6 +6,11 @@
 		<title>Scrollmeister</title>
 		<script src="../dist/scrollmeister.js"></script>
 		<style>
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+
 			el-meister {
 				background: rgba(0, 255, 0, 0.5);
 				outline: 1px solid rgba(255, 0, 0, 0.5);
@@ -29,6 +34,8 @@
 	<body>
 		<scroll-meister
 			debugguides
+
+			fadein
 
 			guidelayout="
 				guides:

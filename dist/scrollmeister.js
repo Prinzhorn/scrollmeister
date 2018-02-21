@@ -2390,7 +2390,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/scrollStatus.js":22,"ponies/CustomEvent.js":23,"ponies/Object.assign.js":24}],10:[function(require,module,exports){
+},{"lib/scrollStatus.js":23,"ponies/CustomEvent.js":24,"ponies/Object.assign.js":25}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2505,7 +2505,69 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":9,"types/StringType.js":33}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"types/StringType.js":34}],11:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DebugGuidesBehavior = function (_Behavior) {
+	_inherits(DebugGuidesBehavior, _Behavior);
+
+	function DebugGuidesBehavior() {
+		_classCallCheck(this, DebugGuidesBehavior);
+
+		return _possibleConstructorReturn(this, (DebugGuidesBehavior.__proto__ || Object.getPrototypeOf(DebugGuidesBehavior)).apply(this, arguments));
+	}
+
+	_createClass(DebugGuidesBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			this.element.style.opacity = 1;
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this.element.style.opacity = '';
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {};
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return [];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'fadein';
+		}
+	}]);
+
+	return DebugGuidesBehavior;
+}(_Behavior3.default);
+
+exports.default = DebugGuidesBehavior;
+
+},{"behaviors/Behavior.js":9}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2905,7 +2967,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":19,"lib/fakeClick.js":20,"lib/isTextInput.js":21,"lib/scrollStatus.js":22,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":27,"types/GuideDefinitionType.js":29}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":23,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":28,"types/GuideDefinitionType.js":30}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2968,6 +3030,8 @@ var DimensionsBehavior = function (_Behavior) {
 				height: 0
 			};
 
+			this._wrapContents();
+
 			//Listen to the layout event of the layout behavior.
 			//TODO: is gut? We can always refactor, but does this make sense though?
 			//This means possibly hundreds of DimensionsBehaviors will react to this event.
@@ -2997,6 +3061,7 @@ var DimensionsBehavior = function (_Behavior) {
 		key: 'detach',
 		value: function detach() {
 			this._unobserveHeight();
+			this._unwrapContents();
 		}
 	}, {
 		key: 'scroll',
@@ -3005,6 +3070,78 @@ var DimensionsBehavior = function (_Behavior) {
 			this.element.style.transform = 'translate3d(' + Math.round(this.left) + 'px, ' + transformedTop + 'px, 0)';
 
 			//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
+		}
+
+		//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
+
+	}, {
+		key: '_wrapContents',
+		value: function _wrapContents() {
+			//Includes elements and also text nodes.
+			var childNodes = this.element.childNodes;
+			var childElements = this.element.children;
+
+			//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
+			if (childElements.length === 1) {
+				//There are no text nodes, just this one element. #winning
+				if (childNodes.length === 1) {
+					this.innerElement = childElements[0];
+					return;
+				}
+
+				//There is a single element as child, but there might also be whitespace (text nodes) around it.
+				//Check if there is nothing but "empty" text nodes, which we can ignore.
+				//This catches cases such as the following, where the whitespace (nl, tab) around the <img> is irrelevant.
+				//<el-meister>
+				//	<img>
+				//</el-meister>
+				var onlyEmptyTextNodes = true;
+
+				for (var i = 0; i < childNodes.length; i++) {
+					var child = childNodes[i];
+
+					if (child.textContent.trim() !== '') {
+						onlyEmptyTextNodes = false;
+						break;
+					}
+				}
+
+				if (onlyEmptyTextNodes) {
+					this.innerElement = childElements[0];
+					return;
+				}
+			}
+
+			console.log('Wrapped ' + childNodes.length + ' children in a <div>');
+
+			this._wrappedContents = true;
+
+			var fragment = document.createDocumentFragment();
+			this.innerElement = document.createElement('div');
+
+			//childNodes is a live list.
+			while (childNodes.length > 0) {
+				fragment.appendChild(childNodes[0]);
+			}
+
+			this.innerElement.appendChild(fragment);
+			this.element.appendChild(this.innerElement);
+		}
+	}, {
+		key: '_unwrapContents',
+		value: function _unwrapContents() {
+			if (this._wrappedContents) {
+				var childNodes = this.innerElement.childNodes;
+				var fragment = document.createDocumentFragment();
+
+				//childNodes is a live list.
+				while (childNodes.length > 0) {
+					fragment.appendChild(childNodes[0]);
+				}
+
+				this.element.removeChild(this.innerElement);
+				this.element.appendChild(fragment);
+			}
 		}
 	}, {
 		key: '_observeHeight',
@@ -3105,7 +3242,7 @@ var DimensionsBehavior = function (_Behavior) {
 
 exports.default = DimensionsBehavior;
 
-},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/CSSLengthType.js":27,"types/FollowerModeType.js":28,"types/HeightType.js":30,"types/LayoutDependencyType.js":31,"types/StringType.js":33}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/CSSLengthType.js":28,"types/FollowerModeType.js":29,"types/HeightType.js":31,"types/LayoutDependencyType.js":32,"types/StringType.js":34}],14:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -3120,6 +3257,10 @@ var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
 
 var _DebugGuidesBehavior2 = _interopRequireDefault(_DebugGuidesBehavior);
 
+var _FadeInBehavior = require('behaviors/FadeInBehavior.js');
+
+var _FadeInBehavior2 = _interopRequireDefault(_FadeInBehavior);
+
 var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
 
 var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
@@ -3128,10 +3269,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
+_scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/LayoutBehavior.js":12,"scrollmeister.js":26}],14:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/LayoutBehavior.js":13,"scrollmeister.js":27}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3177,7 +3319,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":15,"scrollmeister.js":26}],15:[function(require,module,exports){
+},{"./MeisterComponent.js":16,"scrollmeister.js":27}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3231,11 +3373,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		}
 	}, {
 		key: 'connectedCallback',
-		value: function connectedCallback() {
-			//TODO: the layout behavior requires a single child node inside the custom element.
-			//Check if it has a single child of type element.
-			//If not then wrap all children in a div and append it https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment
-		}
+		value: function connectedCallback() {}
 	}, {
 		key: 'disconnectedCallback',
 		value: function disconnectedCallback() {
@@ -3293,7 +3431,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":5,"scrollmeister.js":26}],16:[function(require,module,exports){
+},{"raf":5,"scrollmeister.js":27}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3339,7 +3477,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":15,"scrollmeister.js":26}],17:[function(require,module,exports){
+},{"./MeisterComponent.js":16,"scrollmeister.js":27}],18:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3357,7 +3495,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":14,"components/ScrollMeisterComponent.js":16,"document-register-element":2}],18:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":15,"components/ScrollMeisterComponent.js":17,"document-register-element":2}],19:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.css');
@@ -3368,7 +3506,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":13,"./components":17,"./scrollmeister.css":25,"./scrollmeister.js":26}],19:[function(require,module,exports){
+},{"./behaviors":14,"./components":18,"./scrollmeister.css":26,"./scrollmeister.js":27}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3877,7 +4015,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3920,7 +4058,7 @@ exports.default = {
 	}
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3939,7 +4077,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4039,7 +4177,7 @@ ScrollStatus.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = new ScrollStatus();
 
-},{"tiny-emitter":8}],23:[function(require,module,exports){
+},{"tiny-emitter":8}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4062,7 +4200,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4100,9 +4238,9 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],26:[function(require,module,exports){
+},{"browserify-css":1}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4206,7 +4344,7 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4248,7 +4386,7 @@ exports.default = {
 	}
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4263,7 +4401,7 @@ exports.default = {
 	}
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4288,7 +4426,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":27,"types/NumberType.js":32,"types/StringType.js":33}],30:[function(require,module,exports){
+},{"types/CSSLengthType.js":28,"types/NumberType.js":33,"types/StringType.js":34}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4334,7 +4472,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":27}],31:[function(require,module,exports){
+},{"types/CSSLengthType.js":28}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4401,14 +4539,18 @@ exports.default = {
 			}
 		}
 
-		return Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+		var dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+
+		if (dependencies.length === 0) {
+			throw new Error('Couldn\'t resolve the layout dependency "' + value + '". No flow elements found matching this selector.');
+		}
 	},
 	stringify: function stringify(value) {
 		return value;
 	}
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4437,7 +4579,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4470,4 +4612,4 @@ exports.default = {
 	}
 };
 
-},{}]},{},[18]);
+},{}]},{},[19]);

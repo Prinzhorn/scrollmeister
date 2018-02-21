@@ -29,11 +29,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		};
 	}
 
-	connectedCallback() {
-		//TODO: the layout behavior requires a single child node inside the custom element.
-		//Check if it has a single child of type element.
-		//If not then wrap all children in a div and append it https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment
-	}
+	connectedCallback() {}
 
 	disconnectedCallback() {
 		raf.cancel(this._batchHandle);

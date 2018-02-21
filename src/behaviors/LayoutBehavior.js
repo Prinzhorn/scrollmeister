@@ -68,6 +68,8 @@ export default class DimensionsBehavior extends Behavior {
 			height: 0
 		};
 
+		this._wrapContents();
+
 		//Listen to the layout event of the layout behavior.
 		//TODO: is gut? We can always refactor, but does this make sense though?
 		//This means possibly hundreds of DimensionsBehaviors will react to this event.
@@ -104,6 +106,7 @@ export default class DimensionsBehavior extends Behavior {
 
 	detach() {
 		this._unobserveHeight();
+		this._unwrapContents();
 	}
 
 	scroll(status, engine) {
@@ -111,6 +114,74 @@ export default class DimensionsBehavior extends Behavior {
 		this.element.style.transform = `translate3d(${Math.round(this.left)}px, ${transformedTop}px, 0)`;
 
 		//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
+	}
+
+	//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
+	_wrapContents() {
+		//Includes elements and also text nodes.
+		let childNodes = this.element.childNodes;
+		let childElements = this.element.children;
+
+		//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
+		if (childElements.length === 1) {
+			//There are no text nodes, just this one element. #winning
+			if (childNodes.length === 1) {
+				this.innerElement = childElements[0];
+				return;
+			}
+
+			//There is a single element as child, but there might also be whitespace (text nodes) around it.
+			//Check if there is nothing but "empty" text nodes, which we can ignore.
+			//This catches cases such as the following, where the whitespace (nl, tab) around the <img> is irrelevant.
+			//<el-meister>
+			//	<img>
+			//</el-meister>
+			let onlyEmptyTextNodes = true;
+
+			for (let i = 0; i < childNodes.length; i++) {
+				let child = childNodes[i];
+
+				if (child.textContent.trim() !== '') {
+					onlyEmptyTextNodes = false;
+					break;
+				}
+			}
+
+			if (onlyEmptyTextNodes) {
+				this.innerElement = childElements[0];
+				return;
+			}
+		}
+
+		console.log(`Wrapped ${childNodes.length} children in a <div>`);
+
+		this._wrappedContents = true;
+
+		let fragment = document.createDocumentFragment();
+		this.innerElement = document.createElement('div');
+
+		//childNodes is a live list.
+		while (childNodes.length > 0) {
+			fragment.appendChild(childNodes[0]);
+		}
+
+		this.innerElement.appendChild(fragment);
+		this.element.appendChild(this.innerElement);
+	}
+
+	_unwrapContents() {
+		if (this._wrappedContents) {
+			let childNodes = this.innerElement.childNodes;
+			let fragment = document.createDocumentFragment();
+
+			//childNodes is a live list.
+			while (childNodes.length > 0) {
+				fragment.appendChild(childNodes[0]);
+			}
+
+			this.element.removeChild(this.innerElement);
+			this.element.appendChild(fragment);
+		}
 	}
 
 	_observeHeight() {

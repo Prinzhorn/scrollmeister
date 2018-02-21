@@ -59,7 +59,13 @@ export default {
 			}
 		}
 
-		return Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+		let dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+
+		if (dependencies.length === 0) {
+			throw new Error(
+				`Couldn't resolve the layout dependency "${value}". No flow elements found matching this selector.`
+			);
+		}
 	},
 	stringify: function(value: string): string {
 		return value;
