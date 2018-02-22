@@ -61,6 +61,8 @@ export default class Behavior {
 
 		this.parseProperties(rawProperties);
 
+		//TODO: does this make sense? Does ANYONE except for the layout behavior need the scroll event?
+		//We wanted to solve everything else using signals/slots which can be triggered by the layout engine.
 		if (this.scroll) {
 			this.listen(scrollStatus, 'scroll', this.scroll.bind(this));
 		}

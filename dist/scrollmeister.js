@@ -2163,6 +2163,8 @@ var Behavior = function () {
 
 		this.parseProperties(rawProperties);
 
+		//TODO: does this make sense? Does ANYONE except for the layout behavior need the scroll event?
+		//We wanted to solve everything else using signals/slots which can be triggered by the layout engine.
 		if (this.scroll) {
 			this.listen(_scrollStatus2.default, 'scroll', this.scroll.bind(this));
 		}
@@ -2895,9 +2897,11 @@ var LayoutBehavior = function (_Behavior) {
 		value: function _doLayout() {
 			this._layoutScheduled = false;
 
-			var elements = this.el.querySelectorAll('[layout]');
+			var nodes = Array.prototype.slice.call(this.el.querySelectorAll('[layout]')).map(function (el) {
+				return el.layout;
+			});
 
-			this.engine.doLayout(elements, this.props.guides, this.props.width);
+			this.engine.doLayout(nodes, this.props.guides, this.props.width);
 
 			this._updateScrollHeight();
 
@@ -2907,11 +2911,6 @@ var LayoutBehavior = function (_Behavior) {
 		key: '_updateScrollHeight',
 		value: function _updateScrollHeight() {
 			var requiredHeight = this.engine.requiredHeight;
-			var documentElement = document.documentElement;
-
-			if (!documentElement) {
-				throw new Error('There is no documentElement to get the size of.');
-			}
 
 			//Firefox on Android will scroll natively to remove the addressbar.
 			//This can not be prevented, even with preventDefault on the touch events.
@@ -2922,7 +2921,11 @@ var LayoutBehavior = function (_Behavior) {
 			//On iOS the iframe will scale to the height of its content, but we query the window height.
 			//So basically it was growing ENDLESSLY (100vh kept getting larger)!
 			if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
-				documentElement.style.overflow = 'visible';
+				if (!document.documentElement) {
+					throw new Error('There is no documentElement to style.');
+				}
+
+				document.documentElement.style.overflow = 'visible';
 				this.el.style.height = 0;
 			} else {
 				this.el.style.height = Math.round(requiredHeight) + 'px';
@@ -3016,16 +3019,16 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var DimensionsBehavior = function (_Behavior) {
-	_inherits(DimensionsBehavior, _Behavior);
+var LayoutBehavior = function (_Behavior) {
+	_inherits(LayoutBehavior, _Behavior);
 
-	function DimensionsBehavior() {
-		_classCallCheck(this, DimensionsBehavior);
+	function LayoutBehavior() {
+		_classCallCheck(this, LayoutBehavior);
 
-		return _possibleConstructorReturn(this, (DimensionsBehavior.__proto__ || Object.getPrototypeOf(DimensionsBehavior)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (LayoutBehavior.__proto__ || Object.getPrototypeOf(LayoutBehavior)).apply(this, arguments));
 	}
 
-	_createClass(DimensionsBehavior, [{
+	_createClass(LayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
 			var _this2 = this;
@@ -3033,6 +3036,8 @@ var DimensionsBehavior = function (_Behavior) {
 			this.state = {
 				height: 0
 			};
+
+			this.layout = {};
 
 			this._scrollUpdate = {};
 
@@ -3069,15 +3074,16 @@ var DimensionsBehavior = function (_Behavior) {
 		value: function detach() {
 			this._unobserveHeight();
 			this._unwrapContents();
+			//TODO: remove styles
 		}
 	}, {
 		key: 'scroll',
 		value: function scroll(status, engine) {
 			var scrollUpdate = this._scrollUpdate;
-			var didMove = engine.doScroll(this, status.position, scrollUpdate);
+			var didMove = engine.doScroll(this.layout, status.position, scrollUpdate);
 
 			if (didMove) {
-				var _left = Math.round(this.left);
+				var _left = Math.round(this.layout.left);
 				var _top = scrollUpdate.wrapperTop;
 				var style = this.el.style;
 
@@ -3214,12 +3220,12 @@ var DimensionsBehavior = function (_Behavior) {
 			var style = this.el.style;
 			var display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 			var overflow = 'visible';
-			var width = this.width;
-			var height = this.height;
+			var width = this.layout.width;
+			var height = this.layout.height;
 
 			//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
 			if (this.props.clip) {
-				height = this.clipRect.height;
+				height = this.layout.clipRect.height;
 				overflow = 'hidden';
 			}
 
@@ -3234,8 +3240,8 @@ var DimensionsBehavior = function (_Behavior) {
 		key: '_renderInner',
 		value: function _renderInner() {
 			var style = this.innerEl.style;
-			var width = this.width;
-			var height = this.props.height === 'auto' ? 'auto' : this.height;
+			var width = this.layout.width;
+			var height = this.props.height === 'auto' ? 'auto' : this.layout.height;
 
 			style.width = Math.round(width) + 'px';
 			style.height = Math.round(height) + 'px';
@@ -3306,10 +3312,10 @@ var DimensionsBehavior = function (_Behavior) {
 		}
 	}]);
 
-	return DimensionsBehavior;
+	return LayoutBehavior;
 }(_Behavior3.default);
 
-exports.default = DimensionsBehavior;
+exports.default = LayoutBehavior;
 
 },{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/BooleanType.js":28,"types/CSSLengthType.js":29,"types/FollowerModeType.js":30,"types/HeightType.js":32,"types/LayoutDependencyType.js":33,"types/StringType.js":35}],14:[function(require,module,exports){
 'use strict';
@@ -3656,7 +3662,7 @@ var GuideLayoutEngine = function () {
 						continue;
 					}
 
-					var dependencies = _node.layout.props.dependencies;
+					var dependencies = _node.props.dependencies;
 
 					//Check if any of the dependencies is still dirty.
 					for (var j = 0; j < dependencies.length; j++) {
@@ -3762,8 +3768,8 @@ var GuideLayoutEngine = function () {
 		key: '_doNodeLayout',
 		value: function _doNodeLayout(node, dependencies) {
 			var layout = node.layout;
-			var props = layout.props;
-			var state = layout.state;
+			var props = node.props;
+			var state = node.state;
 			var layoutMode = props.mode;
 
 			layout.spacingTop = this.lengthToPixel(props.spacing.top);
@@ -4645,7 +4651,7 @@ exports.default = {
 			element = findPreviousFlowElement(element);
 
 			if (element) {
-				return [element];
+				return [element.layout];
 			} else {
 				return [];
 			}
@@ -4663,7 +4669,7 @@ exports.default = {
 			} while (element && numberOfSkips--);
 
 			if (element) {
-				return [element];
+				return [element.layout];
 			} else {
 				return [];
 			}
@@ -4674,6 +4680,10 @@ exports.default = {
 		if (dependencies.length === 0) {
 			throw new Error('Couldn\'t resolve the layout dependency "' + value + '". No flow elements found matching this selector.');
 		}
+
+		return dependencies.map(function (el) {
+			return el.layout;
+		});
 	},
 	stringify: function stringify(value) {
 		return value;

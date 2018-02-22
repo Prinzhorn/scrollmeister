@@ -279,9 +279,9 @@ export default class LayoutBehavior extends Behavior {
 	_doLayout() {
 		this._layoutScheduled = false;
 
-		let elements = this.el.querySelectorAll('[layout]');
+		let nodes = Array.prototype.slice.call(this.el.querySelectorAll('[layout]')).map(el => el.layout);
 
-		this.engine.doLayout(elements, this.props.guides, this.props.width);
+		this.engine.doLayout(nodes, this.props.guides, this.props.width);
 
 		this._updateScrollHeight();
 
@@ -290,11 +290,6 @@ export default class LayoutBehavior extends Behavior {
 
 	_updateScrollHeight() {
 		let requiredHeight = this.engine.requiredHeight;
-		let documentElement = document.documentElement;
-
-		if (!documentElement) {
-			throw new Error('There is no documentElement to get the size of.');
-		}
 
 		//Firefox on Android will scroll natively to remove the addressbar.
 		//This can not be prevented, even with preventDefault on the touch events.
@@ -305,7 +300,11 @@ export default class LayoutBehavior extends Behavior {
 		//On iOS the iframe will scale to the height of its content, but we query the window height.
 		//So basically it was growing ENDLESSLY (100vh kept getting larger)!
 		if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
-			documentElement.style.overflow = 'visible';
+			if (!document.documentElement) {
+				throw new Error('There is no documentElement to style.');
+			}
+
+			document.documentElement.style.overflow = 'visible';
 			this.el.style.height = 0;
 		} else {
 			this.el.style.height = Math.round(requiredHeight) + 'px';

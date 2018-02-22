@@ -35,7 +35,7 @@ export default {
 			element = findPreviousFlowElement(element);
 
 			if (element) {
-				return [element];
+				return [element.layout];
 			} else {
 				return [];
 			}
@@ -53,7 +53,7 @@ export default {
 			} while (element && numberOfSkips--);
 
 			if (element) {
-				return [element];
+				return [element.layout];
 			} else {
 				return [];
 			}
@@ -66,6 +66,8 @@ export default {
 				`Couldn't resolve the layout dependency "${value}". No flow elements found matching this selector.`
 			);
 		}
+
+		return dependencies.map(el => el.layout);
 	},
 	stringify: function(value: string): string {
 		return value;

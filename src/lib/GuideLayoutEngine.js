@@ -38,7 +38,7 @@ export default class GuideLayoutEngine {
 	}
 
 	doLayout(
-		nodes: Array<{ layout: any }>,
+		nodes: Array<{ layout: any, props: any, state: { height: number } }>,
 		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,
 		contentWidth: { length: number, unit: string }
 	) {
@@ -72,7 +72,7 @@ export default class GuideLayoutEngine {
 					continue;
 				}
 
-				let dependencies = node.layout.props.dependencies;
+				let dependencies = node.props.dependencies;
 
 				//Check if any of the dependencies is still dirty.
 				for (let j = 0; j < dependencies.length; j++) {
@@ -172,10 +172,10 @@ export default class GuideLayoutEngine {
 	}
 
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
-	_doNodeLayout(node: { layout: any }, dependencies: Array<{ layout: any }>) {
+	_doNodeLayout(node: { layout: any, props: any, state: { height: number } }, dependencies: Array<{ layout: any }>) {
 		let layout = node.layout;
-		let props = layout.props;
-		let state = layout.state;
+		let props = node.props;
+		let state = node.state;
 		let layoutMode = props.mode;
 
 		layout.spacingTop = this.lengthToPixel(props.spacing.top);

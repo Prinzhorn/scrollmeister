@@ -11,7 +11,7 @@ import CSSLengthType from 'types/CSSLengthType.js';
 
 import Behavior from 'behaviors/Behavior.js';
 
-export default class DimensionsBehavior extends Behavior {
+export default class LayoutBehavior extends Behavior {
 	//TODO: instead of StringType or LayoutDependencyType we need to give them names such as "string" and "layout-dependency".
 	//Otherwise you cannot just create a custom behavior in a <script> tag without importing the types.
 	static get schema(): any {
@@ -73,6 +73,8 @@ export default class DimensionsBehavior extends Behavior {
 			height: 0
 		};
 
+		this.layout = {};
+
 		this._scrollUpdate = {};
 
 		this._wrapContents();
@@ -115,14 +117,15 @@ export default class DimensionsBehavior extends Behavior {
 	detach() {
 		this._unobserveHeight();
 		this._unwrapContents();
+		//TODO: remove styles
 	}
 
 	scroll(status, engine) {
 		let scrollUpdate = this._scrollUpdate;
-		let didMove = engine.doScroll(this, status.position, scrollUpdate);
+		let didMove = engine.doScroll(this.layout, status.position, scrollUpdate);
 
 		if (didMove) {
-			let left = Math.round(this.left);
+			let left = Math.round(this.layout.left);
 			let top = scrollUpdate.wrapperTop;
 			let style = this.el.style;
 
@@ -248,12 +251,12 @@ export default class DimensionsBehavior extends Behavior {
 		let style = this.el.style;
 		let display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 		let overflow = 'visible';
-		let width = this.width;
-		let height = this.height;
+		let width = this.layout.width;
+		let height = this.layout.height;
 
 		//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
 		if (this.props.clip) {
-			height = this.clipRect.height;
+			height = this.layout.clipRect.height;
 			overflow = 'hidden';
 		}
 
@@ -267,8 +270,8 @@ export default class DimensionsBehavior extends Behavior {
 
 	_renderInner() {
 		let style = this.innerEl.style;
-		let width = this.width;
-		let height = this.props.height === 'auto' ? 'auto' : this.height;
+		let width = this.layout.width;
+		let height = this.props.height === 'auto' ? 'auto' : this.layout.height;
 
 		style.width = Math.round(width) + 'px';
 		style.height = Math.round(height) + 'px';
