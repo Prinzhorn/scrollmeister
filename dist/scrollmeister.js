@@ -2505,7 +2505,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":9,"types/StringType.js":34}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"types/StringType.js":35}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2967,7 +2967,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":23,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":28,"types/GuideDefinitionType.js":30}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":23,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":29,"types/GuideDefinitionType.js":31}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2979,6 +2979,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _resizeObserverPolyfill = require('resize-observer-polyfill');
 
 var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+var _BooleanType = require('types/BooleanType.js');
+
+var _BooleanType2 = _interopRequireDefault(_BooleanType);
 
 var _StringType = require('types/StringType.js');
 
@@ -3030,6 +3034,8 @@ var DimensionsBehavior = function (_Behavior) {
 				height: 0
 			};
 
+			this._scrollUpdate = {};
+
 			this._wrapContents();
 
 			//Listen to the layout event of the layout behavior.
@@ -3038,6 +3044,7 @@ var DimensionsBehavior = function (_Behavior) {
 			//We could instead reverse the responsibility and have the layout behavior
 			//Call a method on each of the children.
 			//Maybe we should just merge Dimensions+PositionBehavior because they belong together anyway.
+			//this.parentEl instead of document
 			this.listen(document, 'guidelayout:layout', function () {
 				_this2._render();
 			});
@@ -3066,8 +3073,33 @@ var DimensionsBehavior = function (_Behavior) {
 	}, {
 		key: 'scroll',
 		value: function scroll(status, engine) {
-			var transformedTop = engine.doScroll(this, status.position);
-			this.element.style.transform = 'translate3d(' + Math.round(this.left) + 'px, ' + transformedTop + 'px, 0)';
+			var scrollUpdate = this._scrollUpdate;
+			var didMove = engine.doScroll(this, status.position, scrollUpdate);
+
+			if (didMove) {
+				var _left = Math.round(this.left);
+				var _top = scrollUpdate.wrapperTop;
+				var style = this.element.style;
+
+				style.msTransform = 'translate(' + _left + 'px, ' + _top + 'px)';
+				style.transform = style.WebkitTransform = 'translate3d(' + _left + 'px, ' + _top + 'px, 0)';
+
+				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
+				//But we do not do the opposite here. This is just the last resort.
+				//Under normal circumstances an async process (handleScrollPause) toggles display block/none intelligently.
+				if (scrollUpdate.inViewport) {
+					style.display = 'block';
+				}
+
+				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
+				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
+				//or elements with appear effects using scaling/rotation.
+				var innerStyle = this.innerElement.style;
+				innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
+				innerStyle.transform = innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+
+				//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+			}
 
 			//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 		}
@@ -3154,7 +3186,7 @@ var DimensionsBehavior = function (_Behavior) {
 				});
 			});
 
-			this._resizeObserver.observe(this.element);
+			this._resizeObserver.observe(this.innerElement);
 		}
 	}, {
 		key: '_unobserveHeight',
@@ -3167,17 +3199,50 @@ var DimensionsBehavior = function (_Behavior) {
 	}, {
 		key: '_render',
 		value: function _render() {
+			this._renderWrapper();
+			this._renderInner();
+		}
+	}, {
+		key: '_canSafelyBeUnloadedFromGPU',
+		value: function _canSafelyBeUnloadedFromGPU() {
+			//It's not safe to hide tiles with auto-height because we query the DOM for their height.
+			return this.props.height !== 'auto';
+		}
+	}, {
+		key: '_renderWrapper',
+		value: function _renderWrapper() {
 			var style = this.element.style;
-			var left = Math.round(this.left);
-			var top = Math.round(this.top);
+			var display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
+			var overflow = 'visible';
+			var width = this.width;
+			var height = this.height;
 
-			style.msTransform = 'translate(' + left + 'px, ' + top + 'px)';
-			style.transform = style.WebkitTransform = 'translate3d(' + left + 'px, ' + top + 'px, 0)';
+			//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
+			if (this.props.clip) {
+				height = this.clipRect.height;
+				overflow = 'hidden';
+			}
 
-			style.width = Math.round(this.width) + 'px';
-			style.height = this.props.height === 'auto' ? 'auto' : Math.round(this.height) + 'px';
+			style.display = display;
+			style.overflow = overflow;
+			style.width = Math.round(width) + 'px';
+			style.height = Math.round(height) + 'px';
+			style.msTransform = 'translate(0, 0)';
+			style.transform = style.WebkitTransform = 'translate3d(0, 0, 0.00001)';
+		}
+	}, {
+		key: '_renderInner',
+		value: function _renderInner() {
+			var style = this.innerElement.style;
+			var width = this.width;
+			var height = this.props.height === 'auto' ? 'auto' : this.height;
 
-			style.overflow = 'hidden';
+			style.width = Math.round(width) + 'px';
+			style.height = Math.round(height) + 'px';
+
+			if (this.props.clip) {
+				style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+			}
 		}
 	}], [{
 		key: 'schema',
@@ -3200,6 +3265,10 @@ var DimensionsBehavior = function (_Behavior) {
 				followerMode: {
 					type: _StringType2.default.createEnum('followerMode', ['parallax', 'pin']),
 					default: 'parallax'
+				},
+				clip: {
+					type: _BooleanType2.default,
+					default: 'false'
 				},
 				pinAnchor: {
 					type: _StringType2.default.createEnum('pinAnchor', ['top', 'center', 'bottom']),
@@ -3242,7 +3311,7 @@ var DimensionsBehavior = function (_Behavior) {
 
 exports.default = DimensionsBehavior;
 
-},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/CSSLengthType.js":28,"types/FollowerModeType.js":29,"types/HeightType.js":31,"types/LayoutDependencyType.js":32,"types/StringType.js":34}],14:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/BooleanType.js":28,"types/CSSLengthType.js":29,"types/FollowerModeType.js":30,"types/HeightType.js":32,"types/LayoutDependencyType.js":33,"types/StringType.js":35}],14:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -3619,18 +3688,72 @@ var GuideLayoutEngine = function () {
 				}
 			} while (skippedNode);
 		}
+
+		//Does not return anything other than a flag. Instead we pass it an object that it fills.
+		//This minimizes the amount of garbage we create on the hot path, we reuse this object.
+
 	}, {
 		key: 'doScroll',
-		value: function doScroll(layout, scrollPosition) {
-			var contentTop = void 0;
+		value: function doScroll(layout, scrollPosition, ret) {
+			var verticalCenter = this.viewport.height / 2;
+			var prevWrapperTop = ret.wrapperTop;
+
+			ret.contentHeight = layout.height;
 
 			if (layout.transformTopPosition) {
-				contentTop = layout.transformTopPosition(scrollPosition);
+				ret.contentTop = layout.transformTopPosition(scrollPosition);
 			} else {
-				contentTop = layout.top - scrollPosition;
+				ret.contentTop = layout.top - scrollPosition;
 			}
 
-			return contentTop;
+			if (layout.clipRect) {
+				ret.wrapperTop = layout.clipRect.top - scrollPosition;
+				ret.wrapperHeight = layout.clipRect.height;
+			} else {
+				ret.wrapperTop = ret.contentTop;
+				ret.wrapperHeight = ret.contentHeight;
+			}
+
+			ret.wrapperBottom = Math.round(ret.wrapperTop + ret.wrapperHeight);
+			ret.contentBottom = Math.round(ret.contentTop + ret.contentHeight);
+
+			//We round this here and not earlier because other calculations,
+			//like wrapper/contentBottom need to be as accurate as possible.
+			ret.wrapperTop = Math.round(ret.wrapperTop);
+			ret.contentTop = Math.round(ret.contentTop);
+
+			ret.contentTopOffset = ret.contentTop - ret.wrapperTop;
+
+			//Does the center of the viewport intersect with the element?
+			ret.inCenter = ret.wrapperTop < verticalCenter && ret.wrapperBottom > verticalCenter;
+
+			//The extended viewport has three times the height of the normal viewport (+1 at the top and bottom).
+			//It's used for lazy loading etc. before something enters the viewport.
+			ret.inExtendedViewport = ret.wrapperTop < 2 * this.viewport.height && ret.wrapperBottom > -this.viewport.height;
+
+			//Optimization: there's no need to translate the item beyond the viewport.
+			//"Park" it exactly at the edge.
+			//This makes the difference between touching ~5 (visible) and ~100s (all) DOM items.
+			//But we also return the absolute top position before parking it.
+
+			ret.absoluteWrapperTop = ret.wrapperTop;
+			ret.absoluteContentTop = ret.contentTop;
+
+			//Top of the element below the viewport?
+			if (ret.wrapperTop >= this.viewport.height) {
+				ret.wrapperTop = this.viewport.height;
+				ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
+				ret.inViewport = false;
+			} else if (ret.wrapperBottom <= 0) {
+				//Bottom of the element above the viewport?
+				ret.wrapperTop = -Math.round(ret.wrapperHeight);
+				ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
+				ret.inViewport = false;
+			} else {
+				ret.inViewport = true;
+			}
+
+			return ret.wrapperTop !== prevWrapperTop;
 		}
 
 		//This will attach the layout info directly to each dom node. No need for a lookup map.
@@ -3839,29 +3962,21 @@ var GuideLayoutEngine = function () {
 			//clipping
 			//
 
+			if (props.clip && layoutMode === 'follow') {
+				//Reuse the object.
+				if (!layout.clipRect) {
+					layout.clipRect = {};
+				}
+
+				layout.clipRect.top = dependencies[0].layout.top;
+				layout.clipRect.bottom = dependencies[1].layout.bottom;
+				layout.clipRect.height = layout.leaderHeight;
+			} else {
+				delete layout.clipRect;
+			}
+
 			/*
-   if (item.get('clip')) {
-   	if (layoutMode === 'follow') {
-   		layout.set(
-   			'clipRect',
-   			Immutable.Map({
-   				top: dependencies.get(0).get('top'),
-   				bottom: dependencies.get(1).get('bottom'),
-   				height: layout.get('leaderHeight')
-   			})
-   		);
-   	} else {
-   		layout.set(
-   			'clipRect',
-   			Immutable.Map({
-   				top: layout.get('top'),
-   				bottom: layout.get('bottom'),
-   				height: layout.get('height')
-   			})
-   		);
-   	}
-   }
-   	if (item.get('appear') && item.get('appear').size > 0) {
+   if (item.get('appear') && item.get('appear').size > 0) {
    	layout.set('calculateAppear', this.createAppearCalculator(item, dependencies, layout));
    }
    */
@@ -4239,7 +4354,7 @@ if (typeof assign !== 'function') {
 exports.default = assign;
 
 },{}],26:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden;will-change:opacity}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
 },{"browserify-css":1}],27:[function(require,module,exports){
 "use strict";
 
@@ -4350,6 +4465,21 @@ exports.default = Scrollmeister;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+exports.default = {
+	parse: function parse(value) {
+		return value.trim() === 'true';
+	},
+	stringify: function stringify(value) {
+		return '' + value;
+	}
+};
+
+},{}],29:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
 var units = ['px', 'vw', 'vh', 'vmin', 'vmax', '%'];
 var unitRegex = new RegExp('[\\d.](' + units.join('|') + ')$');
 
@@ -4386,7 +4516,7 @@ exports.default = {
 	}
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4401,7 +4531,7 @@ exports.default = {
 	}
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4426,7 +4556,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //But let's see how far we get.
 exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
 
-},{"types/CSSLengthType.js":28,"types/NumberType.js":33,"types/StringType.js":34}],31:[function(require,module,exports){
+},{"types/CSSLengthType.js":29,"types/NumberType.js":34,"types/StringType.js":35}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4472,7 +4602,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":28}],32:[function(require,module,exports){
+},{"types/CSSLengthType.js":29}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4550,7 +4680,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4579,7 +4709,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

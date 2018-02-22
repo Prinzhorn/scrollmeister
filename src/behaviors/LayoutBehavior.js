@@ -2,6 +2,7 @@
 
 import ResizeObserver from 'resize-observer-polyfill';
 
+import BooleanType from 'types/BooleanType.js';
 import StringType from 'types/StringType.js';
 import LayoutDependencyType from 'types/LayoutDependencyType.js';
 import HeightType from 'types/HeightType.js';
@@ -29,6 +30,10 @@ export default class DimensionsBehavior extends Behavior {
 			followerMode: {
 				type: StringType.createEnum('followerMode', ['parallax', 'pin']),
 				default: 'parallax'
+			},
+			clip: {
+				type: BooleanType,
+				default: 'false'
 			},
 			pinAnchor: {
 				type: StringType.createEnum('pinAnchor', ['top', 'center', 'bottom']),
@@ -68,6 +73,8 @@ export default class DimensionsBehavior extends Behavior {
 			height: 0
 		};
 
+		this._scrollUpdate = {};
+
 		this._wrapContents();
 
 		//Listen to the layout event of the layout behavior.
@@ -76,6 +83,7 @@ export default class DimensionsBehavior extends Behavior {
 		//We could instead reverse the responsibility and have the layout behavior
 		//Call a method on each of the children.
 		//Maybe we should just merge Dimensions+PositionBehavior because they belong together anyway.
+		//this.parentEl instead of document
 		this.listen(document, 'guidelayout:layout', () => {
 			this._render();
 		});
@@ -110,8 +118,33 @@ export default class DimensionsBehavior extends Behavior {
 	}
 
 	scroll(status, engine) {
-		let transformedTop = engine.doScroll(this, status.position);
-		this.element.style.transform = `translate3d(${Math.round(this.left)}px, ${transformedTop}px, 0)`;
+		let scrollUpdate = this._scrollUpdate;
+		let didMove = engine.doScroll(this, status.position, scrollUpdate);
+
+		if (didMove) {
+			let left = Math.round(this.left);
+			let top = scrollUpdate.wrapperTop;
+			let style = this.element.style;
+
+			style.msTransform = `translate(${left}px, ${top}px)`;
+			style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
+
+			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
+			//But we do not do the opposite here. This is just the last resort.
+			//Under normal circumstances an async process (handleScrollPause) toggles display block/none intelligently.
+			if (scrollUpdate.inViewport) {
+				style.display = 'block';
+			}
+
+			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
+			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
+			//or elements with appear effects using scaling/rotation.
+			let innerStyle = this.innerElement.style;
+			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
+			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
+
+			//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+		}
 
 		//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 	}
@@ -191,7 +224,7 @@ export default class DimensionsBehavior extends Behavior {
 			});
 		});
 
-		this._resizeObserver.observe(this.element);
+		this._resizeObserver.observe(this.innerElement);
 	}
 
 	_unobserveHeight() {
@@ -202,16 +235,46 @@ export default class DimensionsBehavior extends Behavior {
 	}
 
 	_render() {
+		this._renderWrapper();
+		this._renderInner();
+	}
+
+	_canSafelyBeUnloadedFromGPU() {
+		//It's not safe to hide tiles with auto-height because we query the DOM for their height.
+		return this.props.height !== 'auto';
+	}
+
+	_renderWrapper() {
 		let style = this.element.style;
-		let left = Math.round(this.left);
-		let top = Math.round(this.top);
+		let display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
+		let overflow = 'visible';
+		let width = this.width;
+		let height = this.height;
 
-		style.msTransform = `translate(${left}px, ${top}px)`;
-		style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
+		//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
+		if (this.props.clip) {
+			height = this.clipRect.height;
+			overflow = 'hidden';
+		}
 
-		style.width = Math.round(this.width) + 'px';
-		style.height = this.props.height === 'auto' ? 'auto' : Math.round(this.height) + 'px';
+		style.display = display;
+		style.overflow = overflow;
+		style.width = Math.round(width) + 'px';
+		style.height = Math.round(height) + 'px';
+		style.msTransform = `translate(0, 0)`;
+		style.transform = style.WebkitTransform = `translate3d(0, 0, 0.00001)`;
+	}
 
-		style.overflow = 'hidden';
+	_renderInner() {
+		let style = this.innerElement.style;
+		let width = this.width;
+		let height = this.props.height === 'auto' ? 'auto' : this.height;
+
+		style.width = Math.round(width) + 'px';
+		style.height = Math.round(height) + 'px';
+
+		if (this.props.clip) {
+			style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+		}
 	}
 }

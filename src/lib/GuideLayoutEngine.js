@@ -107,16 +107,68 @@ export default class GuideLayoutEngine {
 		} while (skippedNode);
 	}
 
-	doScroll(layout, scrollPosition) {
-		let contentTop;
+	//Does not return anything other than a flag. Instead we pass it an object that it fills.
+	//This minimizes the amount of garbage we create on the hot path, we reuse this object.
+	doScroll(layout, scrollPosition, ret) {
+		let verticalCenter = this.viewport.height / 2;
+		let prevWrapperTop = ret.wrapperTop;
+
+		ret.contentHeight = layout.height;
 
 		if (layout.transformTopPosition) {
-			contentTop = layout.transformTopPosition(scrollPosition);
+			ret.contentTop = layout.transformTopPosition(scrollPosition);
 		} else {
-			contentTop = layout.top - scrollPosition;
+			ret.contentTop = layout.top - scrollPosition;
 		}
 
-		return contentTop;
+		if (layout.clipRect) {
+			ret.wrapperTop = layout.clipRect.top - scrollPosition;
+			ret.wrapperHeight = layout.clipRect.height;
+		} else {
+			ret.wrapperTop = ret.contentTop;
+			ret.wrapperHeight = ret.contentHeight;
+		}
+
+		ret.wrapperBottom = Math.round(ret.wrapperTop + ret.wrapperHeight);
+		ret.contentBottom = Math.round(ret.contentTop + ret.contentHeight);
+
+		//We round this here and not earlier because other calculations,
+		//like wrapper/contentBottom need to be as accurate as possible.
+		ret.wrapperTop = Math.round(ret.wrapperTop);
+		ret.contentTop = Math.round(ret.contentTop);
+
+		ret.contentTopOffset = ret.contentTop - ret.wrapperTop;
+
+		//Does the center of the viewport intersect with the element?
+		ret.inCenter = ret.wrapperTop < verticalCenter && ret.wrapperBottom > verticalCenter;
+
+		//The extended viewport has three times the height of the normal viewport (+1 at the top and bottom).
+		//It's used for lazy loading etc. before something enters the viewport.
+		ret.inExtendedViewport = ret.wrapperTop < 2 * this.viewport.height && ret.wrapperBottom > -this.viewport.height;
+
+		//Optimization: there's no need to translate the item beyond the viewport.
+		//"Park" it exactly at the edge.
+		//This makes the difference between touching ~5 (visible) and ~100s (all) DOM items.
+		//But we also return the absolute top position before parking it.
+
+		ret.absoluteWrapperTop = ret.wrapperTop;
+		ret.absoluteContentTop = ret.contentTop;
+
+		//Top of the element below the viewport?
+		if (ret.wrapperTop >= this.viewport.height) {
+			ret.wrapperTop = this.viewport.height;
+			ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
+			ret.inViewport = false;
+		} else if (ret.wrapperBottom <= 0) {
+			//Bottom of the element above the viewport?
+			ret.wrapperTop = -Math.round(ret.wrapperHeight);
+			ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
+			ret.inViewport = false;
+		} else {
+			ret.inViewport = true;
+		}
+
+		return ret.wrapperTop !== prevWrapperTop;
 	}
 
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
@@ -331,29 +383,20 @@ export default class GuideLayoutEngine {
 		//clipping
 		//
 
-		/*
-		if (item.get('clip')) {
-			if (layoutMode === 'follow') {
-				layout.set(
-					'clipRect',
-					Immutable.Map({
-						top: dependencies.get(0).get('top'),
-						bottom: dependencies.get(1).get('bottom'),
-						height: layout.get('leaderHeight')
-					})
-				);
-			} else {
-				layout.set(
-					'clipRect',
-					Immutable.Map({
-						top: layout.get('top'),
-						bottom: layout.get('bottom'),
-						height: layout.get('height')
-					})
-				);
+		if (props.clip && layoutMode === 'follow') {
+			//Reuse the object.
+			if (!layout.clipRect) {
+				layout.clipRect = {};
 			}
+
+			layout.clipRect.top = dependencies[0].layout.top;
+			layout.clipRect.bottom = dependencies[1].layout.bottom;
+			layout.clipRect.height = layout.leaderHeight;
+		} else {
+			delete layout.clipRect;
 		}
 
+		/*
 		if (item.get('appear') && item.get('appear').size > 0) {
 			layout.set('calculateAppear', this.createAppearCalculator(item, dependencies, layout));
 		}

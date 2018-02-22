@@ -23,6 +23,7 @@
 			el-meister.follower > img {
 				width: 100%;
 				height: 100%;
+				object-fit: cover;
 			}
 
 			img {
@@ -55,9 +56,9 @@
 			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">5</el-meister>
 			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">6</el-meister>
 
-			<el-meister layout="guides: contentleft leftthird; height: 2/1; spacing: 20vh 0;">7</el-meister>
+			<el-meister layout="guides: contentleft leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</el-meister>
 
-			<el-meister class="follower" layout="guides: centercollapsed contentright; height: 1920/1280; mode: follow;">
+			<el-meister class="follower" layout="guides: viewport viewport; height: 75vh; mode: follow; clip: true;">
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 			</el-meister>
 
