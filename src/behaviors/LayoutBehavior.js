@@ -124,7 +124,7 @@ export default class DimensionsBehavior extends Behavior {
 		if (didMove) {
 			let left = Math.round(this.left);
 			let top = scrollUpdate.wrapperTop;
-			let style = this.element.style;
+			let style = this.el.style;
 
 			style.msTransform = `translate(${left}px, ${top}px)`;
 			style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
@@ -139,7 +139,7 @@ export default class DimensionsBehavior extends Behavior {
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 			//or elements with appear effects using scaling/rotation.
-			let innerStyle = this.innerElement.style;
+			let innerStyle = this.innerEl.style;
 			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
 			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
 
@@ -152,14 +152,14 @@ export default class DimensionsBehavior extends Behavior {
 	//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
 	_wrapContents() {
 		//Includes elements and also text nodes.
-		let childNodes = this.element.childNodes;
-		let childElements = this.element.children;
+		let childNodes = this.el.childNodes;
+		let childElements = this.el.children;
 
 		//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
 		if (childElements.length === 1) {
 			//There are no text nodes, just this one element. #winning
 			if (childNodes.length === 1) {
-				this.innerElement = childElements[0];
+				this.innerEl = childElements[0];
 				return;
 			}
 
@@ -181,7 +181,7 @@ export default class DimensionsBehavior extends Behavior {
 			}
 
 			if (onlyEmptyTextNodes) {
-				this.innerElement = childElements[0];
+				this.innerEl = childElements[0];
 				return;
 			}
 		}
@@ -191,20 +191,20 @@ export default class DimensionsBehavior extends Behavior {
 		this._wrappedContents = true;
 
 		let fragment = document.createDocumentFragment();
-		this.innerElement = document.createElement('div');
+		this.innerEl = document.createElement('div');
 
 		//childNodes is a live list.
 		while (childNodes.length > 0) {
 			fragment.appendChild(childNodes[0]);
 		}
 
-		this.innerElement.appendChild(fragment);
-		this.element.appendChild(this.innerElement);
+		this.innerEl.appendChild(fragment);
+		this.el.appendChild(this.innerEl);
 	}
 
 	_unwrapContents() {
 		if (this._wrappedContents) {
-			let childNodes = this.innerElement.childNodes;
+			let childNodes = this.innerEl.childNodes;
 			let fragment = document.createDocumentFragment();
 
 			//childNodes is a live list.
@@ -212,8 +212,8 @@ export default class DimensionsBehavior extends Behavior {
 				fragment.appendChild(childNodes[0]);
 			}
 
-			this.element.removeChild(this.innerElement);
-			this.element.appendChild(fragment);
+			this.el.removeChild(this.innerEl);
+			this.el.appendChild(fragment);
 		}
 	}
 
@@ -224,7 +224,7 @@ export default class DimensionsBehavior extends Behavior {
 			});
 		});
 
-		this._resizeObserver.observe(this.innerElement);
+		this._resizeObserver.observe(this.innerEl);
 	}
 
 	_unobserveHeight() {
@@ -245,7 +245,7 @@ export default class DimensionsBehavior extends Behavior {
 	}
 
 	_renderWrapper() {
-		let style = this.element.style;
+		let style = this.el.style;
 		let display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 		let overflow = 'visible';
 		let width = this.width;
@@ -266,7 +266,7 @@ export default class DimensionsBehavior extends Behavior {
 	}
 
 	_renderInner() {
-		let style = this.innerElement.style;
+		let style = this.innerEl.style;
 		let width = this.width;
 		let height = this.props.height === 'auto' ? 'auto' : this.height;
 

@@ -25,7 +25,7 @@ export default class DebugGuidesBehavior extends Behavior {
 		this._createElement();
 
 		//Whenever the guide layout updates, render the guides.
-		this.listenAndInvoke(this.element, 'guidelayout:layout', () => {
+		this.listenAndInvoke(this.el, 'guidelayout:layout', () => {
 			this._renderGuides();
 		});
 	}
@@ -57,7 +57,7 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	_renderGuides() {
-		let guides = this.element.guidelayout.engine.guides;
+		let guides = this.el.guidelayout.engine.guides;
 		let html = guides.map(guide => {
 			let width = guide.width;
 			let opacity = 0.2;

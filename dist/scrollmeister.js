@@ -2157,7 +2157,7 @@ var Behavior = function () {
 	function Behavior(element, rawProperties) {
 		_classCallCheck(this, Behavior);
 
-		this.element = element;
+		this.el = element;
 		this.props = {};
 		this.state = {};
 
@@ -2254,7 +2254,7 @@ var Behavior = function () {
 				details: params
 			});
 
-			this.element.dispatchEvent(event);
+			this.el.dispatchEvent(event);
 		}
 	}, {
 		key: 'updateProperties',
@@ -2370,7 +2370,7 @@ var Behavior = function () {
 						var name = keys[0];
 						var _rawValue = _rawValuesList2[rawValueIndex];
 
-						map[name] = namedPropertyType[name].parse(_rawValue, this.element);
+						map[name] = namedPropertyType[name].parse(_rawValue, this.el);
 					}
 
 					return map;
@@ -2380,7 +2380,7 @@ var Behavior = function () {
 			} else {
 				//thing: keyword
 				//a.thing = 'keyword'
-				return propertyType.parse(rawValue, this.element);
+				return propertyType.parse(rawValue, this.el);
 			}
 		}
 	}]);
@@ -2432,7 +2432,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 			this._createElement();
 
 			//Whenever the guide layout updates, render the guides.
-			this.listenAndInvoke(this.element, 'guidelayout:layout', function () {
+			this.listenAndInvoke(this.el, 'guidelayout:layout', function () {
 				_this2._renderGuides();
 			});
 		}
@@ -2463,7 +2463,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 		value: function _renderGuides() {
 			var _this3 = this;
 
-			var guides = this.element.guidelayout.engine.guides;
+			var guides = this.el.guidelayout.engine.guides;
 			var html = guides.map(function (guide) {
 				var width = guide.width;
 				var opacity = 0.2;
@@ -2538,12 +2538,12 @@ var DebugGuidesBehavior = function (_Behavior) {
 	_createClass(DebugGuidesBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			this.element.style.opacity = 1;
+			this.el.style.opacity = 1;
 		}
 	}, {
 		key: 'detach',
 		value: function detach() {
-			this.element.style.opacity = '';
+			this.el.style.opacity = '';
 		}
 	}], [{
 		key: 'schema',
@@ -2895,7 +2895,7 @@ var LayoutBehavior = function (_Behavior) {
 		value: function _doLayout() {
 			this._layoutScheduled = false;
 
-			var elements = this.element.querySelectorAll('[layout]');
+			var elements = this.el.querySelectorAll('[layout]');
 
 			this.engine.doLayout(elements, this.props.guides, this.props.width);
 
@@ -2923,9 +2923,9 @@ var LayoutBehavior = function (_Behavior) {
 			//So basically it was growing ENDLESSLY (100vh kept getting larger)!
 			if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
 				documentElement.style.overflow = 'visible';
-				this.element.style.height = 0;
+				this.el.style.height = 0;
 			} else {
-				this.element.style.height = Math.round(requiredHeight) + 'px';
+				this.el.style.height = Math.round(requiredHeight) + 'px';
 			}
 
 			this._scrollLogic.setContainerLength(this.engine.viewport.height);
@@ -3079,7 +3079,7 @@ var DimensionsBehavior = function (_Behavior) {
 			if (didMove) {
 				var _left = Math.round(this.left);
 				var _top = scrollUpdate.wrapperTop;
-				var style = this.element.style;
+				var style = this.el.style;
 
 				style.msTransform = 'translate(' + _left + 'px, ' + _top + 'px)';
 				style.transform = style.WebkitTransform = 'translate3d(' + _left + 'px, ' + _top + 'px, 0)';
@@ -3094,7 +3094,7 @@ var DimensionsBehavior = function (_Behavior) {
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 				//or elements with appear effects using scaling/rotation.
-				var innerStyle = this.innerElement.style;
+				var innerStyle = this.innerEl.style;
 				innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
 				innerStyle.transform = innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
 
@@ -3110,14 +3110,14 @@ var DimensionsBehavior = function (_Behavior) {
 		key: '_wrapContents',
 		value: function _wrapContents() {
 			//Includes elements and also text nodes.
-			var childNodes = this.element.childNodes;
-			var childElements = this.element.children;
+			var childNodes = this.el.childNodes;
+			var childElements = this.el.children;
 
 			//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
 			if (childElements.length === 1) {
 				//There are no text nodes, just this one element. #winning
 				if (childNodes.length === 1) {
-					this.innerElement = childElements[0];
+					this.innerEl = childElements[0];
 					return;
 				}
 
@@ -3139,7 +3139,7 @@ var DimensionsBehavior = function (_Behavior) {
 				}
 
 				if (onlyEmptyTextNodes) {
-					this.innerElement = childElements[0];
+					this.innerEl = childElements[0];
 					return;
 				}
 			}
@@ -3149,21 +3149,21 @@ var DimensionsBehavior = function (_Behavior) {
 			this._wrappedContents = true;
 
 			var fragment = document.createDocumentFragment();
-			this.innerElement = document.createElement('div');
+			this.innerEl = document.createElement('div');
 
 			//childNodes is a live list.
 			while (childNodes.length > 0) {
 				fragment.appendChild(childNodes[0]);
 			}
 
-			this.innerElement.appendChild(fragment);
-			this.element.appendChild(this.innerElement);
+			this.innerEl.appendChild(fragment);
+			this.el.appendChild(this.innerEl);
 		}
 	}, {
 		key: '_unwrapContents',
 		value: function _unwrapContents() {
 			if (this._wrappedContents) {
-				var childNodes = this.innerElement.childNodes;
+				var childNodes = this.innerEl.childNodes;
 				var fragment = document.createDocumentFragment();
 
 				//childNodes is a live list.
@@ -3171,8 +3171,8 @@ var DimensionsBehavior = function (_Behavior) {
 					fragment.appendChild(childNodes[0]);
 				}
 
-				this.element.removeChild(this.innerElement);
-				this.element.appendChild(fragment);
+				this.el.removeChild(this.innerEl);
+				this.el.appendChild(fragment);
 			}
 		}
 	}, {
@@ -3186,7 +3186,7 @@ var DimensionsBehavior = function (_Behavior) {
 				});
 			});
 
-			this._resizeObserver.observe(this.innerElement);
+			this._resizeObserver.observe(this.innerEl);
 		}
 	}, {
 		key: '_unobserveHeight',
@@ -3211,7 +3211,7 @@ var DimensionsBehavior = function (_Behavior) {
 	}, {
 		key: '_renderWrapper',
 		value: function _renderWrapper() {
-			var style = this.element.style;
+			var style = this.el.style;
 			var display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 			var overflow = 'visible';
 			var width = this.width;
@@ -3233,7 +3233,7 @@ var DimensionsBehavior = function (_Behavior) {
 	}, {
 		key: '_renderInner',
 		value: function _renderInner() {
-			var style = this.innerElement.style;
+			var style = this.innerEl.style;
 			var width = this.width;
 			var height = this.props.height === 'auto' ? 'auto' : this.height;
 

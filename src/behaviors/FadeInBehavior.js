@@ -16,10 +16,10 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	attach() {
-		this.element.style.opacity = 1;
+		this.el.style.opacity = 1;
 	}
 
 	detach() {
-		this.element.style.opacity = '';
+		this.el.style.opacity = '';
 	}
 }

@@ -55,7 +55,7 @@ export default class Behavior {
 	}
 
 	constructor(element, rawProperties) {
-		this.element = element;
+		this.el = element;
 		this.props = {};
 		this.state = {};
 
@@ -145,7 +145,7 @@ export default class Behavior {
 			details: params
 		});
 
-		this.element.dispatchEvent(event);
+		this.el.dispatchEvent(event);
 	}
 
 	updateProperties(rawProperties) {
@@ -264,7 +264,7 @@ export default class Behavior {
 					let name = keys[0];
 					let rawValue = rawValuesList[rawValueIndex];
 
-					map[name] = namedPropertyType[name].parse(rawValue, this.element);
+					map[name] = namedPropertyType[name].parse(rawValue, this.el);
 				}
 
 				return map;
@@ -278,7 +278,7 @@ export default class Behavior {
 		} else {
 			//thing: keyword
 			//a.thing = 'keyword'
-			return propertyType.parse(rawValue, this.element);
+			return propertyType.parse(rawValue, this.el);
 		}
 	}
 }

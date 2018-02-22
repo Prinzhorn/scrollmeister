@@ -279,7 +279,7 @@ export default class LayoutBehavior extends Behavior {
 	_doLayout() {
 		this._layoutScheduled = false;
 
-		let elements = this.element.querySelectorAll('[layout]');
+		let elements = this.el.querySelectorAll('[layout]');
 
 		this.engine.doLayout(elements, this.props.guides, this.props.width);
 
@@ -306,9 +306,9 @@ export default class LayoutBehavior extends Behavior {
 		//So basically it was growing ENDLESSLY (100vh kept getting larger)!
 		if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
 			documentElement.style.overflow = 'visible';
-			this.element.style.height = 0;
+			this.el.style.height = 0;
 		} else {
-			this.element.style.height = Math.round(requiredHeight) + 'px';
+			this.el.style.height = Math.round(requiredHeight) + 'px';
 		}
 
 		this._scrollLogic.setContainerLength(this.engine.viewport.height);
