@@ -31,13 +31,10 @@
 				max-width: 100%;
 			}
 		</style>
+		<script src="scrollmeister.js"></script>
 	</head>
 	<body>
-		<scroll-meister
-			debugguides
-
-			fadein
-
+		<scroll-meister debugguides fadein
 			guidelayout="
 				guides:
 					contentleft 0 2vmin,
@@ -58,7 +55,7 @@
 
 			<el-meister layout="guides: contentleft leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</el-meister>
 
-			<el-meister class="follower" layout="guides: viewport viewport; height: 75vh; mode: follow; clip: true;">
+			<el-meister layout="guides: viewport viewport; mode: follow; clip: true; height: 75vh; " class="follower">
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 			</el-meister>
 
@@ -66,7 +63,7 @@
 				8 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 				Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		</el-meister>
+			</el-meister>
 
 			<el-meister
 				class="follower"

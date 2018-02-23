@@ -2,53 +2,21 @@
 
 import ResizeObserver from 'resize-observer-polyfill';
 
-import BooleanType from 'types/BooleanType.js';
-import StringType from 'types/StringType.js';
-import LayoutDependencyType from 'types/LayoutDependencyType.js';
-import HeightType from 'types/HeightType.js';
-import FollowerModeType from 'types/FollowerModeType.js';
-import CSSLengthType from 'types/CSSLengthType.js';
-
 import Behavior from 'behaviors/Behavior.js';
 
 export default class LayoutBehavior extends Behavior {
-	//TODO: instead of StringType or LayoutDependencyType we need to give them names such as "string" and "layout-dependency".
-	//Otherwise you cannot just create a custom behavior in a <script> tag without importing the types.
 	static get schema(): any {
 		return {
 			guides: {
-				type: [{ left: StringType }, { right: StringType }]
+				type: [{ left: 'string' }, { right: 'string' }],
+				default: 'viewport viewport'
 			},
 			height: {
-				type: HeightType,
+				type: 'height',
 				default: 'auto'
 			},
-			mode: {
-				type: StringType.createEnum('mode', ['flow', 'follow']),
-				default: 'flow'
-			},
-			followerMode: {
-				type: StringType.createEnum('followerMode', ['parallax', 'pin']),
-				default: 'parallax'
-			},
-			clip: {
-				type: BooleanType,
-				default: 'false'
-			},
-			pinAnchor: {
-				type: StringType.createEnum('pinAnchor', ['top', 'center', 'bottom']),
-				default: 'center'
-			},
-			pinOffset: {
-				type: CSSLengthType,
-				default: '0'
-			},
-			dependencies: {
-				type: LayoutDependencyType,
-				default: 'inherit'
-			},
 			spacing: {
-				type: [{ top: CSSLengthType }, { bottom: CSSLengthType }],
+				type: [{ top: 'csslength' }, { bottom: 'csslength' }],
 				//TODO: in cases like this we might want to accept "100vh" and automatically expand it to "100vh 100vh" (for arity 2 and 4).
 				//When arity is 2, expand 100vh to 100vh 100vh. If it is 4, do the CSS dance.
 				//E.g. 100vh 40vh expands to 100vh 40vh 100vh 40vh
@@ -56,6 +24,33 @@ export default class LayoutBehavior extends Behavior {
 				//expand: true,
 				//For now KISS
 				default: '0 0'
+			},
+			mode: {
+				type: 'string',
+				enum: ['flow', 'follow'],
+				default: 'flow'
+			},
+			followerMode: {
+				type: 'string',
+				enum: ['parallax', 'pin'],
+				default: 'parallax'
+			},
+			pinAnchor: {
+				type: 'string',
+				enum: ['top', 'center', 'bottom'],
+				default: 'center'
+			},
+			pinOffset: {
+				type: 'csslength',
+				default: '0'
+			},
+			clip: {
+				type: 'boolean',
+				default: 'false'
+			},
+			dependencies: {
+				type: 'layoutdependency',
+				default: 'inherit'
 			}
 		};
 	}

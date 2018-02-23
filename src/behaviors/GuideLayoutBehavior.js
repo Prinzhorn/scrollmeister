@@ -8,9 +8,6 @@ import fakeClick from 'lib/fakeClick.js';
 import isTextInput from 'lib/isTextInput.js';
 import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
 
-import GuideDefinitionType from 'types/GuideDefinitionType.js';
-import CSSLengthType from 'types/CSSLengthType.js';
-
 import Behavior from 'behaviors/Behavior.js';
 
 const isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
@@ -24,11 +21,12 @@ export default class LayoutBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			guides: {
-				type: [GuideDefinitionType]
+				type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]]
 				//TODO: can we default to an empty array here by using an empty string?
+				//Answer: write a test
 			},
 			width: {
-				type: CSSLengthType,
+				type: 'csslength',
 				default: '1280px'
 			}
 		};

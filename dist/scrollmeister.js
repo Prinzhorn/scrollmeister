@@ -2093,6 +2093,10 @@ var _CustomEvent = require('ponies/CustomEvent.js');
 
 var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
 
+var _schemaParser = require('lib/schemaParser.js');
+
+var _schemaParser2 = _interopRequireDefault(_schemaParser);
+
 var _scrollStatus = require('lib/scrollStatus.js');
 
 var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
@@ -2100,14 +2104,6 @@ var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-//property:value; pairs (separated by colons) separated by semicolons.
-//TODO: if this isn't the perfect thing to write unit tests for then call me steve.
-//TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
-//However, the right part should allow colons bruh. This also solves the issue with selectors like "target: .foo:not(bar)". The only reserved character is the semicolon.
-//                               /([^:]+):([^;]+)/g;
-var propertiesAndValuesRegex = /([^:;]+):([^:;]+)/g;
-var whiteSpaceRegex = /\s+/;
 
 var supportsPassiveEvents = function () {
 	var passiveSupported = void 0;
@@ -2183,7 +2179,7 @@ var Behavior = function () {
 
 					//listen works for both DOM elements and event emitters using on/off.
 					if (typeof listener.element.removeEventListener === 'function') {
-						listener.element.removeEventListener(listener.event, listener.callback);
+						listener.element.removeEventListener(listener.event, listener.callback, thirdEventListenerArgument);
 					} else {
 						listener.element.off(listener.event, listener.callback);
 					}
@@ -2271,119 +2267,11 @@ var Behavior = function () {
 
 			this.emit('update');
 		}
-
-		//TODO: This might not belong to the behavior itself but to the schemas/types folder, which can then be tested much easier
-
 	}, {
 		key: 'parseProperties',
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
-			var rawPropertiesMap = {};
-			var match = void 0;
-
-			propertiesAndValuesRegex.lastIndex = 0;
-
-			while ((match = propertiesAndValuesRegex.exec(rawProperties)) !== null) {
-				var property = match[1].trim();
-				var rawValue = match[2];
-
-				if (!schema.hasOwnProperty(property)) {
-					throw new Error('You have defined a property "' + property + '" in your HTML that "' + this.constructor.name + '" is not expecting. The value was "' + rawValue + '".');
-				}
-
-				rawPropertiesMap[property] = rawValue;
-			}
-
-			for (var key in schema) {
-				if (!schema.hasOwnProperty(key)) {
-					continue;
-				}
-
-				if (!rawPropertiesMap.hasOwnProperty(key)) {
-					//The schema specifies a property that is currently not defined and no default was specified.
-					//TODO: does that imply they are all required? What if falsy properties are OK?
-					//So far I'm leaning towards yes, they're ALL required. Keywords like "none" or "0" work well as defaults.
-					//This makes parts of the code much easier and consistent. KISS.
-					if (!schema[key].hasOwnProperty('default')) {
-						//TODO: this error message does not help people who only write HTML and don't even know what the class is.
-						//It should simply be something like "The layout attribute misses the required guides property"
-						//Don't get too technical.
-						throw new Error('You are missing the "' + key + '" property for the ' + this.constructor.name + ' class, which has no default value.');
-					} else {
-						//There is a default specified, use it.
-						this.props[key] = this.parseProperty(key, schema[key].default, schema[key].type);
-						continue;
-					}
-				}
-
-				this.props[key] = this.parseProperty(key, rawPropertiesMap[key], schema[key].type);
-			}
-		}
-	}, {
-		key: 'parseProperty',
-		value: function parseProperty(property, rawValue, propertyType) {
-			var _this2 = this;
-
-			if (propertyType instanceof Array) {
-				//thing: keyword, anotherone, and, more
-				//a.thing = ['keyword', 'anotherone', 'and', 'more']
-				//or
-				//thing: keyword 30px 30px, anotherone 100px 8px
-				//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
-				if (propertyType.length === 1) {
-					propertyType = propertyType[0];
-
-					if (propertyType instanceof Array) {
-						//thing: keyword 30px 30px, anotherone 100px 8px
-						//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
-						var rawValuesList = rawValue.split(',');
-
-						return rawValuesList.map(function (rawValue, index) {
-							return _this2.parseProperty(property, rawValue, propertyType);
-						});
-					} else {
-						//thing: keyword, anotherone, and, more
-						//a.thing = ['keyword', 'anotherone', 'and', 'more']
-						var _rawValuesList = rawValue.split(',');
-
-						return _rawValuesList.map(function (rawValue) {
-							return propertyType.parse(rawValue);
-						});
-					}
-				} else if (propertyType.length > 1) {
-					//thing: keyword 100px
-					//a.thing = ['keyword', {length: 100, unit: 'px'}]
-					var _rawValuesList2 = rawValue.trim().split(whiteSpaceRegex);
-
-					if (_rawValuesList2.length !== propertyType.length) {
-						throw new Error('The schema for the "' + property + '" property of the "' + this.constructor.name + '" class expects ' + propertyType.length + ' values. Got ' + _rawValuesList2.length + ', namely "' + _rawValuesList2.join(' ') + '".');
-					}
-
-					var map = {};
-
-					for (var rawValueIndex = 0; rawValueIndex < _rawValuesList2.length; rawValueIndex++) {
-						var namedPropertyType = propertyType[rawValueIndex];
-						var keys = Object.keys(namedPropertyType);
-
-						if (keys.length !== 1) {
-							throw new Error('A nested schema should have exactly one key (the name) which maps to the type.');
-						}
-
-						var name = keys[0];
-						var _rawValue = _rawValuesList2[rawValueIndex];
-
-						map[name] = namedPropertyType[name].parse(_rawValue, this.el);
-					}
-
-					return map;
-				} else {
-					throw new Error('You have defined an empty array as schema type for the "' + property + '"" property of the "' + this.constructor.name + '" class.');
-				}
-			} else {
-				//thing: keyword
-				//a.thing = 'keyword'
-				return propertyType.parse(rawValue, this.el);
-			}
+			_schemaParser2.default.parseProperties(this.el, schema, rawProperties, this.props);
 		}
 	}]);
 
@@ -2392,7 +2280,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/scrollStatus.js":23,"ponies/CustomEvent.js":24,"ponies/Object.assign.js":25}],10:[function(require,module,exports){
+},{"lib/schemaParser.js":23,"lib/scrollStatus.js":24,"ponies/CustomEvent.js":25,"ponies/Object.assign.js":26}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2400,10 +2288,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _StringType = require('types/StringType.js');
-
-var _StringType2 = _interopRequireDefault(_StringType);
 
 var _Behavior2 = require('behaviors/Behavior.js');
 
@@ -2485,7 +2369,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 		get: function get() {
 			return {
 				color: {
-					type: _StringType2.default,
+					type: 'string',
 					default: '#0cf'
 				}
 			};
@@ -2507,7 +2391,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":9,"types/StringType.js":35}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":9}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2601,14 +2485,6 @@ var _isTextInput2 = _interopRequireDefault(_isTextInput);
 var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
 
 var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
-
-var _GuideDefinitionType = require('types/GuideDefinitionType.js');
-
-var _GuideDefinitionType2 = _interopRequireDefault(_GuideDefinitionType);
-
-var _CSSLengthType = require('types/CSSLengthType.js');
-
-var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
 
 var _Behavior2 = require('behaviors/Behavior.js');
 
@@ -2944,11 +2820,12 @@ var LayoutBehavior = function (_Behavior) {
 		get: function get() {
 			return {
 				guides: {
-					type: [_GuideDefinitionType2.default]
+					type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]]
 					//TODO: can we default to an empty array here by using an empty string?
+					//Answer: write a test
 				},
 				width: {
-					type: _CSSLengthType2.default,
+					type: 'csslength',
 					default: '1280px'
 				}
 			};
@@ -2970,7 +2847,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":23,"raf":5,"scroll-logic":7,"types/CSSLengthType.js":29,"types/GuideDefinitionType.js":31}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":24,"raf":5,"scroll-logic":7}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2982,30 +2859,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _resizeObserverPolyfill = require('resize-observer-polyfill');
 
 var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
-
-var _BooleanType = require('types/BooleanType.js');
-
-var _BooleanType2 = _interopRequireDefault(_BooleanType);
-
-var _StringType = require('types/StringType.js');
-
-var _StringType2 = _interopRequireDefault(_StringType);
-
-var _LayoutDependencyType = require('types/LayoutDependencyType.js');
-
-var _LayoutDependencyType2 = _interopRequireDefault(_LayoutDependencyType);
-
-var _HeightType = require('types/HeightType.js');
-
-var _HeightType2 = _interopRequireDefault(_HeightType);
-
-var _FollowerModeType = require('types/FollowerModeType.js');
-
-var _FollowerModeType2 = _interopRequireDefault(_FollowerModeType);
-
-var _CSSLengthType = require('types/CSSLengthType.js');
-
-var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
 
 var _Behavior2 = require('behaviors/Behavior.js');
 
@@ -3252,44 +3105,18 @@ var LayoutBehavior = function (_Behavior) {
 		}
 	}], [{
 		key: 'schema',
-
-		//TODO: instead of StringType or LayoutDependencyType we need to give them names such as "string" and "layout-dependency".
-		//Otherwise you cannot just create a custom behavior in a <script> tag without importing the types.
 		get: function get() {
 			return {
 				guides: {
-					type: [{ left: _StringType2.default }, { right: _StringType2.default }]
+					type: [{ left: 'string' }, { right: 'string' }],
+					default: 'viewport viewport'
 				},
 				height: {
-					type: _HeightType2.default,
+					type: 'height',
 					default: 'auto'
 				},
-				mode: {
-					type: _StringType2.default.createEnum('mode', ['flow', 'follow']),
-					default: 'flow'
-				},
-				followerMode: {
-					type: _StringType2.default.createEnum('followerMode', ['parallax', 'pin']),
-					default: 'parallax'
-				},
-				clip: {
-					type: _BooleanType2.default,
-					default: 'false'
-				},
-				pinAnchor: {
-					type: _StringType2.default.createEnum('pinAnchor', ['top', 'center', 'bottom']),
-					default: 'center'
-				},
-				pinOffset: {
-					type: _CSSLengthType2.default,
-					default: '0'
-				},
-				dependencies: {
-					type: _LayoutDependencyType2.default,
-					default: 'inherit'
-				},
 				spacing: {
-					type: [{ top: _CSSLengthType2.default }, { bottom: _CSSLengthType2.default }],
+					type: [{ top: 'csslength' }, { bottom: 'csslength' }],
 					//TODO: in cases like this we might want to accept "100vh" and automatically expand it to "100vh 100vh" (for arity 2 and 4).
 					//When arity is 2, expand 100vh to 100vh 100vh. If it is 4, do the CSS dance.
 					//E.g. 100vh 40vh expands to 100vh 40vh 100vh 40vh
@@ -3297,6 +3124,33 @@ var LayoutBehavior = function (_Behavior) {
 					//expand: true,
 					//For now KISS
 					default: '0 0'
+				},
+				mode: {
+					type: 'string',
+					enum: ['flow', 'follow'],
+					default: 'flow'
+				},
+				followerMode: {
+					type: 'string',
+					enum: ['parallax', 'pin'],
+					default: 'parallax'
+				},
+				pinAnchor: {
+					type: 'string',
+					enum: ['top', 'center', 'bottom'],
+					default: 'center'
+				},
+				pinOffset: {
+					type: 'csslength',
+					default: '0'
+				},
+				clip: {
+					type: 'boolean',
+					default: 'false'
+				},
+				dependencies: {
+					type: 'layoutdependency',
+					default: 'inherit'
 				}
 			};
 		}
@@ -3317,7 +3171,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6,"types/BooleanType.js":28,"types/CSSLengthType.js":29,"types/FollowerModeType.js":30,"types/HeightType.js":32,"types/LayoutDependencyType.js":33,"types/StringType.js":35}],14:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6}],14:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -3348,7 +3202,7 @@ _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/LayoutBehavior.js":13,"scrollmeister.js":27}],15:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/LayoutBehavior.js":13,"scrollmeister.js":28}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3394,7 +3248,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":27}],16:[function(require,module,exports){
+},{"./MeisterComponent.js":16,"scrollmeister.js":28}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3506,7 +3360,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":5,"scrollmeister.js":27}],17:[function(require,module,exports){
+},{"raf":5,"scrollmeister.js":28}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3552,7 +3406,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":27}],18:[function(require,module,exports){
+},{"./MeisterComponent.js":16,"scrollmeister.js":28}],18:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3581,7 +3435,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":14,"./components":18,"./scrollmeister.css":26,"./scrollmeister.js":27}],20:[function(require,module,exports){
+},{"./behaviors":14,"./components":18,"./scrollmeister.css":27,"./scrollmeister.js":28}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4204,6 +4058,147 @@ exports.default = function (node) {
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+
+var _types = require('types');
+
+var _types2 = _interopRequireDefault(_types);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//property:value; pairs (separated by colons) separated by semicolons.
+//TODO: if this isn't the perfect thing to write unit tests for then call me steve.
+//TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
+//However, the right part should allow colons bruh. This also solves the issue with selectors like "target: .foo:not(bar)". The only reserved character is the semicolon.
+var propertiesAndValuesRegex = /([^:;]+):([^;]+)/g;
+var whiteSpaceRegex = /\s+/;
+
+exports.default = {
+	parseProperties: function parseProperties(element, schema, rawProperties, props) {
+		var rawPropertiesMap = {};
+		var match = void 0;
+
+		propertiesAndValuesRegex.lastIndex = 0;
+
+		//Collect all "key:value;" pairs.
+		while ((match = propertiesAndValuesRegex.exec(rawProperties)) !== null) {
+			var property = match[1].trim();
+			var rawValue = match[2];
+
+			if (!schema.hasOwnProperty(property)) {
+				throw new Error('You have defined a property "' + property + '" in your attribute that is not expected. The value was "' + rawValue + '".');
+			}
+
+			rawPropertiesMap[property] = rawValue;
+		}
+
+		for (var key in schema) {
+			if (!schema.hasOwnProperty(key)) {
+				continue;
+			}
+
+			var _rawValue = void 0;
+
+			if (rawPropertiesMap.hasOwnProperty(key)) {
+				_rawValue = rawPropertiesMap[key];
+			} else {
+				//The schema specifies a property that is currently not defined and no default was specified.
+				//That implies that all properties are required. Keywords like "none" or "0" work well as defaults.
+				if (!schema[key].hasOwnProperty('default')) {
+					//TODO: this error message does not help people who only write HTML and don't even know what the class is.
+					//It should simply be something like "The layout attribute misses the required guides property"
+					//Don't get too technical.
+					throw new Error('You are missing the "' + key + '" property, which has no default value.');
+				} else {
+					//There is a default specified, use it.
+					_rawValue = schema[key].default;
+				}
+			}
+
+			var value = this.parseProperty(element, key, _rawValue, schema[key].type);
+			var enumValues = schema[key].enum;
+
+			if (enumValues instanceof Array && enumValues.indexOf(value) === -1) {
+				throw new Error('Got "' + value + '" as value for property "' + key + '". Expected one of "' + enumValues.join('", "') + '".');
+			}
+
+			props[key] = value;
+		}
+	},
+
+	parseProperty: function parseProperty(element, property, rawValue, propertyType) {
+		var _this = this;
+
+		if (propertyType instanceof Array) {
+			//thing: keyword, anotherone, and, more
+			//a.thing = ['keyword', 'anotherone', 'and', 'more']
+			//or
+			//thing: keyword 30px 30px, anotherone 100px 8px
+			//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
+			if (propertyType.length === 1) {
+				propertyType = propertyType[0];
+
+				if (propertyType instanceof Array) {
+					//thing: keyword 30px 30px, anotherone 100px 8px
+					//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
+					var rawValuesList = rawValue.split(',');
+
+					return rawValuesList.map(function (rawValue, index) {
+						return _this.parseProperty(element, property, rawValue, propertyType);
+					});
+				} else {
+					//thing: keyword, anotherone, and, more
+					//a.thing = ['keyword', 'anotherone', 'and', 'more']
+					var _rawValuesList = rawValue.split(',');
+
+					return _rawValuesList.map(function (rawValue) {
+						return _types2.default[propertyType].parse(rawValue, element);
+					});
+				}
+			} else if (propertyType.length > 1) {
+				//thing: keyword 100px
+				//a.thing = ['keyword', {length: 100, unit: 'px'}]
+				var _rawValuesList2 = rawValue.trim().split(whiteSpaceRegex);
+
+				if (_rawValuesList2.length !== propertyType.length) {
+					//TODO: this is exactly the place to implement something like expanding shorthand properties.
+					//e.g. "spacing: 100vh" expands to "spacing: 100vh 100vh".
+					throw new Error('The schema for the "' + property + '" property expects ' + propertyType.length + ' values. Got ' + _rawValuesList2.length + ', namely "' + _rawValuesList2.join(' ') + '".');
+				}
+
+				var map = {};
+
+				for (var rawValueIndex = 0; rawValueIndex < _rawValuesList2.length; rawValueIndex++) {
+					var namedPropertyType = propertyType[rawValueIndex];
+					var keys = Object.keys(namedPropertyType);
+
+					if (keys.length !== 1) {
+						throw new Error('A nested schema should have exactly one key (the name) which maps to the type.');
+					}
+
+					var name = keys[0];
+					var _rawValue2 = _rawValuesList2[rawValueIndex];
+
+					map[name] = _types2.default[namedPropertyType[name]].parse(_rawValue2, element);
+				}
+
+				return map;
+			} else {
+				throw new Error('You have defined an empty array as schema type for the "' + property + '" property.');
+			}
+		} else {
+			//thing: keyword
+			//a.thing = 'keyword'
+			return _types2.default[propertyType].parse(rawValue, element);
+		}
+	}
+};
+
+},{"types":35}],24:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
 //TODO: this has not been migrated to classes yet.
 
 var Emitter = require('tiny-emitter');
@@ -4298,7 +4293,7 @@ ScrollStatus.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = new ScrollStatus();
 
-},{"tiny-emitter":8}],24:[function(require,module,exports){
+},{"tiny-emitter":8}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4321,7 +4316,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4359,9 +4354,9 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden;will-change:opacity}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],27:[function(require,module,exports){
+},{"browserify-css":1}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4465,7 +4460,7 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4480,7 +4475,7 @@ exports.default = {
 	}
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4522,47 +4517,7 @@ exports.default = {
 	}
 };
 
-},{}],30:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-exports.default = {
-	parse: function parse(value) {
-		return value.trim();
-	},
-	stringify: function stringify(value) {
-		return value;
-	}
-};
-
 },{}],31:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _StringType = require('types/StringType.js');
-
-var _StringType2 = _interopRequireDefault(_StringType);
-
-var _NumberType = require('types/NumberType.js');
-
-var _NumberType2 = _interopRequireDefault(_NumberType);
-
-var _CSSLengthType = require('types/CSSLengthType.js');
-
-var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//TODO: named nested properties. Just arrays so far.
-//But let's see how far we get.
-exports.default = [{ name: _StringType2.default }, { position: _NumberType2.default }, { width: _CSSLengthType2.default }];
-
-},{"types/CSSLengthType.js":29,"types/NumberType.js":34,"types/StringType.js":35}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4608,7 +4563,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":29}],33:[function(require,module,exports){
+},{"types/CSSLengthType.js":30}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4635,7 +4590,7 @@ function findPreviousFlowElement(element) {
 }
 
 //TODO: do we need stringify at all?
-//Also I believe SelectorType needs to be reavaluated all the time!
+//TODO: Also I believe SelectorType needs to be reavaluated (live) all the time!
 //https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 exports.default = {
@@ -4675,6 +4630,10 @@ exports.default = {
 			}
 		}
 
+		//TODO: nope, this should do sth. like "prevSiblings()"
+		//Double nope: we can get into circular-dependencies here (which the layout engine would catch though)
+		//Maybe allow negative skips to reverse the order like flexbox?
+		//I need to put some thought into this. KISS.
 		var dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
 
 		if (dependencies.length === 0) {
@@ -4690,7 +4649,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4719,37 +4678,61 @@ exports.default = {
 	}
 };
 
+},{}],34:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = {
+	parse: function parse(value) {
+		return value.trim();
+	},
+	stringify: function stringify(value) {
+		return value;
+	}
+};
+
 },{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var _parse = function _parse(value) {
-	return value.trim();
-};
 
-var stringify = function stringify(value) {
-	return value;
-};
+var _BooleanType = require('types/BooleanType.js');
+
+var _BooleanType2 = _interopRequireDefault(_BooleanType);
+
+var _CSSLengthType = require('types/CSSLengthType.js');
+
+var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+var _HeightType = require('types/HeightType.js');
+
+var _HeightType2 = _interopRequireDefault(_HeightType);
+
+var _LayoutDependencyType = require('types/LayoutDependencyType.js');
+
+var _LayoutDependencyType2 = _interopRequireDefault(_LayoutDependencyType);
+
+var _NumberType = require('types/NumberType.js');
+
+var _NumberType2 = _interopRequireDefault(_NumberType);
+
+var _StringType = require('types/StringType.js');
+
+var _StringType2 = _interopRequireDefault(_StringType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = {
-	parse: _parse,
-	stringify: stringify,
-	createEnum: function createEnum(propertyName, values) {
-		return {
-			parse: function parse(value) {
-				value = _parse(value);
-
-				if (values.indexOf(value) === -1) {
-					throw new Error('Got "' + value + '" as value for property "' + propertyName + '". Expected one of "' + values.join('", "') + '".');
-				}
-
-				return value;
-			},
-			stringify: stringify
-		};
-	}
+	boolean: _BooleanType2.default,
+	csslength: _CSSLengthType2.default,
+	height: _HeightType2.default,
+	layoutdependency: _LayoutDependencyType2.default,
+	number: _NumberType2.default,
+	string: _StringType2.default
 };
 
-},{}]},{},[19]);
+},{"types/BooleanType.js":29,"types/CSSLengthType.js":30,"types/HeightType.js":31,"types/LayoutDependencyType.js":32,"types/NumberType.js":33,"types/StringType.js":34}]},{},[19]);

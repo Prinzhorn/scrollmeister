@@ -1,13 +1,12 @@
 // @flow
 
-import StringType from 'types/StringType.js';
 import Behavior from 'behaviors/Behavior.js';
 
 export default class DebugGuidesBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			color: {
-				type: StringType,
+				type: 'string',
 				default: '#0cf'
 			}
 		};
