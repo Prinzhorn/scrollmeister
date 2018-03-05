@@ -2,7 +2,7 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
-export default class DebugGuidesBehavior extends Behavior {
+export default class FadeInBehavior extends Behavior {
 	static get schema(): any {
 		return {};
 	}

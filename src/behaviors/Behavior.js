@@ -64,12 +64,7 @@ export default class Behavior {
 			for (let i = 0; i < this.listeners.length; i++) {
 				let listener = this.listeners[i];
 
-				//listen works for both DOM elements and event emitters using on/off.
-				if (typeof listener.element.removeEventListener === 'function') {
-					listener.element.removeEventListener(listener.eventName, listener.callback, thirdEventListenerArgument);
-				} else {
-					listener.element.off(listener.eventName, listener.callback);
-				}
+				this.unlisten(listener.element, listener.eventName, listener.callback);
 			}
 		}
 
@@ -122,6 +117,15 @@ export default class Behavior {
 	listenAndInvoke(element, eventName, callback) {
 		this.listen(element, eventName, callback);
 		callback();
+	}
+
+	unlisten(element, eventName, callback) {
+		//listen works for both DOM elements and event emitters using on/off.
+		if (typeof element.removeEventListener === 'function') {
+			element.removeEventListener(eventName, callback, thirdEventListenerArgument);
+		} else {
+			element.off(eventName, callback);
+		}
 	}
 
 	emit(name, bubbles = true) {

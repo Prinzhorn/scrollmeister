@@ -74,9 +74,8 @@ export default class LayoutBehavior extends Behavior {
 			height: 0
 		};
 
+		this.scrollUpdate = {};
 		this.layout = {};
-
-		this._scrollUpdate = {};
 
 		this._wrapContents();
 
@@ -255,7 +254,7 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_scroll(scrollState, forceUpdate = false) {
-		let scrollUpdate = this._scrollUpdate;
+		let scrollUpdate = this.scrollUpdate;
 		let didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
 		let style = this.el.style;
 		let innerStyle = this.innerEl.style;
@@ -290,7 +289,7 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_scrollPause() {
-		let scrollUpdate = this._scrollUpdate;
+		let scrollUpdate = this.scrollUpdate;
 		let style = this.el.style;
 
 		if (scrollUpdate.inExtendedViewport) {
