@@ -60,10 +60,16 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return [];
+		return ['^guidelayout'];
 	}
 
 	attach() {
+		/*
+		TODO: we haven't quite figured out state/rendering yet. Quoting react docs
+		"If you don’t use it in render(), it shouldn’t be in the state. For example, you can put timer IDs directly on the instance."
+		This behavior itself does not need the state.height at all. It just provides it to the GuideLayoutBehavior.
+		Maybe an `intrinsicHeight` property on the instance itself?
+		*/
 		this.state = {
 			height: 0
 		};
@@ -74,15 +80,16 @@ export default class LayoutBehavior extends Behavior {
 
 		this._wrapContents();
 
-		//Listen to the layout event of the layout behavior.
-		//TODO: is gut? We can always refactor, but does this make sense though?
-		//This means possibly hundreds of DimensionsBehaviors will react to this event.
-		//We could instead reverse the responsibility and have the layout behavior
-		//Call a method on each of the children.
-		//Maybe we should just merge Dimensions+PositionBehavior because they belong together anyway.
-		//this.parentEl instead of document
-		this.listen(document, 'guidelayout:layout', () => {
+		this.listen(this.parentEl, 'guidelayout:layout', () => {
 			this._render();
+		});
+
+		this.listen(this.parentEl, 'guidelayout:scroll', e => {
+			this._scroll(e.detail.scrollState);
+		});
+
+		this.listen(this.parentEl, 'guidelayout:pause', () => {
+			this._scrollPause();
 		});
 
 		if (this.props.height === 'auto') {
@@ -113,38 +120,6 @@ export default class LayoutBehavior extends Behavior {
 		this._unobserveHeight();
 		this._unwrapContents();
 		//TODO: remove styles
-	}
-
-	scroll(status, engine) {
-		let scrollUpdate = this._scrollUpdate;
-		let didMove = engine.doScroll(this.layout, status.position, scrollUpdate);
-
-		if (didMove) {
-			let left = Math.round(this.layout.left);
-			let top = scrollUpdate.wrapperTop;
-			let style = this.el.style;
-
-			style.msTransform = `translate(${left}px, ${top}px)`;
-			style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
-
-			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
-			//But we do not do the opposite here. This is just the last resort.
-			//Under normal circumstances an async process (handleScrollPause) toggles display block/none intelligently.
-			if (scrollUpdate.inViewport) {
-				style.display = 'block';
-			}
-
-			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
-			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
-			//or elements with appear effects using scaling/rotation.
-			let innerStyle = this.innerEl.style;
-			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
-			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
-
-			//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
-		}
-
-		//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 	}
 
 	//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
@@ -235,6 +210,9 @@ export default class LayoutBehavior extends Behavior {
 	_render() {
 		this._renderWrapper();
 		this._renderInner();
+
+		//Force a scroll update.
+		this._scroll(this.parentEl.guidelayout.scrollState, true);
 	}
 
 	_canSafelyBeUnloadedFromGPU() {
@@ -273,6 +251,63 @@ export default class LayoutBehavior extends Behavior {
 
 		if (this.props.clip) {
 			style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+		}
+	}
+
+	_scroll(scrollState, forceUpdate = false) {
+		let scrollUpdate = this._scrollUpdate;
+		let didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+		let style = this.el.style;
+		let innerStyle = this.innerEl.style;
+
+		if (didMove || forceUpdate) {
+			let left = Math.round(this.layout.left);
+			let top = scrollUpdate.wrapperTop;
+
+			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
+			//But we do not do the opposite here. This is just the last resort.
+			//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
+			if (scrollUpdate.inViewport) {
+				style.display = 'block';
+				style.willChange = 'transform';
+			}
+
+			style.msTransform = `translate(${left}px, ${top}px)`;
+			style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
+
+			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
+			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
+			//or elements with appear effects using scaling/rotation.
+			let innerStyle = this.innerEl.style;
+			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
+			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
+
+			//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
+			//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
+
+			//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+		}
+	}
+
+	_scrollPause() {
+		let scrollUpdate = this._scrollUpdate;
+		let style = this.el.style;
+
+		if (scrollUpdate.inExtendedViewport) {
+			style.display = 'block';
+			style.willChange = 'transform';
+		} else {
+			if (this._canSafelyBeUnloadedFromGPU()) {
+				style.display = 'none';
+			} else {
+				//This reduces gpu memory a ton and also hides text at the edge of the viewport.
+				//Otherwise those elements would be visible behind the adress bar in iOS.
+				//There's no inverse operation to that because once it is inside the viewport again
+				//the translation will overwrite the scale transform.
+				style.transform = style.WebkitTransform = style.msTransform = 'scale(0)';
+			}
+
+			style.willChange = 'auto';
 		}
 	}
 }

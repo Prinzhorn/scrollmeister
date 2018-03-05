@@ -2009,74 +2009,6 @@ return index;
 })();
 
 },{}],8:[function(require,module,exports){
-function E () {
-  // Keep this empty so it's easier to inherit from
-  // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
-}
-
-E.prototype = {
-  on: function (name, callback, ctx) {
-    var e = this.e || (this.e = {});
-
-    (e[name] || (e[name] = [])).push({
-      fn: callback,
-      ctx: ctx
-    });
-
-    return this;
-  },
-
-  once: function (name, callback, ctx) {
-    var self = this;
-    function listener () {
-      self.off(name, listener);
-      callback.apply(ctx, arguments);
-    };
-
-    listener._ = callback
-    return this.on(name, listener, ctx);
-  },
-
-  emit: function (name) {
-    var data = [].slice.call(arguments, 1);
-    var evtArr = ((this.e || (this.e = {}))[name] || []).slice();
-    var i = 0;
-    var len = evtArr.length;
-
-    for (i; i < len; i++) {
-      evtArr[i].fn.apply(evtArr[i].ctx, data);
-    }
-
-    return this;
-  },
-
-  off: function (name, callback) {
-    var e = this.e || (this.e = {});
-    var evts = e[name];
-    var liveEvents = [];
-
-    if (evts && callback) {
-      for (var i = 0, len = evts.length; i < len; i++) {
-        if (evts[i].fn !== callback && evts[i].fn._ !== callback)
-          liveEvents.push(evts[i]);
-      }
-    }
-
-    // Remove event from queue to prevent memory leak
-    // Suggested by https://github.com/lazd
-    // Ref: https://github.com/scottcorgan/tiny-emitter/commit/c6ebfaa9bc973b33d110a84a307742b7cf94c953#commitcomment-5024910
-
-    (liveEvents.length)
-      ? e[name] = liveEvents
-      : delete e[name];
-
-    return this;
-  }
-};
-
-module.exports = E;
-
-},{}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2096,10 +2028,6 @@ var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
 var _schemaParser = require('lib/schemaParser.js');
 
 var _schemaParser2 = _interopRequireDefault(_schemaParser);
-
-var _scrollStatus = require('lib/scrollStatus.js');
-
-var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2154,16 +2082,11 @@ var Behavior = function () {
 		_classCallCheck(this, Behavior);
 
 		this.el = element;
+		this.parentEl = element.parentNode;
 		this.props = {};
 		this.state = {};
 
 		this.parseProperties(rawProperties);
-
-		//TODO: does this make sense? Does ANYONE except for the layout behavior need the scroll event?
-		//We wanted to solve everything else using signals/slots which can be triggered by the layout engine.
-		if (this.scroll) {
-			this.listen(_scrollStatus2.default, 'scroll', this.scroll.bind(this));
-		}
 
 		this.attach();
 		this.emit('attach');
@@ -2179,9 +2102,9 @@ var Behavior = function () {
 
 					//listen works for both DOM elements and event emitters using on/off.
 					if (typeof listener.element.removeEventListener === 'function') {
-						listener.element.removeEventListener(listener.event, listener.callback, thirdEventListenerArgument);
+						listener.element.removeEventListener(listener.eventName, listener.callback, thirdEventListenerArgument);
 					} else {
-						listener.element.off(listener.event, listener.callback);
+						listener.element.off(listener.eventName, listener.callback);
 					}
 				}
 			}
@@ -2242,14 +2165,16 @@ var Behavior = function () {
 		}
 	}, {
 		key: 'emit',
-		value: function emit(name, params) {
+		value: function emit(name) {
+			var bubbles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
 			//Namespace the event to the name of the behavior.
 			name = this.constructor.behaviorName + ':' + name;
 
 			var event = new _CustomEvent2.default(name, {
-				bubbles: true,
+				bubbles: bubbles,
 				cancelable: false,
-				details: params
+				detail: this
 			});
 
 			this.el.dispatchEvent(event);
@@ -2280,7 +2205,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":23,"lib/scrollStatus.js":24,"ponies/CustomEvent.js":25,"ponies/Object.assign.js":26}],10:[function(require,module,exports){
+},{"lib/schemaParser.js":23,"ponies/CustomEvent.js":24,"ponies/Object.assign.js":25}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2391,7 +2316,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":9}],11:[function(require,module,exports){
+},{"behaviors/Behavior.js":8}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2453,7 +2378,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 exports.default = DebugGuidesBehavior;
 
-},{"behaviors/Behavior.js":9}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2470,9 +2395,9 @@ var _scrollLogic = require('scroll-logic');
 
 var _scrollLogic2 = _interopRequireDefault(_scrollLogic);
 
-var _scrollStatus = require('lib/scrollStatus.js');
+var _ScrollState = require('lib/ScrollState.js');
 
-var _scrollStatus2 = _interopRequireDefault(_scrollStatus);
+var _ScrollState2 = _interopRequireDefault(_ScrollState);
 
 var _fakeClick = require('lib/fakeClick.js');
 
@@ -2502,16 +2427,16 @@ var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.
 var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-var LayoutBehavior = function (_Behavior) {
-	_inherits(LayoutBehavior, _Behavior);
+var GuideLayoutBehavior = function (_Behavior) {
+	_inherits(GuideLayoutBehavior, _Behavior);
 
-	function LayoutBehavior() {
-		_classCallCheck(this, LayoutBehavior);
+	function GuideLayoutBehavior() {
+		_classCallCheck(this, GuideLayoutBehavior);
 
-		return _possibleConstructorReturn(this, (LayoutBehavior.__proto__ || Object.getPrototypeOf(LayoutBehavior)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (GuideLayoutBehavior.__proto__ || Object.getPrototypeOf(GuideLayoutBehavior)).apply(this, arguments));
 	}
 
-	_createClass(LayoutBehavior, [{
+	_createClass(GuideLayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
 			this.state = {
@@ -2527,7 +2452,9 @@ var LayoutBehavior = function (_Behavior) {
 		}
 	}, {
 		key: 'detach',
-		value: function detach() {}
+		value: function detach() {
+			this.scrollState.destroy();
+		}
 	}, {
 		key: 'update',
 		value: function update() {
@@ -2536,6 +2463,8 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_setupScrolling',
 		value: function _setupScrolling() {
+			this.scrollState = new _ScrollState2.default(this.emit.bind(this, 'scroll', false), this.emit.bind(this, 'pause', false));
+
 			this._setupMobileScrolling();
 			this._handleScrollModes();
 		}
@@ -2721,7 +2650,7 @@ var LayoutBehavior = function (_Behavior) {
 				}
 			}
 
-			_scrollStatus2.default.tick(now, currentScrollPosition, this.engine);
+			this.scrollState.tick(now, currentScrollPosition);
 		}
 	}, {
 		key: '_getViewport',
@@ -2781,7 +2710,7 @@ var LayoutBehavior = function (_Behavior) {
 
 			this._updateScrollHeight();
 
-			this.emit('layout');
+			this.emit('layout', false);
 		}
 	}, {
 		key: '_updateScrollHeight',
@@ -2810,10 +2739,10 @@ var LayoutBehavior = function (_Behavior) {
 			this._scrollLogic.setContainerLength(this.engine.viewport.height);
 			this._scrollLogic.setContentLength(requiredHeight);
 
-			_scrollStatus2.default.maxPosition = requiredHeight - this.engine.viewport.height;
+			this.scrollState.maxPosition = requiredHeight - this.engine.viewport.height;
 
 			//Make sure we don't lose our relative scroll position.
-			this.scrollTo(_scrollStatus2.default.maxPosition * _scrollStatus2.default.progress);
+			this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
 		}
 	}], [{
 		key: 'schema',
@@ -2842,12 +2771,12 @@ var LayoutBehavior = function (_Behavior) {
 		}
 	}]);
 
-	return LayoutBehavior;
+	return GuideLayoutBehavior;
 }(_Behavior3.default);
 
-exports.default = LayoutBehavior;
+exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"lib/scrollStatus.js":24,"raf":5,"scroll-logic":7}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":19,"lib/ScrollState.js":20,"lib/fakeClick.js":21,"lib/isTextInput.js":22,"raf":5,"scroll-logic":7}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2886,6 +2815,12 @@ var LayoutBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
+			/*
+   TODO: we haven't quite figured out state/rendering yet. Quoting react docs
+   "If you don’t use it in render(), it shouldn’t be in the state. For example, you can put timer IDs directly on the instance."
+   This behavior itself does not need the state.height at all. It just provides it to the GuideLayoutBehavior.
+   Maybe an `intrinsicHeight` property on the instance itself?
+   */
 			this.state = {
 				height: 0
 			};
@@ -2896,15 +2831,16 @@ var LayoutBehavior = function (_Behavior) {
 
 			this._wrapContents();
 
-			//Listen to the layout event of the layout behavior.
-			//TODO: is gut? We can always refactor, but does this make sense though?
-			//This means possibly hundreds of DimensionsBehaviors will react to this event.
-			//We could instead reverse the responsibility and have the layout behavior
-			//Call a method on each of the children.
-			//Maybe we should just merge Dimensions+PositionBehavior because they belong together anyway.
-			//this.parentEl instead of document
-			this.listen(document, 'guidelayout:layout', function () {
+			this.listen(this.parentEl, 'guidelayout:layout', function () {
 				_this2._render();
+			});
+
+			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
+				_this2._scroll(e.detail.scrollState);
+			});
+
+			this.listen(this.parentEl, 'guidelayout:pause', function () {
+				_this2._scrollPause();
 			});
 
 			if (this.props.height === 'auto') {
@@ -2928,39 +2864,6 @@ var LayoutBehavior = function (_Behavior) {
 			this._unobserveHeight();
 			this._unwrapContents();
 			//TODO: remove styles
-		}
-	}, {
-		key: 'scroll',
-		value: function scroll(status, engine) {
-			var scrollUpdate = this._scrollUpdate;
-			var didMove = engine.doScroll(this.layout, status.position, scrollUpdate);
-
-			if (didMove) {
-				var _left = Math.round(this.layout.left);
-				var _top = scrollUpdate.wrapperTop;
-				var style = this.el.style;
-
-				style.msTransform = 'translate(' + _left + 'px, ' + _top + 'px)';
-				style.transform = style.WebkitTransform = 'translate3d(' + _left + 'px, ' + _top + 'px, 0)';
-
-				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
-				//But we do not do the opposite here. This is just the last resort.
-				//Under normal circumstances an async process (handleScrollPause) toggles display block/none intelligently.
-				if (scrollUpdate.inViewport) {
-					style.display = 'block';
-				}
-
-				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
-				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
-				//or elements with appear effects using scaling/rotation.
-				var innerStyle = this.innerEl.style;
-				innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
-				innerStyle.transform = innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
-
-				//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
-			}
-
-			//TODO: we need to combine _render and scroll and make sure they're consistently called (need access to the engine tho).
 		}
 
 		//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
@@ -3060,6 +2963,9 @@ var LayoutBehavior = function (_Behavior) {
 		value: function _render() {
 			this._renderWrapper();
 			this._renderInner();
+
+			//Force a scroll update.
+			this._scroll(this.parentEl.guidelayout.scrollState, true);
 		}
 	}, {
 		key: '_canSafelyBeUnloadedFromGPU',
@@ -3101,6 +3007,67 @@ var LayoutBehavior = function (_Behavior) {
 
 			if (this.props.clip) {
 				style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+			}
+		}
+	}, {
+		key: '_scroll',
+		value: function _scroll(scrollState) {
+			var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+			var scrollUpdate = this._scrollUpdate;
+			var didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+			var style = this.el.style;
+			var innerStyle = this.innerEl.style;
+
+			if (didMove || forceUpdate) {
+				var _left = Math.round(this.layout.left);
+				var _top = scrollUpdate.wrapperTop;
+
+				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
+				//But we do not do the opposite here. This is just the last resort.
+				//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
+				if (scrollUpdate.inViewport) {
+					style.display = 'block';
+					style.willChange = 'transform';
+				}
+
+				style.msTransform = 'translate(' + _left + 'px, ' + _top + 'px)';
+				style.transform = style.WebkitTransform = 'translate3d(' + _left + 'px, ' + _top + 'px, 0)';
+
+				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
+				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
+				//or elements with appear effects using scaling/rotation.
+				var _innerStyle = this.innerEl.style;
+				_innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
+				_innerStyle.transform = _innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+
+				//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
+				//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
+
+				//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+			}
+		}
+	}, {
+		key: '_scrollPause',
+		value: function _scrollPause() {
+			var scrollUpdate = this._scrollUpdate;
+			var style = this.el.style;
+
+			if (scrollUpdate.inExtendedViewport) {
+				style.display = 'block';
+				style.willChange = 'transform';
+			} else {
+				if (this._canSafelyBeUnloadedFromGPU()) {
+					style.display = 'none';
+				} else {
+					//This reduces gpu memory a ton and also hides text at the edge of the viewport.
+					//Otherwise those elements would be visible behind the adress bar in iOS.
+					//There's no inverse operation to that because once it is inside the viewport again
+					//the translation will overwrite the scale transform.
+					style.transform = style.WebkitTransform = style.msTransform = 'scale(0)';
+				}
+
+				style.willChange = 'auto';
 			}
 		}
 	}], [{
@@ -3162,7 +3129,7 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return [];
+			return ['^guidelayout'];
 		}
 	}]);
 
@@ -3171,7 +3138,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"resize-observer-polyfill":6}],14:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"resize-observer-polyfill":6}],13:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -3202,7 +3169,7 @@ _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/LayoutBehavior.js":13,"scrollmeister.js":28}],15:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/LayoutBehavior.js":12,"scrollmeister.js":27}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3248,7 +3215,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":28}],16:[function(require,module,exports){
+},{"./MeisterComponent.js":15,"scrollmeister.js":27}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3273,6 +3240,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var invalidMarkupSelectors = [':not(scroll-meister) > el-meister', 'scroll-meister * el-meister', 'scroll-meister scroll-meister', 'el-meister el-meister', 'el-meister scroll-meister'];
+
 var ScrollMeisterComponent = function (_HTMLElement) {
 	_inherits(ScrollMeisterComponent, _HTMLElement);
 
@@ -3293,7 +3262,8 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	_createClass(ScrollMeisterComponent, [{
 		key: 'init',
 		value: function init() {
-			this._scrollBehaviors = [];
+			this.behaviors = {};
+
 			this._scheduledBatchUpdate = false;
 			this._scheduledBehaviors = {
 				attach: {},
@@ -3302,7 +3272,14 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		}
 	}, {
 		key: 'connectedCallback',
-		value: function connectedCallback() {}
+		value: function connectedCallback() {
+			//Make some sanity checks on the markup for UX.
+			(0, _raf2.default)(function () {
+				if (document.querySelector(invalidMarkupSelectors.join(','))) {
+					throw new Error('You have nested <scroll-meister> and <el-meister> elements in an unsupported way. <el-meister> elements need to always be direct children of <scroll-meister>.');
+				}
+			});
+		}
 	}, {
 		key: 'disconnectedCallback',
 		value: function disconnectedCallback() {
@@ -3339,19 +3316,11 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		value: function _batchUpdateBehaviors() {
 			this._scheduledBatchUpdate = false;
 
-			for (var key in this._scheduledBehaviors.detach) {
-				if (this._scheduledBehaviors.detach.hasOwnProperty(key)) {
-					_scrollmeister2.default.detachBehavior(this, key);
-					delete this._scheduledBehaviors.detach[key];
-				}
-			}
+			_scrollmeister2.default.attachBehaviors(this, this._scheduledBehaviors.attach);
+			this._scheduledBehaviors.attach = {};
 
-			for (var _key in this._scheduledBehaviors.attach) {
-				if (this._scheduledBehaviors.attach.hasOwnProperty(_key)) {
-					_scrollmeister2.default.attachBehavior(this, _key, this._scheduledBehaviors.attach[_key]);
-					delete this._scheduledBehaviors.attach[_key];
-				}
-			}
+			_scrollmeister2.default.detachBehaviors(this, this._scheduledBehaviors.detach);
+			this._scheduledBehaviors.detach = {};
 		}
 	}]);
 
@@ -3360,7 +3329,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":5,"scrollmeister.js":28}],17:[function(require,module,exports){
+},{"raf":5,"scrollmeister.js":27}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3406,7 +3375,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":28}],18:[function(require,module,exports){
+},{"./MeisterComponent.js":15,"scrollmeister.js":27}],17:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3424,7 +3393,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":15,"components/ScrollMeisterComponent.js":17,"document-register-element":2}],19:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":14,"components/ScrollMeisterComponent.js":16,"document-register-element":2}],18:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.css');
@@ -3435,7 +3404,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":14,"./components":18,"./scrollmeister.css":27,"./scrollmeister.js":28}],20:[function(require,module,exports){
+},{"./behaviors":13,"./components":17,"./scrollmeister.css":26,"./scrollmeister.js":27}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3990,6 +3959,109 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
+},{}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+//TODO: this has not been migrated to classes yet.
+
+var PAUSE_DELAY = 300; //ms
+var MAX_HISTORY_LENGTH = 30;
+var MAX_HISTORY_AGE = 300; //ms
+
+var ScrollState = function ScrollState(onScroll, onPause) {
+	this.onScroll = onScroll;
+	this.onPause = onPause;
+
+	this.position = 0;
+	this.maxPosition = 0;
+	this.velocity = 0;
+	this.progress = 0;
+	this.direction = 'down';
+	this.history = [];
+};
+
+ScrollState.prototype.tick = function (now, newPosition) {
+	var direction;
+
+	//We keep track of the position and time for calculating an accurate velocity in later frames.
+	this.history.push(this.position, now);
+
+	//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
+	if (this.history.length > MAX_HISTORY_LENGTH * 2) {
+		this.history.splice(0, MAX_HISTORY_LENGTH);
+	}
+
+	this.velocity = this._calculateScrollVelocity(now);
+
+	if (this.position !== newPosition) {
+		direction = newPosition > this.position ? 'down' : 'up';
+
+		this.position = newPosition;
+		this.progress = newPosition / this.maxPosition;
+
+		//When the direction changed, we clear the history.
+		//This way we get better scroll velocity calculations
+		//when the users moves up/down very fast (e.g. touch display scratching).
+		if (this.direction !== direction) {
+			this.direction = direction;
+			this.history.length = 0;
+		}
+
+		if (this.pauseTimer) {
+			clearTimeout(this.pauseTimer);
+			this.pauseTimer = null;
+		}
+
+		this.onScroll();
+	} else {
+		if (!this.pauseTimer) {
+			this.pauseTimer = setTimeout(this.onPause, PAUSE_DELAY);
+		}
+	}
+};
+
+ScrollState.prototype.destroy = function (now, newPosition) {
+	clearTimeout(this.pauseTimer);
+};
+
+ScrollState.prototype._calculateScrollVelocity = function (now) {
+	//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
+	//We do this because using just the past two frames for calculating the veloctiy
+	//gives very jumpy results.
+	var positions = this.history;
+	var positionsIndexEnd = positions.length - 1;
+	var positionsIndexStart = positionsIndexEnd;
+	var positionsIndex = positionsIndexEnd;
+	var timeOffset;
+	var movedOffset;
+
+	//Move pointer to position measured MAX_HISTORY_AGE ago
+	//The positions array contains alternating offset/timeStamp pairs.
+	for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
+		//Did we go back far enough and found the position MAX_HISTORY_AGE ago?
+		if (positions[positionsIndex] <= now - MAX_HISTORY_AGE) {
+			break;
+		}
+
+		positionsIndexStart = positionsIndex;
+	}
+
+	//Compute relative movement between these two points.
+	timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
+	movedOffset = positions[positionsIndexEnd - 1] - positions[positionsIndexStart - 1];
+
+	if (timeOffset > 0 && Math.abs(movedOffset) > 0) {
+		return movedOffset / timeOffset;
+	} else {
+		return 0;
+	}
+};
+
+exports.default = ScrollState;
+
 },{}],21:[function(require,module,exports){
 'use strict';
 
@@ -4193,107 +4265,7 @@ exports.default = {
 	}
 };
 
-},{"types":35}],24:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-//TODO: this has not been migrated to classes yet.
-
-var Emitter = require('tiny-emitter');
-
-var PAUSE_DELAY = 300; //ms
-var MAX_HISTORY_LENGTH = 30;
-var MAX_HISTORY_AGE = 300; //ms
-
-var ScrollStatus = function ScrollStatus() {
-	this.position = 0;
-	this.maxPosition = 0;
-	this.velocity = 0;
-	this.progress = 0;
-	this.direction = 'down';
-	this.history = [];
-};
-
-ScrollStatus.prototype = new Emitter();
-
-ScrollStatus.prototype.tick = function (now, newPosition, layoutEngine) {
-	var direction;
-
-	//We keep track of the position and time for calculating an accurate velocity in later frames.
-	this.history.push(this.position, now);
-
-	//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
-	if (this.history.length > MAX_HISTORY_LENGTH * 2) {
-		this.history.splice(0, MAX_HISTORY_LENGTH);
-	}
-
-	this.velocity = this._calculateScrollVelocity(now);
-
-	if (this.position !== newPosition) {
-		direction = newPosition > this.position ? 'down' : 'up';
-
-		this.position = newPosition;
-		this.progress = newPosition / this.maxPosition;
-
-		//When the direction changed, we clear the history.
-		//This way we get better scroll velocity calculations
-		//when the users moves up/down very fast (e.g. touch display scratching).
-		if (this.direction !== direction) {
-			this.direction = direction;
-			this.history.length = 0;
-		}
-
-		if (this.pauseTimer) {
-			clearTimeout(this.pauseTimer);
-			this.pauseTimer = null;
-		}
-
-		this.emit('scroll', this, layoutEngine);
-	} else {
-		if (!this.pauseTimer) {
-			this.pauseTimer = setTimeout(this.emit.bind(this, 'pause', this), PAUSE_DELAY);
-		}
-	}
-};
-
-ScrollStatus.prototype._calculateScrollVelocity = function (now) {
-	//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
-	//We do this because using just the past two frames for calculating the veloctiy
-	//gives very jumpy results.
-	var positions = this.history;
-	var positionsIndexEnd = positions.length - 1;
-	var positionsIndexStart = positionsIndexEnd;
-	var positionsIndex = positionsIndexEnd;
-	var timeOffset;
-	var movedOffset;
-
-	//Move pointer to position measured MAX_HISTORY_AGE ago
-	//The positions array contains alternating offset/timeStamp pairs.
-	for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
-		//Did we go back far enough and found the position MAX_HISTORY_AGE ago?
-		if (positions[positionsIndex] <= now - MAX_HISTORY_AGE) {
-			break;
-		}
-
-		positionsIndexStart = positionsIndex;
-	}
-
-	//Compute relative movement between these two points.
-	timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
-	movedOffset = positions[positionsIndexEnd - 1] - positions[positionsIndexStart - 1];
-
-	if (timeOffset > 0 && Math.abs(movedOffset) > 0) {
-		return movedOffset / timeOffset;
-	} else {
-		return 0;
-	}
-};
-
-exports.default = new ScrollStatus();
-
-},{"tiny-emitter":8}],25:[function(require,module,exports){
+},{"types":34}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4316,7 +4288,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4354,10 +4326,10 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],27:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden;will-change:opacity}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;backface-visibility:hidden;will-change:transform}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
-},{"browserify-css":1}],28:[function(require,module,exports){
-"use strict";
+},{}],26:[function(require,module,exports){
+var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;backface-visibility:hidden}"; (require("browserify-css").createStyle(css, {}, { "insertAt": undefined })); module.exports = css;
+},{"browserify-css":1}],27:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
@@ -4376,39 +4348,75 @@ var Scrollmeister = {
 		var name = classDefinition.behaviorName;
 
 		if (this.behaviors.hasOwnProperty(name)) {
-			throw new Error("You are trying to redefine the \"" + name + "\" behavior.");
+			throw new Error('You are trying to redefine the "' + name + '" behavior.');
 		}
 
 		if (!lowerCaseAndDashRegex.test(name)) {
-			throw new Error("The behavior \"" + name + "\" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.");
+			throw new Error('The behavior "' + name + '" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.');
 		}
 
 		this.behaviors[name] = classDefinition;
 	},
 
+	attachBehaviors: function attachBehaviors(element, behaviorPropertiesMap) {
+		var attachedABehavior = void 0;
+		var hasKeys = void 0;
+
+		//We loop over all behaviors in unspecified order until we eventually resolve all dependencies (or not).
+		do {
+			hasKeys = false;
+			attachedABehavior = false;
+
+			for (var name in behaviorPropertiesMap) {
+				if (!behaviorPropertiesMap.hasOwnProperty(name)) {
+					continue;
+				}
+
+				hasKeys = true;
+
+				if (this._checkBehaviorDependencies(element, name)) {
+					this.attachBehavior(element, name, behaviorPropertiesMap[name]);
+					attachedABehavior = true;
+
+					delete behaviorPropertiesMap[name];
+				}
+			}
+
+			if (hasKeys && !attachedABehavior) {
+				throw new Error(
+				//TODO: better error message with the exact thing that is missing.
+				'Could not resolve dependencies for behaviors "' + Object.keys(behaviorPropertiesMap).join('", "') + '".');
+			}
+		} while (hasKeys);
+	},
+
 	attachBehavior: function attachBehavior(element, name, rawProperties) {
 		if (!this.behaviors.hasOwnProperty(name)) {
-			throw new Error("Tried to attach an unknown behavior \"" + name + "\". This should never happen since we only track attributes which correspond to defined behaviors.");
+			throw new Error('Tried to attach an unknown behavior "' + name + '". This should never happen since we only track attributes that correspond to defined behaviors.');
 		}
-
-		var Behavior = this.behaviors[name];
 
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
 			element[name].updateProperties(rawProperties);
 		} else {
-			if (this._checkBehaviorDependencies(element, name)) {
-				//Make the behavior available as a property on the DOM node.
-				//TODO: What if people assign a plain rawProperties to the property?
-				//Maybe this should not be allowed at all, but instead always use the attribute?
-				//BUT: if we can make it work then it should work for UX reasons.
-				//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-				element[name] = new Behavior(element, rawProperties);
+			//Make the behavior available as a property on the DOM node.
+			//TODO: What if people assign a plain rawProperties to the property?
+			//Maybe this should not be allowed at all, but instead always use the attribute?
+			//BUT: if we can make it work then it should work for UX reasons.
+			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
+			var Behavior = this.behaviors[name];
+			element[name] = new Behavior(element, rawProperties);
+			element.behaviors[name] = element[name];
+		}
+	},
 
-				this._updateWaitingBehaviors(element);
-			} else {
-				this.behaviorsWaitingForDependencies.push({ name: name, rawProperties: rawProperties });
+	detachBehaviors: function detachBehaviors(element, behaviorPropertiesMap) {
+		for (var name in behaviorPropertiesMap) {
+			if (!behaviorPropertiesMap.hasOwnProperty(name)) {
+				continue;
 			}
+
+			this.detachBehavior(element, name);
 		}
 	},
 
@@ -4416,6 +4424,20 @@ var Scrollmeister = {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
+			delete element.behaviors[name];
+		}
+
+		//Check if all dependencies are still resolved.
+		//TODO: this check missed dependencies of children.
+		//E.g. removing "guidelayout" when there are children with "layout".
+		for (var otherName in element.behaviors) {
+			if (!element.behaviors.hasOwnProperty(otherName)) {
+				continue;
+			}
+
+			if (!this._checkBehaviorDependencies(element, otherName)) {
+				throw new Error('You just removed the "' + name + '" behavior, which "' + otherName + '" requires.');
+			}
 		}
 	},
 
@@ -4425,42 +4447,26 @@ var Scrollmeister = {
 		for (var dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			var dependency = Behavior.dependencies[dependencyIndex];
 
-			if (!element.hasOwnProperty(dependency)) {
-				return false;
+			if (dependency.charAt(0) === '^') {
+				dependency = dependency.slice(1);
+
+				if (!element.parentNode.hasOwnProperty(dependency)) {
+					return false;
+				}
+			} else {
+				if (!element.hasOwnProperty(dependency)) {
+					return false;
+				}
 			}
 		}
 
 		return true;
-	},
-
-	_updateWaitingBehaviors: function _updateWaitingBehaviors(element) {
-		var stillWaiting = [];
-		var finallyResolved = [];
-
-		//Check if any of the waiting behaviors can now be resolved.
-		for (var behaviorIndex = 0; behaviorIndex < this.behaviorsWaitingForDependencies.length; behaviorIndex++) {
-			var waitingBehavior = this.behaviorsWaitingForDependencies[behaviorIndex];
-
-			if (this._checkBehaviorDependencies(element, waitingBehavior.name)) {
-				finallyResolved.push(waitingBehavior);
-			} else {
-				stillWaiting.push(waitingBehavior);
-			}
-		}
-
-		this.behaviorsWaitingForDependencies = stillWaiting;
-
-		for (var _behaviorIndex = 0; _behaviorIndex < finallyResolved.length; _behaviorIndex++) {
-			var _waitingBehavior = finallyResolved[_behaviorIndex];
-
-			this.attachBehavior(element, _waitingBehavior.name, _waitingBehavior.rawProperties);
-		}
 	}
 };
 
 exports.default = Scrollmeister;
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4475,7 +4481,7 @@ exports.default = {
 	}
 };
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4517,7 +4523,7 @@ exports.default = {
 	}
 };
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4563,7 +4569,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":30}],32:[function(require,module,exports){
+},{"types/CSSLengthType.js":29}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4649,7 +4655,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4678,7 +4684,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4693,7 +4699,7 @@ exports.default = {
 	}
 };
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4735,4 +4741,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":29,"types/CSSLengthType.js":30,"types/HeightType.js":31,"types/LayoutDependencyType.js":32,"types/NumberType.js":33,"types/StringType.js":34}]},{},[19]);
+},{"types/BooleanType.js":28,"types/CSSLengthType.js":29,"types/HeightType.js":30,"types/LayoutDependencyType.js":31,"types/NumberType.js":32,"types/StringType.js":33}]},{},[18]);

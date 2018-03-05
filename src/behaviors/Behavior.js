@@ -2,7 +2,6 @@ import assign from 'ponies/Object.assign.js';
 import CustomEvent from 'ponies/CustomEvent.js';
 
 import schemaParser from 'lib/schemaParser.js';
-import scrollStatus from 'lib/scrollStatus.js';
 
 const supportsPassiveEvents = (function() {
 	let passiveSupported;
@@ -49,16 +48,11 @@ export default class Behavior {
 
 	constructor(element, rawProperties) {
 		this.el = element;
+		this.parentEl = element.parentNode;
 		this.props = {};
 		this.state = {};
 
 		this.parseProperties(rawProperties);
-
-		//TODO: does this make sense? Does ANYONE except for the layout behavior need the scroll event?
-		//We wanted to solve everything else using signals/slots which can be triggered by the layout engine.
-		if (this.scroll) {
-			this.listen(scrollStatus, 'scroll', this.scroll.bind(this));
-		}
 
 		this.attach();
 		this.emit('attach');
@@ -72,9 +66,9 @@ export default class Behavior {
 
 				//listen works for both DOM elements and event emitters using on/off.
 				if (typeof listener.element.removeEventListener === 'function') {
-					listener.element.removeEventListener(listener.event, listener.callback, thirdEventListenerArgument);
+					listener.element.removeEventListener(listener.eventName, listener.callback, thirdEventListenerArgument);
 				} else {
-					listener.element.off(listener.event, listener.callback);
+					listener.element.off(listener.eventName, listener.callback);
 				}
 			}
 		}
@@ -130,14 +124,14 @@ export default class Behavior {
 		callback();
 	}
 
-	emit(name, params) {
+	emit(name, bubbles = true) {
 		//Namespace the event to the name of the behavior.
 		name = this.constructor.behaviorName + ':' + name;
 
 		let event = new CustomEvent(name, {
-			bubbles: true,
+			bubbles: bubbles,
 			cancelable: false,
-			details: params
+			detail: this
 		});
 
 		this.el.dispatchEvent(event);

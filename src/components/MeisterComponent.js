@@ -4,8 +4,16 @@ import raf from 'raf';
 
 import Scrollmeister from 'scrollmeister.js';
 
+const invalidMarkupSelectors = [
+	':not(scroll-meister) > el-meister',
+	'scroll-meister * el-meister',
+	'scroll-meister scroll-meister',
+	'el-meister el-meister',
+	'el-meister scroll-meister'
+];
+
 export default class ScrollMeisterComponent extends HTMLElement {
-	_scrollBehaviors: Array<{ scroll: Function }>;
+	behaviors: any;
 	_scheduledBatchUpdate: boolean;
 	_scheduledBehaviors: { attach: any, detach: any };
 	_batchHandle: number;
@@ -21,7 +29,8 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	init() {
-		this._scrollBehaviors = [];
+		this.behaviors = {};
+
 		this._scheduledBatchUpdate = false;
 		this._scheduledBehaviors = {
 			attach: {},
@@ -29,7 +38,16 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		};
 	}
 
-	connectedCallback() {}
+	connectedCallback() {
+		//Make some sanity checks on the markup for UX.
+		raf(() => {
+			if (document.querySelector(invalidMarkupSelectors.join(','))) {
+				throw new Error(
+					'You have nested <scroll-meister> and <el-meister> elements in an unsupported way. <el-meister> elements need to always be direct children of <scroll-meister>.'
+				);
+			}
+		});
+	}
 
 	disconnectedCallback() {
 		raf.cancel(this._batchHandle);
@@ -63,18 +81,10 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	_batchUpdateBehaviors() {
 		this._scheduledBatchUpdate = false;
 
-		for (let key in this._scheduledBehaviors.detach) {
-			if (this._scheduledBehaviors.detach.hasOwnProperty(key)) {
-				Scrollmeister.detachBehavior(this, key);
-				delete this._scheduledBehaviors.detach[key];
-			}
-		}
+		Scrollmeister.attachBehaviors(this, this._scheduledBehaviors.attach);
+		this._scheduledBehaviors.attach = {};
 
-		for (let key in this._scheduledBehaviors.attach) {
-			if (this._scheduledBehaviors.attach.hasOwnProperty(key)) {
-				Scrollmeister.attachBehavior(this, key, this._scheduledBehaviors.attach[key]);
-				delete this._scheduledBehaviors.attach[key];
-			}
-		}
+		Scrollmeister.detachBehaviors(this, this._scheduledBehaviors.detach);
+		this._scheduledBehaviors.detach = {};
 	}
 }

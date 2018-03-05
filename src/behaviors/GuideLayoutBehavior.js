@@ -3,7 +3,7 @@
 import raf from 'raf';
 import ScrollLogic from 'scroll-logic';
 
-import scrollStatus from 'lib/scrollStatus.js';
+import ScrollState from 'lib/ScrollState.js';
 import fakeClick from 'lib/fakeClick.js';
 import isTextInput from 'lib/isTextInput.js';
 import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
@@ -14,7 +14,7 @@ const isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigato
 const isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 const isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-export default class LayoutBehavior extends Behavior {
+export default class GuideLayoutBehavior extends Behavior {
 	_scrollLogic: ScrollLogic;
 	_mousemoveCounter: number;
 
@@ -53,13 +53,17 @@ export default class LayoutBehavior extends Behavior {
 		raf(this._scrollLoop.bind(this));
 	}
 
-	detach() {}
+	detach() {
+		this.scrollState.destroy();
+	}
 
 	update() {
 		this._updateScrollHeight();
 	}
 
 	_setupScrolling() {
+		this.scrollState = new ScrollState(this.emit.bind(this, 'scroll', false), this.emit.bind(this, 'pause', false));
+
 		this._setupMobileScrolling();
 		this._handleScrollModes();
 	}
@@ -230,7 +234,7 @@ export default class LayoutBehavior extends Behavior {
 			}
 		}
 
-		scrollStatus.tick(now, currentScrollPosition, this.engine);
+		this.scrollState.tick(now, currentScrollPosition);
 	}
 
 	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
@@ -283,7 +287,7 @@ export default class LayoutBehavior extends Behavior {
 
 		this._updateScrollHeight();
 
-		this.emit('layout');
+		this.emit('layout', false);
 	}
 
 	_updateScrollHeight() {
@@ -311,9 +315,9 @@ export default class LayoutBehavior extends Behavior {
 		this._scrollLogic.setContainerLength(this.engine.viewport.height);
 		this._scrollLogic.setContentLength(requiredHeight);
 
-		scrollStatus.maxPosition = requiredHeight - this.engine.viewport.height;
+		this.scrollState.maxPosition = requiredHeight - this.engine.viewport.height;
 
 		//Make sure we don't lose our relative scroll position.
-		this.scrollTo(scrollStatus.maxPosition * scrollStatus.progress);
+		this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
 	}
 }

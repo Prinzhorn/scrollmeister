@@ -1,12 +1,13 @@
 //TODO: this has not been migrated to classes yet.
 
-var Emitter = require('tiny-emitter');
-
 var PAUSE_DELAY = 300; //ms
 var MAX_HISTORY_LENGTH = 30;
 var MAX_HISTORY_AGE = 300; //ms
 
-var ScrollStatus = function() {
+var ScrollState = function(onScroll, onPause) {
+	this.onScroll = onScroll;
+	this.onPause = onPause;
+
 	this.position = 0;
 	this.maxPosition = 0;
 	this.velocity = 0;
@@ -15,9 +16,7 @@ var ScrollStatus = function() {
 	this.history = [];
 };
 
-ScrollStatus.prototype = new Emitter();
-
-ScrollStatus.prototype.tick = function(now, newPosition, layoutEngine) {
+ScrollState.prototype.tick = function(now, newPosition) {
 	var direction;
 
 	//We keep track of the position and time for calculating an accurate velocity in later frames.
@@ -49,15 +48,19 @@ ScrollStatus.prototype.tick = function(now, newPosition, layoutEngine) {
 			this.pauseTimer = null;
 		}
 
-		this.emit('scroll', this, layoutEngine);
+		this.onScroll();
 	} else {
 		if (!this.pauseTimer) {
-			this.pauseTimer = setTimeout(this.emit.bind(this, 'pause', this), PAUSE_DELAY);
+			this.pauseTimer = setTimeout(this.onPause, PAUSE_DELAY);
 		}
 	}
 };
 
-ScrollStatus.prototype._calculateScrollVelocity = function(now) {
+ScrollState.prototype.destroy = function(now, newPosition) {
+	clearTimeout(this.pauseTimer);
+};
+
+ScrollState.prototype._calculateScrollVelocity = function(now) {
 	//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
 	//We do this because using just the past two frames for calculating the veloctiy
 	//gives very jumpy results.
@@ -90,4 +93,4 @@ ScrollStatus.prototype._calculateScrollVelocity = function(now) {
 	}
 };
 
-export default new ScrollStatus();
+export default ScrollState;

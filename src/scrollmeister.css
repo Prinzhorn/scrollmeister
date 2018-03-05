@@ -20,7 +20,6 @@ scroll-meister {
 	position: static;
 	width: 100%;
 	overflow: hidden;
-	will-change: opacity;
 }
 
 el-meister {
@@ -30,5 +29,4 @@ el-meister {
 	top: 0;
 	opacity: 1;
 	backface-visibility: hidden;
-	will-change: transform;
 }
