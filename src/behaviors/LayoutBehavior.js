@@ -256,17 +256,14 @@ export default class LayoutBehavior extends Behavior {
 	_scroll(scrollState, forceUpdate = false) {
 		let scrollUpdate = this.scrollUpdate;
 
-		//TODO: instead of didMove, return a "changes" object. E.g. did inViewport change?
-		let didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
 		let style = this.el.style;
 		let innerStyle = this.innerEl.style;
 
-		if (didMove || forceUpdate) {
+		this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+
+		if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 			let left = Math.round(this.layout.left);
 			let top = scrollUpdate.wrapperTop;
-
-			//TODO: collect events and trigger them at the end of this function.
-			//E.g. inViewport, inExtendedViewport. This will make the lazyloading much easier.
 
 			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
 			//But we do not do the opposite here. This is just the last resort.
@@ -290,6 +287,30 @@ export default class LayoutBehavior extends Behavior {
 			//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
 
 			//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+		}
+
+		if (scrollUpdate.inExtendedViewportChanged) {
+			if (scrollUpdate.inExtendedViewportChanged) {
+				this.emit('extendedviewport:enter');
+			} else {
+				this.emit('extendedviewport:leave');
+			}
+		}
+
+		if (scrollUpdate.inViewportChanged) {
+			if (scrollUpdate.inViewport) {
+				this.emit('viewport:enter');
+			} else {
+				this.emit('viewport:leave');
+			}
+		}
+
+		if (scrollUpdate.inCenterChanged) {
+			if (scrollUpdate.inCenter) {
+				this.emit('center:enter');
+			} else {
+				this.emit('center:leave');
+			}
 		}
 	}
 

@@ -2981,17 +2981,14 @@ var LayoutBehavior = function (_Behavior) {
 
 			var scrollUpdate = this.scrollUpdate;
 
-			//TODO: instead of didMove, return a "changes" object. E.g. did inViewport change?
-			var didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
 			var style = this.el.style;
 			var innerStyle = this.innerEl.style;
 
-			if (didMove || forceUpdate) {
+			this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+
+			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 				var _left = Math.round(this.layout.left);
 				var _top = scrollUpdate.wrapperTop;
-
-				//TODO: collect events and trigger them at the end of this function.
-				//E.g. inViewport, inExtendedViewport. This will make the lazyloading much easier.
 
 				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
 				//But we do not do the opposite here. This is just the last resort.
@@ -3015,6 +3012,30 @@ var LayoutBehavior = function (_Behavior) {
 				//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
 
 				//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+			}
+
+			if (scrollUpdate.inExtendedViewportChanged) {
+				if (scrollUpdate.inExtendedViewportChanged) {
+					this.emit('extendedviewport:enter');
+				} else {
+					this.emit('extendedviewport:leave');
+				}
+			}
+
+			if (scrollUpdate.inViewportChanged) {
+				if (scrollUpdate.inViewport) {
+					this.emit('viewport:enter');
+				} else {
+					this.emit('viewport:leave');
+				}
+			}
+
+			if (scrollUpdate.inCenterChanged) {
+				if (scrollUpdate.inCenter) {
+					this.emit('center:enter');
+				} else {
+					this.emit('center:leave');
+				}
 			}
 		}
 	}, {
@@ -3569,71 +3590,77 @@ var GuideLayoutEngine = function () {
 			} while (skippedNode);
 		}
 
-		//Does not return anything other than a flag. Instead we pass it an object that it fills.
+		//Does not return anything, instead we pass it an object that it fills.
 		//This minimizes the amount of garbage we create on the hot path, we reuse this object.
+		//This also has the nice side effect that we can make optimization by comparing to the previous scroll data.
 
 	}, {
 		key: 'doScroll',
-		value: function doScroll(layout, scrollPosition, ret) {
+		value: function doScroll(layout, scrollPosition, scrollUpdate) {
 			var verticalCenter = this.viewport.height / 2;
-			var prevWrapperTop = ret.wrapperTop;
-
-			ret.contentHeight = layout.height;
+			var contentHeight = layout.height;
+			var prevWrapperTop = scrollUpdate.wrapperTop;
+			var prevInCenter = scrollUpdate.inCenter;
+			var prevInViewport = scrollUpdate.inViewport;
+			var prevInExtendedViewport = scrollUpdate.inExtendedViewport;
 
 			if (layout.transformTopPosition) {
-				ret.contentTop = layout.transformTopPosition(scrollPosition);
+				scrollUpdate.contentTop = layout.transformTopPosition(scrollPosition);
 			} else {
-				ret.contentTop = layout.top - scrollPosition;
+				scrollUpdate.contentTop = layout.top - scrollPosition;
 			}
 
 			if (layout.clipRect) {
-				ret.wrapperTop = layout.clipRect.top - scrollPosition;
-				ret.wrapperHeight = layout.clipRect.height;
+				scrollUpdate.wrapperTop = layout.clipRect.top - scrollPosition;
+				scrollUpdate.wrapperHeight = layout.clipRect.height;
 			} else {
-				ret.wrapperTop = ret.contentTop;
-				ret.wrapperHeight = ret.contentHeight;
+				scrollUpdate.wrapperTop = scrollUpdate.contentTop;
+				scrollUpdate.wrapperHeight = contentHeight;
 			}
 
-			ret.wrapperBottom = Math.round(ret.wrapperTop + ret.wrapperHeight);
-			ret.contentBottom = Math.round(ret.contentTop + ret.contentHeight);
+			scrollUpdate.wrapperBottom = Math.round(scrollUpdate.wrapperTop + scrollUpdate.wrapperHeight);
+			scrollUpdate.contentBottom = Math.round(scrollUpdate.contentTop + contentHeight);
 
 			//We round this here and not earlier because other calculations,
 			//like wrapper/contentBottom need to be as accurate as possible.
-			ret.wrapperTop = Math.round(ret.wrapperTop);
-			ret.contentTop = Math.round(ret.contentTop);
+			scrollUpdate.wrapperTop = Math.round(scrollUpdate.wrapperTop);
+			scrollUpdate.contentTop = Math.round(scrollUpdate.contentTop);
 
-			ret.contentTopOffset = ret.contentTop - ret.wrapperTop;
+			scrollUpdate.contentTopOffset = scrollUpdate.contentTop - scrollUpdate.wrapperTop;
 
 			//Does the center of the viewport intersect with the element?
-			ret.inCenter = ret.wrapperTop < verticalCenter && ret.wrapperBottom > verticalCenter;
+			scrollUpdate.inCenter = scrollUpdate.wrapperTop < verticalCenter && scrollUpdate.wrapperBottom > verticalCenter;
 
 			//The extended viewport has three times the height of the normal viewport (+1 at the top and bottom).
 			//It's used for lazy loading etc. before something enters the viewport.
-			ret.inExtendedViewport = ret.wrapperTop < 2 * this.viewport.height && ret.wrapperBottom > -this.viewport.height;
+			scrollUpdate.inExtendedViewport = scrollUpdate.wrapperTop < 2 * this.viewport.height && scrollUpdate.wrapperBottom > -this.viewport.height;
 
 			//Optimization: there's no need to translate the item beyond the viewport.
 			//"Park" it exactly at the edge.
 			//This makes the difference between touching ~5 (visible) and ~100s (all) DOM items.
 			//But we also return the absolute top position before parking it.
 
-			ret.absoluteWrapperTop = ret.wrapperTop;
-			ret.absoluteContentTop = ret.contentTop;
+			scrollUpdate.absoluteWrapperTop = scrollUpdate.wrapperTop;
+			scrollUpdate.absoluteContentTop = scrollUpdate.contentTop;
 
 			//Top of the element below the viewport?
-			if (ret.wrapperTop >= this.viewport.height) {
-				ret.wrapperTop = this.viewport.height;
-				ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
-				ret.inViewport = false;
-			} else if (ret.wrapperBottom <= 0) {
+			if (scrollUpdate.wrapperTop >= this.viewport.height) {
+				scrollUpdate.wrapperTop = this.viewport.height;
+				scrollUpdate.contentTop = scrollUpdate.wrapperTop + scrollUpdate.contentTopOffset;
+				scrollUpdate.inViewport = false;
+			} else if (scrollUpdate.wrapperBottom <= 0) {
 				//Bottom of the element above the viewport?
-				ret.wrapperTop = -Math.round(ret.wrapperHeight);
-				ret.contentTop = ret.wrapperTop + ret.contentTopOffset;
-				ret.inViewport = false;
+				scrollUpdate.wrapperTop = -Math.round(scrollUpdate.wrapperHeight);
+				scrollUpdate.contentTop = scrollUpdate.wrapperTop + scrollUpdate.contentTopOffset;
+				scrollUpdate.inViewport = false;
 			} else {
-				ret.inViewport = true;
+				scrollUpdate.inViewport = true;
 			}
 
-			return ret.wrapperTop !== prevWrapperTop;
+			scrollUpdate.wrapperTopChanged = scrollUpdate.wrapperTop !== prevWrapperTop;
+			scrollUpdate.inCenterChanged = scrollUpdate.inCenter !== prevInCenter;
+			scrollUpdate.inViewportChanged = scrollUpdate.inViewport !== prevInViewport;
+			scrollUpdate.inExtendedViewportChanged = scrollUpdate.inExtendedViewport !== prevInExtendedViewport;
 		}
 
 		//This will attach the layout info directly to each dom node. No need for a lookup map.
