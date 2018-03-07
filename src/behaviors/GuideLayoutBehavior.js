@@ -237,11 +237,19 @@ export default class GuideLayoutBehavior extends Behavior {
 		this.scrollState.tick(now, currentScrollPosition);
 	}
 
-	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
+	_getScrollbarWidth() {
+		//Sue me.
+		//Forcing the whole document to reflow three times (by forcing overflow scroll/hidden) is insanely costly.
+		//It took about 2.5ms. Compared to the 0.7ms that doLayout takes in total, this was the bottleneck by far.
+		//Note: I don't like the yellow stuff in my Performance tab.
+		if (this._getScrollbarWidth.hasOwnProperty('_cache')) {
+			return this._getScrollbarWidth._cache;
+		}
+
 		let documentElement = document.documentElement;
 
 		if (!documentElement) {
-			throw new Error('There is no documentElement to get the size of.');
+			throw new Error('There is no documentElement to get the scrollbar width of.');
 		}
 
 		let originalOverflow = documentElement.style.overflowY;
@@ -249,17 +257,31 @@ export default class GuideLayoutBehavior extends Behavior {
 		//Force a scrollbar to get the inner dimensions.
 		documentElement.style.overflowY = 'scroll';
 
-		let width = documentElement.clientWidth;
-		let height = documentElement.clientHeight;
+		let innerWidth = documentElement.clientWidth;
 
 		//Force NO scrollbar to get the outer dimensions.
 		documentElement.style.overflowY = 'hidden';
 
 		let outerWidth = documentElement.clientWidth;
-		let outerHeight = documentElement.clientHeight;
 
 		//Restore overflow.
 		documentElement.style.overflowY = originalOverflow;
+
+		let scrollbarWidth = (this._getScrollbarWidth._cache = outerWidth - innerWidth);
+
+		return scrollbarWidth;
+	}
+
+	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
+		let documentElement = document.documentElement;
+
+		if (!documentElement) {
+			throw new Error('There is no documentElement to get the size of.');
+		}
+
+		let width = documentElement.clientWidth;
+		let outerWidth = width + this._getScrollbarWidth();
+		let height = (outerHeight = documentElement.clientHeight);
 
 		return {
 			width,

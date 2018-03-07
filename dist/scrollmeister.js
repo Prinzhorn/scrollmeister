@@ -2619,6 +2619,42 @@ var GuideLayoutBehavior = function (_Behavior) {
 			this.scrollState.tick(now, currentScrollPosition);
 		}
 	}, {
+		key: '_getScrollbarWidth',
+		value: function _getScrollbarWidth() {
+			//Sue me.
+			//Forcing the whole document to reflow three times (by forcing overflow scroll/hidden) is insanely costly.
+			//It took about 2.5ms. Compared to the 0.7ms that doLayout takes in total, this was the bottleneck by far.
+			//Note: I don't like the yellow stuff in my Performance tab.
+			if (this._getScrollbarWidth.hasOwnProperty('_cache')) {
+				return this._getScrollbarWidth._cache;
+			}
+
+			var documentElement = document.documentElement;
+
+			if (!documentElement) {
+				throw new Error('There is no documentElement to get the scrollbar width of.');
+			}
+
+			var originalOverflow = documentElement.style.overflowY;
+
+			//Force a scrollbar to get the inner dimensions.
+			documentElement.style.overflowY = 'scroll';
+
+			var innerWidth = documentElement.clientWidth;
+
+			//Force NO scrollbar to get the outer dimensions.
+			documentElement.style.overflowY = 'hidden';
+
+			var outerWidth = documentElement.clientWidth;
+
+			//Restore overflow.
+			documentElement.style.overflowY = originalOverflow;
+
+			var scrollbarWidth = this._getScrollbarWidth._cache = outerWidth - innerWidth;
+
+			return scrollbarWidth;
+		}
+	}, {
 		key: '_getViewport',
 		value: function _getViewport() {
 			var documentElement = document.documentElement;
@@ -2627,22 +2663,9 @@ var GuideLayoutBehavior = function (_Behavior) {
 				throw new Error('There is no documentElement to get the size of.');
 			}
 
-			var originalOverflow = documentElement.style.overflowY;
-
-			//Force a scrollbar to get the inner dimensions.
-			documentElement.style.overflowY = 'scroll';
-
 			var width = documentElement.clientWidth;
-			var height = documentElement.clientHeight;
-
-			//Force NO scrollbar to get the outer dimensions.
-			documentElement.style.overflowY = 'hidden';
-
-			var outerWidth = documentElement.clientWidth;
-			var outerHeight = documentElement.clientHeight;
-
-			//Restore overflow.
-			documentElement.style.overflowY = originalOverflow;
+			var outerWidth = width + this._getScrollbarWidth();
+			var height = outerHeight = documentElement.clientHeight;
 
 			return {
 				width: width,
