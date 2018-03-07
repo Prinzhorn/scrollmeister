@@ -3187,13 +3187,22 @@ var LazyLoadBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
-			var lazyLoad = function lazyLoad() {
-				if (!_this2.el.layout.scrollUpdate.inExtendedViewport) {
-					return;
+			//This is the last resort, we definitely need to load the assets once the element is inside the viewport.
+			var handleViewportEnter = function handleViewportEnter() {
+				lazyLoad();
+				unlisten();
+			};
+
+			//We try to intelligently load the asset when the element is close to the viewport (extended viewport).
+			//We do this inside a scroll pause to minimize jank.
+			var handleScrollPause = function handleScrollPause() {
+				if (_this2.el.layout.scrollUpdate.inExtendedViewport) {
+					lazyLoad();
+					unlisten();
 				}
+			};
 
-				_this2.unlisten(_this2.parentEl, 'guidelayout:pause', lazyLoad);
-
+			var lazyLoad = function lazyLoad() {
 				var elements = _this2.el.querySelectorAll('[data-src]');
 
 				for (var i = 0; i < elements.length; i++) {
@@ -3204,7 +3213,13 @@ var LazyLoadBehavior = function (_Behavior) {
 				}
 			};
 
-			this.listen(this.parentEl, 'guidelayout:pause', lazyLoad);
+			var unlisten = function unlisten() {
+				_this2.unlisten(_this2.el, 'layout:viewport:enter', handleViewportEnter);
+				_this2.unlisten(_this2.parentEl, 'guidelayout:pause', handleScrollPause);
+			};
+
+			this.listen(this.el, 'layout:viewport:enter', handleViewportEnter);
+			this.listen(this.parentEl, 'guidelayout:pause', handleScrollPause);
 		}
 	}], [{
 		key: 'schema',
