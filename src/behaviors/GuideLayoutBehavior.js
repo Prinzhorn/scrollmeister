@@ -21,9 +21,19 @@ export default class GuideLayoutBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			guides: {
-				type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]]
+				type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]],
+				expand: function(rawProperties) {
+					//The width is optional and defaults to 0.
+					if (rawProperties.length === 2) {
+						rawProperties.push('0');
+						return true;
+					}
+
+					return false;
+				},
+				default: ''
 				//TODO: can we default to an empty array here by using an empty string?
-				//Answer: write a test
+				//Answer: write a test. multiple. a whole suite.
 			},
 			width: {
 				type: 'csslength',
@@ -298,8 +308,6 @@ export default class GuideLayoutBehavior extends Behavior {
 		}
 	}
 
-	//TODO: do we also need to clean up here if the dimensions/position behavior is removed?
-	//Or do the behaviors handle this (they should)? Do they listen to the layout event on this node?
 	_doLayout() {
 		this._layoutScheduled = false;
 

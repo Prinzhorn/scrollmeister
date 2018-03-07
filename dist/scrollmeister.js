@@ -2171,7 +2171,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":24,"ponies/CustomEvent.js":25,"ponies/Object.assign.js":26}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":25,"ponies/CustomEvent.js":26,"ponies/Object.assign.js":27}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2241,6 +2241,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 			var _this3 = this;
 
 			var guides = this.el.guidelayout.engine.guides;
+
 			var html = guides.map(function (guide) {
 				var width = guide.width;
 				var opacity = 0.2;
@@ -2682,10 +2683,6 @@ var GuideLayoutBehavior = function (_Behavior) {
 				this._layoutScheduled = true;
 			}
 		}
-
-		//TODO: do we also need to clean up here if the dimensions/position behavior is removed?
-		//Or do the behaviors handle this (they should)? Do they listen to the layout event on this node?
-
 	}, {
 		key: '_doLayout',
 		value: function _doLayout() {
@@ -2738,9 +2735,19 @@ var GuideLayoutBehavior = function (_Behavior) {
 		get: function get() {
 			return {
 				guides: {
-					type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]]
+					type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]],
+					expand: function expand(rawProperties) {
+						//The width is optional and defaults to 0.
+						if (rawProperties.length === 2) {
+							rawProperties.push('0');
+							return true;
+						}
+
+						return false;
+					},
+					default: ''
 					//TODO: can we default to an empty array here by using an empty string?
-					//Answer: write a test
+					//Answer: write a test. multiple. a whole suite.
 				},
 				width: {
 					type: 'csslength',
@@ -2765,7 +2772,98 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":20,"lib/ScrollState.js":21,"lib/fakeClick.js":22,"lib/isTextInput.js":23,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":21,"lib/ScrollState.js":22,"lib/fakeClick.js":23,"lib/isTextInput.js":24,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+//Parameters are a comma separated list of keyframes.
+//A keyframe is defined by a position inside the viewport and a value.
+//E.g. "alpha: top 1, bottom 0;" would set the alpha parameter to 1
+//when the top is aligned with the top of the viewport and to 0 when the bottoms are aligned.
+//The values inbetween are interpolated, hence the name of the behavior.
+var keyframesSchema = {
+	type: [[{ anchor: 'string' }, { offset: 'csslength' }, { value: 'number' }]],
+	//TODO: this is sick, use for spacing as well.
+	expand: function expand(rawProperties) {
+		if (rawProperties.length === 1) {
+			//Default offset to 0 and value to 1.
+			rawProperties.push('0', '1');
+			return true;
+		} else if (rawProperties.length === 2) {
+			//Default offset to 0.
+			rawProperties.splice(1, 0, '0');
+			return true;
+		}
+
+		return false;
+	},
+	default: ''
+};
+
+var DebugGuidesBehavior = function (_Behavior) {
+	_inherits(DebugGuidesBehavior, _Behavior);
+
+	function DebugGuidesBehavior() {
+		_classCallCheck(this, DebugGuidesBehavior);
+
+		return _possibleConstructorReturn(this, (DebugGuidesBehavior.__proto__ || Object.getPrototypeOf(DebugGuidesBehavior)).apply(this, arguments));
+	}
+
+	_createClass(DebugGuidesBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			console.log(this.props.alpha);
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				opacity: keyframesSchema,
+				scale: keyframesSchema,
+				rotate: keyframesSchema,
+				alpha: keyframesSchema,
+				beta: keyframesSchema,
+				gamma: keyframesSchema
+			};
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['layout'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'interpolate';
+		}
+	}]);
+
+	return DebugGuidesBehavior;
+}(_Behavior3.default);
+
+exports.default = DebugGuidesBehavior;
+
+},{"behaviors/Behavior.js":8}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3152,7 +3250,7 @@ var LayoutBehavior = function (_Behavior) {
 
 exports.default = LayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"resize-observer-polyfill":5}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"resize-observer-polyfill":5}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3243,7 +3341,7 @@ var LazyLoadBehavior = function (_Behavior) {
 
 exports.default = LazyLoadBehavior;
 
-},{"behaviors/Behavior.js":8}],14:[function(require,module,exports){
+},{"behaviors/Behavior.js":8}],15:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -3266,6 +3364,10 @@ var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
 
 var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
 
+var _InterpolateBehavior = require('behaviors/InterpolateBehavior.js');
+
+var _InterpolateBehavior2 = _interopRequireDefault(_InterpolateBehavior);
+
 var _LazyLoadBehavior = require('behaviors/LazyLoadBehavior.js');
 
 var _LazyLoadBehavior2 = _interopRequireDefault(_LazyLoadBehavior);
@@ -3277,9 +3379,10 @@ _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/LayoutBehavior.js":12,"behaviors/LazyLoadBehavior.js":13,"scrollmeister.js":27}],15:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"scrollmeister.js":28}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3325,7 +3428,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":27}],16:[function(require,module,exports){
+},{"./MeisterComponent.js":17,"scrollmeister.js":28}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3439,7 +3542,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":4,"scrollmeister.js":27}],17:[function(require,module,exports){
+},{"raf":4,"scrollmeister.js":28}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3485,7 +3588,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":16,"scrollmeister.js":27}],18:[function(require,module,exports){
+},{"./MeisterComponent.js":17,"scrollmeister.js":28}],19:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3503,7 +3606,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":15,"components/ScrollMeisterComponent.js":17,"document-register-element":1}],19:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":16,"components/ScrollMeisterComponent.js":18,"document-register-element":1}],20:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -3514,7 +3617,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":14,"./components":18,"./scrollmeister.js":27,"./scrollmeister.sass":28}],20:[function(require,module,exports){
+},{"./behaviors":15,"./components":19,"./scrollmeister.js":28,"./scrollmeister.sass":29}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4075,7 +4178,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4178,7 +4281,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4221,7 +4324,7 @@ exports.default = {
 	}
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4240,7 +4343,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4302,7 +4405,7 @@ exports.default = {
 				}
 			}
 
-			var value = this.parseProperty(element, key, _rawValue, schema[key].type);
+			var value = this.parseProperty(element, key, _rawValue, schema[key].type, schema[key].expand);
 			var enumValues = schema[key].enum;
 
 			if (enumValues instanceof Array && enumValues.indexOf(value) === -1) {
@@ -4313,8 +4416,10 @@ exports.default = {
 		}
 	},
 
-	parseProperty: function parseProperty(element, property, rawValue, propertyType) {
+	parseProperty: function parseProperty(element, property, rawValue, propertyType, valueExpander) {
 		var _this = this;
+
+		rawValue = rawValue.trim();
 
 		if (propertyType instanceof Array) {
 			//thing: keyword, anotherone, and, more
@@ -4326,12 +4431,16 @@ exports.default = {
 				propertyType = propertyType[0];
 
 				if (propertyType instanceof Array) {
+					if (rawValue === '') {
+						return [];
+					}
+
 					//thing: keyword 30px 30px, anotherone 100px 8px
 					//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
 					var rawValuesList = rawValue.split(',');
 
-					return rawValuesList.map(function (rawValue, index) {
-						return _this.parseProperty(element, property, rawValue, propertyType);
+					return rawValuesList.map(function (rawValue) {
+						return _this.parseProperty(element, property, rawValue, propertyType, valueExpander);
 					});
 				} else {
 					//thing: keyword, anotherone, and, more
@@ -4345,12 +4454,17 @@ exports.default = {
 			} else if (propertyType.length > 1) {
 				//thing: keyword 100px
 				//a.thing = ['keyword', {length: 100, unit: 'px'}]
-				var _rawValuesList2 = rawValue.trim().split(whiteSpaceRegex);
+
+				if (rawValue === '') {
+					return [];
+				}
+
+				var _rawValuesList2 = rawValue.split(whiteSpaceRegex);
 
 				if (_rawValuesList2.length !== propertyType.length) {
-					//TODO: this is exactly the place to implement something like expanding shorthand properties.
-					//e.g. "spacing: 100vh" expands to "spacing: 100vh 100vh".
-					throw new Error('The schema for the "' + property + '" property expects ' + propertyType.length + ' values. Got ' + _rawValuesList2.length + ', namely "' + _rawValuesList2.join(' ') + '".');
+					if (!valueExpander || !valueExpander(_rawValuesList2)) {
+						throw new Error('The schema for the "' + property + '" property expects ' + propertyType.length + ' values. Got ' + _rawValuesList2.length + ', namely "' + _rawValuesList2.join(' ') + '".');
+					}
 				}
 
 				var map = {};
@@ -4381,7 +4495,7 @@ exports.default = {
 	}
 };
 
-},{"types":35}],25:[function(require,module,exports){
+},{"types":36}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4404,7 +4518,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4442,7 +4556,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4580,10 +4694,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],29:[function(require,module,exports){
+},{"scssify":7}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4598,7 +4712,7 @@ exports.default = {
 	}
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4640,7 +4754,7 @@ exports.default = {
 	}
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4686,7 +4800,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":30}],32:[function(require,module,exports){
+},{"types/CSSLengthType.js":31}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4772,7 +4886,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4801,7 +4915,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4816,7 +4930,7 @@ exports.default = {
 	}
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4858,4 +4972,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":29,"types/CSSLengthType.js":30,"types/HeightType.js":31,"types/LayoutDependencyType.js":32,"types/NumberType.js":33,"types/StringType.js":34}]},{},[19]);
+},{"types/BooleanType.js":30,"types/CSSLengthType.js":31,"types/HeightType.js":32,"types/LayoutDependencyType.js":33,"types/NumberType.js":34,"types/StringType.js":35}]},{},[20]);

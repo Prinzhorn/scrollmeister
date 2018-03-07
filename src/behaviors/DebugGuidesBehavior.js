@@ -57,6 +57,7 @@ export default class DebugGuidesBehavior extends Behavior {
 
 	_renderGuides() {
 		let guides = this.el.guidelayout.engine.guides;
+
 		let html = guides.map(guide => {
 			let width = guide.width;
 			let opacity = 0.2;

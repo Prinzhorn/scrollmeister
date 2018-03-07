@@ -15,7 +15,7 @@ const keyframesSchema = {
 			//Default offset to 0 and value to 1.
 			rawProperties.push('0', '1');
 			return true;
-		} else if (rawProperties === 2) {
+		} else if (rawProperties.length === 2) {
 			//Default offset to 0.
 			rawProperties.splice(1, 0, '0');
 			return true;
@@ -47,10 +47,8 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	attach() {
-		this.el.style.opacity = 1;
+		console.log(this.props.alpha);
 	}
 
-	detach() {
-		this.el.style.opacity = '';
-	}
+	detach() {}
 }

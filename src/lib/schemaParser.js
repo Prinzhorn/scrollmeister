@@ -51,7 +51,7 @@ export default {
 				}
 			}
 
-			let value = this.parseProperty(element, key, rawValue, schema[key].type);
+			let value = this.parseProperty(element, key, rawValue, schema[key].type, schema[key].expand);
 			let enumValues = schema[key].enum;
 
 			if (enumValues instanceof Array && enumValues.indexOf(value) === -1) {
@@ -62,7 +62,9 @@ export default {
 		}
 	},
 
-	parseProperty: function(element, property, rawValue, propertyType) {
+	parseProperty: function(element, property, rawValue, propertyType, valueExpander) {
+		rawValue = rawValue.trim();
+
 		if (propertyType instanceof Array) {
 			//thing: keyword, anotherone, and, more
 			//a.thing = ['keyword', 'anotherone', 'and', 'more']
@@ -73,12 +75,16 @@ export default {
 				propertyType = propertyType[0];
 
 				if (propertyType instanceof Array) {
+					if (rawValue === '') {
+						return [];
+					}
+
 					//thing: keyword 30px 30px, anotherone 100px 8px
 					//a.thing = [['keyword', {length: 30, unit: 'px'}, {length: 30, unit: 'px'}], [...]];
 					let rawValuesList = rawValue.split(',');
 
-					return rawValuesList.map((rawValue, index) => {
-						return this.parseProperty(element, property, rawValue, propertyType);
+					return rawValuesList.map(rawValue => {
+						return this.parseProperty(element, property, rawValue, propertyType, valueExpander);
 					});
 				} else {
 					//thing: keyword, anotherone, and, more
@@ -92,16 +98,21 @@ export default {
 			} else if (propertyType.length > 1) {
 				//thing: keyword 100px
 				//a.thing = ['keyword', {length: 100, unit: 'px'}]
-				let rawValuesList = rawValue.trim().split(whiteSpaceRegex);
+
+				if (rawValue === '') {
+					return [];
+				}
+
+				let rawValuesList = rawValue.split(whiteSpaceRegex);
 
 				if (rawValuesList.length !== propertyType.length) {
-					//TODO: this is exactly the place to implement something like expanding shorthand properties.
-					//e.g. "spacing: 100vh" expands to "spacing: 100vh 100vh".
-					throw new Error(
-						`The schema for the "${property}" property expects ${propertyType.length} values. Got ${
-							rawValuesList.length
-						}, namely "${rawValuesList.join(' ')}".`
-					);
+					if (!valueExpander || !valueExpander(rawValuesList)) {
+						throw new Error(
+							`The schema for the "${property}" property expects ${propertyType.length} values. Got ${
+								rawValuesList.length
+							}, namely "${rawValuesList.join(' ')}".`
+						);
+					}
 				}
 
 				let map = {};
@@ -111,7 +122,7 @@ export default {
 					let keys = Object.keys(namedPropertyType);
 
 					if (keys.length !== 1) {
-						throw new Error(`A nested schema should have exactly one key (the name) which maps to the type.`);
+						throw new Error('A nested schema should have exactly one key (the name) which maps to the type.');
 					}
 
 					let name = keys[0];
