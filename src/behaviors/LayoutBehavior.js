@@ -255,6 +255,8 @@ export default class LayoutBehavior extends Behavior {
 
 	_scroll(scrollState, forceUpdate = false) {
 		let scrollUpdate = this.scrollUpdate;
+
+		//TODO: instead of didMove, return a "changes" object. E.g. did inViewport change?
 		let didMove = this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
 		let style = this.el.style;
 		let innerStyle = this.innerEl.style;
@@ -262,6 +264,9 @@ export default class LayoutBehavior extends Behavior {
 		if (didMove || forceUpdate) {
 			let left = Math.round(this.layout.left);
 			let top = scrollUpdate.wrapperTop;
+
+			//TODO: collect events and trigger them at the end of this function.
+			//E.g. inViewport, inExtendedViewport. This will make the lazyloading much easier.
 
 			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
 			//But we do not do the opposite here. This is just the last resort.

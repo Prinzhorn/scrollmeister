@@ -20,21 +20,26 @@
   "browserify": {
     "transform": [
       "babelify",
-      "browserify-css"
+      [
+        "scssify",
+        {
+          "autoInject": true,
+          "sass": {
+            "outputStyle": "compressed",
+            "sourceMapEmbed": false,
+            "sourceMapContents": false
+          },
+          "postcss": {
+            "autoprefixer": {
+              "browsers": ["last 2 versions"]
+            }
+          }
+        }
+      ]
     ]
   },
   "babel": {
-    "presets": [
-      "env",
-      "flow"
-    ]
-  },
-  "browserify-css": {
-    "autoInject": true,
-    "autoInjectOptions": {
-      "verbose": false
-    },
-    "minify": true
+    "presets": ["env", "flow"]
   },
   "prettier": {
     "singleQuote": true,
@@ -69,16 +74,18 @@
     "scroll-logic": "^1.0.1"
   },
   "devDependencies": {
+    "autoprefixer": "^8.1.0",
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
     "browser-sync": "^2.23.6",
-    "browserify-css": "^0.14.0",
     "flow-bin": "^0.66.0",
     "http-server": "^0.11.1",
     "jest": "^22.1.4",
+    "postcss": "^6.0.19",
     "prettier": "^1.10.2",
+    "scssify": "^3.0.1",
     "tinyify": "^2.4.0",
     "watchify": "^3.10.0"
   }
