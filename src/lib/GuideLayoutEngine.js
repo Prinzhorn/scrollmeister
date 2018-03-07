@@ -476,7 +476,11 @@ export default class GuideLayoutEngine {
 	}
 
 	_computeGuides(
-		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,
+		rawGuides: Array<{
+			name: string,
+			position: { length: number, unit: string },
+			width: { length: number, unit: string }
+		}>,
 		contentWidth: { length: number, unit: string }
 	) {
 		let pixelWidth = this.lengthToPixel(contentWidth, this.viewport.width);
@@ -508,9 +512,14 @@ export default class GuideLayoutEngine {
 
 			guide.width = this.lengthToPixel(rawGuide.width, pixelWidth);
 
-			//The guide position is always expressed in percentages of the content width.
-			//This is actually the CENTER position of the guide.
-			guide.position = contentMargin + pixelWidth * rawGuide.position;
+			let position = this.lengthToPixel(rawGuide.position, pixelWidth);
+
+			//The position can be negative, which simply means it is rtl (similar to how a negative slice() index works).
+			if (position >= 0) {
+				guide.position = contentMargin + position;
+			} else {
+				guide.position = contentMargin + pixelWidth + position;
+			}
 
 			//TODO: if the guide position is negative, it should calculate the offset from the right instead of the left.
 

@@ -2668,6 +2668,8 @@ var GuideLayoutBehavior = function (_Behavior) {
 			var outerWidth = width + this._getScrollbarWidth();
 			var height = outerHeight = documentElement.clientHeight;
 
+			console.log(width, outerWidth);
+
 			return {
 				width: width,
 				height: height,
@@ -2735,7 +2737,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 		get: function get() {
 			return {
 				guides: {
-					type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]],
+					type: [[{ name: 'string' }, { position: 'csslength' }, { width: 'csslength' }]],
 					expand: function expand(rawProperties) {
 						//The width is optional and defaults to 0.
 						if (rawProperties.length === 2) {
@@ -4131,9 +4133,14 @@ var GuideLayoutEngine = function () {
 
 				guide.width = this.lengthToPixel(rawGuide.width, pixelWidth);
 
-				//The guide position is always expressed in percentages of the content width.
-				//This is actually the CENTER position of the guide.
-				guide.position = contentMargin + pixelWidth * rawGuide.position;
+				var _position = this.lengthToPixel(rawGuide.position, pixelWidth);
+
+				//The position can be negative, which simply means it is rtl (similar to how a negative slice() index works).
+				if (_position >= 0) {
+					guide.position = contentMargin + _position;
+				} else {
+					guide.position = contentMargin + pixelWidth + _position;
+				}
 
 				//TODO: if the guide position is negative, it should calculate the offset from the right instead of the left.
 
@@ -4695,7 +4702,7 @@ var Scrollmeister = {
 exports.default = Scrollmeister;
 
 },{}],29:[function(require,module,exports){
-var css = "html{overflow-x:hidden}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
+var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
 },{"scssify":7}],30:[function(require,module,exports){
 'use strict';

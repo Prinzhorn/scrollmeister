@@ -21,7 +21,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			guides: {
-				type: [[{ name: 'string' }, { position: 'number' }, { width: 'csslength' }]],
+				type: [[{ name: 'string' }, { position: 'csslength' }, { width: 'csslength' }]],
 				expand: function(rawProperties) {
 					//The width is optional and defaults to 0.
 					if (rawProperties.length === 2) {
@@ -292,6 +292,8 @@ export default class GuideLayoutBehavior extends Behavior {
 		let width = documentElement.clientWidth;
 		let outerWidth = width + this._getScrollbarWidth();
 		let height = (outerHeight = documentElement.clientHeight);
+
+		console.log(width, outerWidth);
 
 		return {
 			width,
