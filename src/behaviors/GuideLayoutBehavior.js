@@ -293,8 +293,6 @@ export default class GuideLayoutBehavior extends Behavior {
 		let outerWidth = width + this._getScrollbarWidth();
 		let height = (outerHeight = documentElement.clientHeight);
 
-		console.log(width, outerWidth);
-
 		return {
 			width,
 			height,

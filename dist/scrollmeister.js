@@ -2668,8 +2668,6 @@ var GuideLayoutBehavior = function (_Behavior) {
 			var outerWidth = width + this._getScrollbarWidth();
 			var height = outerHeight = documentElement.clientHeight;
 
-			console.log(width, outerWidth);
-
 			return {
 				width: width,
 				height: height,
