@@ -2171,7 +2171,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":25,"ponies/CustomEvent.js":26,"ponies/Object.assign.js":27}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":26,"ponies/CustomEvent.js":27,"ponies/Object.assign.js":28}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2415,6 +2415,10 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 			this._setupScrolling();
 			this._initLayoutEngine();
+
+			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
+			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
+			//TODO: write a test which checks the correct order of events (also viewport:enter etc.).
 			(0, _raf2.default)(this._scrollLoop.bind(this));
 		}
 	}, {
@@ -2772,7 +2776,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":21,"lib/ScrollState.js":22,"lib/fakeClick.js":23,"lib/isTextInput.js":24,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":22,"lib/ScrollState.js":23,"lib/fakeClick.js":24,"lib/isTextInput.js":25,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2817,23 +2821,172 @@ var keyframesSchema = {
 	default: ''
 };
 
-var DebugGuidesBehavior = function (_Behavior) {
-	_inherits(DebugGuidesBehavior, _Behavior);
+var InterpolateBehavior = function (_Behavior) {
+	_inherits(InterpolateBehavior, _Behavior);
 
-	function DebugGuidesBehavior() {
-		_classCallCheck(this, DebugGuidesBehavior);
+	function InterpolateBehavior() {
+		_classCallCheck(this, InterpolateBehavior);
 
-		return _possibleConstructorReturn(this, (DebugGuidesBehavior.__proto__ || Object.getPrototypeOf(DebugGuidesBehavior)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (InterpolateBehavior.__proto__ || Object.getPrototypeOf(InterpolateBehavior)).apply(this, arguments));
 	}
 
-	_createClass(DebugGuidesBehavior, [{
+	_createClass(InterpolateBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			console.log(this.props.alpha);
+			var _this2 = this;
+
+			this.listen(this.parentEl, 'guidelayout:layout', function () {
+				_this2._createInterpolators();
+			});
+
+			//TODO: if the translate behavior also listens to the scroll event, how do we guarantee that the interpolate behavior gets it FIRST?
+			//This might already be solved because behaviors are attached in order (translate depends on interpolate).
+			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
+				_this2._interpolate(e.detail.scrollState);
+			});
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {}
+		key: 'update',
+		value: function update() {
+			this._createInterpolators();
+		}
+	}, {
+		key: '_createInterpolators',
+		value: function _createInterpolators() {
+			if (this.props.opacity.length > 0) {
+				this._interpolateOpacity = this._createInterpolator(this.props.opacity);
+			} else {
+				delete this._interpolateOpacity;
+			}
+
+			if (this.props.scale.length > 0) {
+				this._interpolateScale = this._createInterpolator(this.props.scale);
+			} else {
+				delete this._interpolateScale;
+			}
+
+			if (this.props.rotate.length > 0) {
+				this._interpolateRotate = this._createInterpolator(this.props.rotate);
+			} else {
+				delete this._interpolateRotate;
+			}
+
+			if (this.props.alpha.length > 0) {
+				this._interpolateAlpha = this._createInterpolator(this.props.alpha);
+			} else {
+				delete this._interpolateAlpha;
+			}
+
+			if (this.props.beta.length > 0) {
+				this._interpolateBeta = this._createInterpolator(this.props.beta);
+			} else {
+				delete this._interpolateBeta;
+			}
+
+			if (this.props.gamma.length > 0) {
+				this._interpolateGamma = this._createInterpolator(this.props.gamma);
+			} else {
+				delete this._interpolateGamma;
+			}
+
+			//Apply the interpolators right away.
+			this._interpolate(this.parentEl.guidelayout.scrollState);
+		}
+	}, {
+		key: '_createInterpolator',
+		value: function _createInterpolator(keyframes) {
+			var _this3 = this;
+
+			var layoutEngine = this.parentEl.guidelayout.engine;
+
+			//Map the keyframe anchor and offset to scroll positions.
+			keyframes = keyframes.map(function (keyframe) {
+				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset);
+				var position = layoutEngine.calculateAnchorPosition(_this3.el.layout.layout, keyframe.anchor, pixelOffset);
+
+				return {
+					position: position,
+					value: keyframe.value
+				};
+			});
+
+			//Sort them by scroll position from top to bottom.
+			keyframes = keyframes.sort(function (a, b) {
+				return a.position - b.position;
+			});
+
+			var firstKeyframe = keyframes[0];
+			var lastKeyframe = keyframes[keyframes.length - 1];
+
+			//Return a function which, given the current scrollPosition, returns the interpolated value.
+			return function (scrollPosition) {
+				//If the top position is out of bounds, use the edge values.
+				if (scrollPosition <= firstKeyframe.position) {
+					return firstKeyframe.value;
+				}
+
+				if (scrollPosition >= lastKeyframe.position) {
+					return lastKeyframe.value;
+				}
+
+				//Figure out between which two keyframes we are.
+				for (var i = 1; i < keyframes.length; i++) {
+					var rightKeyframe = keyframes[i];
+
+					//We found the right keyframe!
+					if (scrollPosition < rightKeyframe.position) {
+						var leftKeyframe = keyframes[i - 1];
+
+						var progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
+
+						return progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
+					}
+				}
+
+				throw new Error('Could not interpolate');
+			};
+		}
+	}, {
+		key: '_interpolate',
+		value: function _interpolate(scrollState) {
+			if (this._interpolateOpacity) {
+				this.opacity = this._interpolateOpacity(scrollState.position);
+			} else {
+				this.opacity = 1;
+			}
+
+			if (this._interpolateScale) {
+				this.scale = this._interpolateScale(scrollState.position);
+			} else {
+				this.scale = 1;
+			}
+
+			if (this._interpolateRotate) {
+				this.rotate = this._interpolateRotate(scrollState.position);
+			} else {
+				this.rotate = 0;
+			}
+
+			if (this._interpolateAlpha) {
+				this.alpha = this._interpolateAlpha(scrollState.position);
+			} else {
+				this.alpha = 0;
+			}
+
+			if (this._interpolateBeta) {
+				this.beta = this._interpolateBeta(scrollState.position);
+			} else {
+				this.beta = 0;
+			}
+
+			if (this._interpolateGamma) {
+				this.gamma = this._interpolateGamma(scrollState.position);
+			} else {
+				this.gamma = 0;
+			}
+
+			this.emit('interpolate');
+		}
 	}], [{
 		key: 'schema',
 		get: function get() {
@@ -2849,7 +3002,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['layout'];
+			return ['^guidelayout', 'layout'];
 		}
 	}, {
 		key: 'behaviorName',
@@ -2858,10 +3011,10 @@ var DebugGuidesBehavior = function (_Behavior) {
 		}
 	}]);
 
-	return DebugGuidesBehavior;
+	return InterpolateBehavior;
 }(_Behavior3.default);
 
-exports.default = DebugGuidesBehavior;
+exports.default = InterpolateBehavior;
 
 },{"behaviors/Behavior.js":8}],13:[function(require,module,exports){
 'use strict';
@@ -3344,6 +3497,67 @@ exports.default = LazyLoadBehavior;
 },{"behaviors/Behavior.js":8}],15:[function(require,module,exports){
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var TransitionBehavior = function (_Behavior) {
+  _inherits(TransitionBehavior, _Behavior);
+
+  function TransitionBehavior() {
+    _classCallCheck(this, TransitionBehavior);
+
+    return _possibleConstructorReturn(this, (TransitionBehavior.__proto__ || Object.getPrototypeOf(TransitionBehavior)).apply(this, arguments));
+  }
+
+  _createClass(TransitionBehavior, [{
+    key: 'attach',
+    value: function attach() {
+      var _this2 = this;
+
+      this.listen(this.el, 'interpolate:interpolate', function () {
+        _this2.el.style.opacity = _this2.el.interpolate.opacity;
+      });
+    }
+  }], [{
+    key: 'schema',
+    get: function get() {
+      return {};
+    }
+  }, {
+    key: 'dependencies',
+    get: function get() {
+      return ['interpolate'];
+    }
+  }, {
+    key: 'behaviorName',
+    get: function get() {
+      return 'transition';
+    }
+  }]);
+
+  return TransitionBehavior;
+}(_Behavior3.default);
+
+exports.default = TransitionBehavior;
+
+},{"behaviors/Behavior.js":8}],16:[function(require,module,exports){
+'use strict';
+
 var _scrollmeister = require('scrollmeister.js');
 
 var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
@@ -3368,6 +3582,10 @@ var _InterpolateBehavior = require('behaviors/InterpolateBehavior.js');
 
 var _InterpolateBehavior2 = _interopRequireDefault(_InterpolateBehavior);
 
+var _TransitionBehavior = require('behaviors/TransitionBehavior.js');
+
+var _TransitionBehavior2 = _interopRequireDefault(_TransitionBehavior);
+
 var _LazyLoadBehavior = require('behaviors/LazyLoadBehavior.js');
 
 var _LazyLoadBehavior2 = _interopRequireDefault(_LazyLoadBehavior);
@@ -3380,9 +3598,10 @@ _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
+_scrollmeister2.default.defineBehavior(_TransitionBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"scrollmeister.js":28}],16:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransitionBehavior.js":15,"scrollmeister.js":29}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3428,7 +3647,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":17,"scrollmeister.js":28}],17:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":29}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3542,7 +3761,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":4,"scrollmeister.js":28}],18:[function(require,module,exports){
+},{"raf":4,"scrollmeister.js":29}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3588,7 +3807,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":17,"scrollmeister.js":28}],19:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":29}],20:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3606,7 +3825,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 customElements.define('el-meister', _ElementMeisterComponent2.default);
 
-},{"components/ElementMeisterComponent.js":16,"components/ScrollMeisterComponent.js":18,"document-register-element":1}],20:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":17,"components/ScrollMeisterComponent.js":19,"document-register-element":1}],21:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -3617,7 +3836,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":15,"./components":19,"./scrollmeister.js":28,"./scrollmeister.sass":29}],21:[function(require,module,exports){
+},{"./behaviors":16,"./components":20,"./scrollmeister.js":29,"./scrollmeister.sass":30}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3664,6 +3883,22 @@ var GuideLayoutEngine = function () {
 				default:
 					throw new Error('Unknown unit "' + value.unit + '" of length "' + value.length + '"');
 			}
+		}
+
+		//E.g. calculate the scroll position when the element's anchor is at the anchor of the viewport.
+
+	}, {
+		key: 'calculateAnchorPosition',
+		value: function calculateAnchorPosition(layout, anchor, offset) {
+			var position = layout.top;
+
+			if (anchor === 'bottom') {
+				position = position - this.viewport.height + layout.height;
+			} else if (anchor === 'center') {
+				position = position - this.viewport.height / 2 + layout.height / 2;
+			}
+
+			return position + offset;
 		}
 	}, {
 		key: 'doLayout',
@@ -4183,13 +4418,13 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-//TODO: this has not been migrated to classes yet.
+//TODO: this has not been migrated to classes yet. Who cares.
 
 var PAUSE_DELAY = 300; //ms
 var MAX_HISTORY_LENGTH = 30;
@@ -4286,7 +4521,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4329,7 +4564,7 @@ exports.default = {
 	}
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4348,7 +4583,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4500,7 +4735,7 @@ exports.default = {
 	}
 };
 
-},{"types":36}],26:[function(require,module,exports){
+},{"types":37}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4523,7 +4758,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4561,7 +4796,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4699,10 +4934,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],30:[function(require,module,exports){
+},{"scssify":7}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4717,7 +4952,7 @@ exports.default = {
 	}
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4759,7 +4994,7 @@ exports.default = {
 	}
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4805,7 +5040,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":31}],33:[function(require,module,exports){
+},{"types/CSSLengthType.js":32}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4891,7 +5126,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4920,7 +5155,7 @@ exports.default = {
 	}
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4935,7 +5170,7 @@ exports.default = {
 	}
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4977,4 +5212,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":30,"types/CSSLengthType.js":31,"types/HeightType.js":32,"types/LayoutDependencyType.js":33,"types/NumberType.js":34,"types/StringType.js":35}]},{},[20]);
+},{"types/BooleanType.js":31,"types/CSSLengthType.js":32,"types/HeightType.js":33,"types/LayoutDependencyType.js":34,"types/NumberType.js":35,"types/StringType.js":36}]},{},[21]);

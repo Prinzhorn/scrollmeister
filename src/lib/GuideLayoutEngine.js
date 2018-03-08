@@ -37,6 +37,19 @@ export default class GuideLayoutEngine {
 		}
 	}
 
+	//E.g. calculate the scroll position when the element's anchor is at the anchor of the viewport.
+	calculateAnchorPosition(layout, anchor, offset) {
+		let position = layout.top;
+
+		if (anchor === 'bottom') {
+			position = position - this.viewport.height + layout.height;
+		} else if (anchor === 'center') {
+			position = position - this.viewport.height / 2 + layout.height / 2;
+		}
+
+		return position + offset;
+	}
+
 	doLayout(
 		nodes: Array<{ layout: any, props: any, state: { height: number } }>,
 		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,

@@ -6,6 +6,7 @@ import FadeInBehavior from 'behaviors/FadeInBehavior.js';
 
 import LayoutBehavior from 'behaviors/LayoutBehavior.js';
 import InterpolateBehavior from 'behaviors/InterpolateBehavior.js';
+import TransitionBehavior from 'behaviors/TransitionBehavior.js';
 import LazyLoadBehavior from 'behaviors/LazyLoadBehavior.js';
 
 Scrollmeister.defineBehavior(GuideLayoutBehavior);
@@ -14,5 +15,6 @@ Scrollmeister.defineBehavior(FadeInBehavior);
 
 Scrollmeister.defineBehavior(LayoutBehavior);
 Scrollmeister.defineBehavior(InterpolateBehavior);
+Scrollmeister.defineBehavior(TransitionBehavior);
 Scrollmeister.defineBehavior(LazyLoadBehavior);
 

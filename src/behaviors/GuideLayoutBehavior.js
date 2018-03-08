@@ -60,6 +60,10 @@ export default class GuideLayoutBehavior extends Behavior {
 
 		this._setupScrolling();
 		this._initLayoutEngine();
+
+		//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
+		//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
+		//TODO: write a test which checks the correct order of events (also viewport:enter etc.).
 		raf(this._scrollLoop.bind(this));
 	}
 

@@ -26,7 +26,7 @@ const keyframesSchema = {
 	default: ''
 };
 
-export default class DebugGuidesBehavior extends Behavior {
+export default class InterpolateBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			opacity: keyframesSchema,
@@ -39,7 +39,7 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['layout'];
+		return ['^guidelayout', 'layout'];
 	}
 
 	static get behaviorName(): string {
@@ -47,8 +47,148 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	attach() {
-		console.log(this.props.alpha);
+		this.listen(this.parentEl, 'guidelayout:layout', () => {
+			this._createInterpolators();
+		});
+
+		//TODO: if the translate behavior also listens to the scroll event, how do we guarantee that the interpolate behavior gets it FIRST?
+		//This might already be solved because behaviors are attached in order (translate depends on interpolate).
+		this.listen(this.parentEl, 'guidelayout:scroll', e => {
+			this._interpolate(e.detail.scrollState);
+		});
 	}
 
-	detach() {}
+	update() {
+		this._createInterpolators();
+	}
+
+	_createInterpolators() {
+		if (this.props.opacity.length > 0) {
+			this._interpolateOpacity = this._createInterpolator(this.props.opacity);
+		} else {
+			delete this._interpolateOpacity;
+		}
+
+		if (this.props.scale.length > 0) {
+			this._interpolateScale = this._createInterpolator(this.props.scale);
+		} else {
+			delete this._interpolateScale;
+		}
+
+		if (this.props.rotate.length > 0) {
+			this._interpolateRotate = this._createInterpolator(this.props.rotate);
+		} else {
+			delete this._interpolateRotate;
+		}
+
+		if (this.props.alpha.length > 0) {
+			this._interpolateAlpha = this._createInterpolator(this.props.alpha);
+		} else {
+			delete this._interpolateAlpha;
+		}
+
+		if (this.props.beta.length > 0) {
+			this._interpolateBeta = this._createInterpolator(this.props.beta);
+		} else {
+			delete this._interpolateBeta;
+		}
+
+		if (this.props.gamma.length > 0) {
+			this._interpolateGamma = this._createInterpolator(this.props.gamma);
+		} else {
+			delete this._interpolateGamma;
+		}
+
+		//Apply the interpolators right away.
+		this._interpolate(this.parentEl.guidelayout.scrollState);
+	}
+
+	_createInterpolator(keyframes) {
+		let layoutEngine = this.parentEl.guidelayout.engine;
+
+		//Map the keyframe anchor and offset to scroll positions.
+		keyframes = keyframes.map(keyframe => {
+			let pixelOffset = layoutEngine.lengthToPixel(keyframe.offset);
+			let position = layoutEngine.calculateAnchorPosition(this.el.layout.layout, keyframe.anchor, pixelOffset);
+
+			return {
+				position: position,
+				value: keyframe.value
+			};
+		});
+
+		//Sort them by scroll position from top to bottom.
+		keyframes = keyframes.sort((a, b) => a.position - b.position);
+
+		let firstKeyframe = keyframes[0];
+		let lastKeyframe = keyframes[keyframes.length - 1];
+
+		//Return a function which, given the current scrollPosition, returns the interpolated value.
+		return function(scrollPosition) {
+			//If the top position is out of bounds, use the edge values.
+			if (scrollPosition <= firstKeyframe.position) {
+				return firstKeyframe.value;
+			}
+
+			if (scrollPosition >= lastKeyframe.position) {
+				return lastKeyframe.value;
+			}
+
+			//Figure out between which two keyframes we are.
+			for (let i = 1; i < keyframes.length; i++) {
+				let rightKeyframe = keyframes[i];
+
+				//We found the right keyframe!
+				if (scrollPosition < rightKeyframe.position) {
+					let leftKeyframe = keyframes[i - 1];
+
+					let progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
+
+					return progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
+				}
+			}
+
+			throw new Error('Could not interpolate');
+		};
+	}
+
+	_interpolate(scrollState) {
+		if (this._interpolateOpacity) {
+			this.opacity = this._interpolateOpacity(scrollState.position);
+		} else {
+			this.opacity = 1;
+		}
+
+		if (this._interpolateScale) {
+			this.scale = this._interpolateScale(scrollState.position);
+		} else {
+			this.scale = 1;
+		}
+
+		if (this._interpolateRotate) {
+			this.rotate = this._interpolateRotate(scrollState.position);
+		} else {
+			this.rotate = 0;
+		}
+
+		if (this._interpolateAlpha) {
+			this.alpha = this._interpolateAlpha(scrollState.position);
+		} else {
+			this.alpha = 0;
+		}
+
+		if (this._interpolateBeta) {
+			this.beta = this._interpolateBeta(scrollState.position);
+		} else {
+			this.beta = 0;
+		}
+
+		if (this._interpolateGamma) {
+			this.gamma = this._interpolateGamma(scrollState.position);
+		} else {
+			this.gamma = 0;
+		}
+
+		this.emit('interpolate');
+	}
 }

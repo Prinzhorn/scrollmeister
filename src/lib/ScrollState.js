@@ -1,4 +1,4 @@
-//TODO: this has not been migrated to classes yet.
+//TODO: this has not been migrated to classes yet. Who cares.
 
 var PAUSE_DELAY = 300; //ms
 var MAX_HISTORY_LENGTH = 30;
