@@ -47,6 +47,16 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	attach() {
+		this._interpolators = {};
+
+		//Non-zero defaults.
+		this._defaultValues = {
+			opacity: 1,
+			scale: 1
+		};
+
+		//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
+		//Maybe ask the element nicely for a cached value of the last time it fired, if any?
 		this.listen(this.parentEl, 'guidelayout:layout', () => {
 			this._createInterpolators();
 		});
@@ -63,40 +73,16 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	_createInterpolators() {
-		if (this.props.opacity.length > 0) {
-			this._interpolateOpacity = this._createInterpolator(this.props.opacity);
-		} else {
-			delete this._interpolateOpacity;
-		}
+		let schema = this.constructor.schema;
 
-		if (this.props.rotate.length > 0) {
-			this._interpolateRotate = this._createInterpolator(this.props.rotate);
-		} else {
-			delete this._interpolateRotate;
-		}
-
-		if (this.props.scale.length > 0) {
-			this._interpolateScale = this._createInterpolator(this.props.scale);
-		} else {
-			delete this._interpolateScale;
-		}
-
-		if (this.props.alpha.length > 0) {
-			this._interpolateAlpha = this._createInterpolator(this.props.alpha);
-		} else {
-			delete this._interpolateAlpha;
-		}
-
-		if (this.props.beta.length > 0) {
-			this._interpolateBeta = this._createInterpolator(this.props.beta);
-		} else {
-			delete this._interpolateBeta;
-		}
-
-		if (this.props.gamma.length > 0) {
-			this._interpolateGamma = this._createInterpolator(this.props.gamma);
-		} else {
-			delete this._interpolateGamma;
+		for (let prop in schema) {
+			if (schema.hasOwnProperty(prop)) {
+				if (this.props[prop].length > 0) {
+					this._interpolators[prop] = this._createInterpolator(this.props[prop]);
+				} else {
+					delete this._interpolators[prop];
+				}
+			}
 		}
 
 		//Apply the interpolators right away.
@@ -153,40 +139,16 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	_interpolate(scrollState) {
-		if (this._interpolateOpacity) {
-			this.opacity = this._interpolateOpacity(scrollState.position);
-		} else {
-			this.opacity = 1;
-		}
+		let schema = this.constructor.schema;
 
-		if (this._interpolateRotate) {
-			this.rotate = this._interpolateRotate(scrollState.position);
-		} else {
-			this.rotate = 0;
-		}
-
-		if (this._interpolateScale) {
-			this.scale = this._interpolateScale(scrollState.position);
-		} else {
-			this.scale = 1;
-		}
-
-		if (this._interpolateAlpha) {
-			this.alpha = this._interpolateAlpha(scrollState.position);
-		} else {
-			this.alpha = 0;
-		}
-
-		if (this._interpolateBeta) {
-			this.beta = this._interpolateBeta(scrollState.position);
-		} else {
-			this.beta = 0;
-		}
-
-		if (this._interpolateGamma) {
-			this.gamma = this._interpolateGamma(scrollState.position);
-		} else {
-			this.gamma = 0;
+		for (let prop in schema) {
+			if (schema.hasOwnProperty(prop)) {
+				if (this._interpolators.hasOwnProperty(prop)) {
+					this[prop] = this._interpolators[prop](scrollState.position);
+				} else {
+					this[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
+				}
+			}
 		}
 
 		//TODO: only trigger events when a value was actually changed!
