@@ -38,6 +38,11 @@ export default class GuideLayoutBehavior extends Behavior {
 			width: {
 				type: 'csslength',
 				default: '1280px'
+			},
+			overscroll: {
+				type: 'string',
+				enum: ['yes', 'no'],
+				default: 'yes'
 			}
 		};
 	}
@@ -71,7 +76,11 @@ export default class GuideLayoutBehavior extends Behavior {
 		this.scrollState.destroy();
 	}
 
-	update() {
+	update(prevProps) {
+		if (prevProps.overscroll !== this.props.overscroll) {
+			this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
+		}
+
 		this._updateScrollHeight();
 	}
 
@@ -84,7 +93,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 	_setupMobileScrolling() {
 		this._scrollLogic = new ScrollLogic({
-			bouncing: true
+			bouncing: this.props.overscroll === 'yes'
 		});
 
 		this.listen(document, 'touchstart', e => {

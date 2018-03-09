@@ -2536,7 +2536,11 @@ var GuideLayoutBehavior = function (_Behavior) {
 		}
 	}, {
 		key: 'update',
-		value: function update() {
+		value: function update(prevProps) {
+			if (prevProps.overscroll !== this.props.overscroll) {
+				this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
+			}
+
 			this._updateScrollHeight();
 		}
 	}, {
@@ -2553,7 +2557,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 			var _this2 = this;
 
 			this._scrollLogic = new _scrollLogic2.default({
-				bouncing: true
+				bouncing: this.props.overscroll === 'yes'
 			});
 
 			this.listen(document, 'touchstart', function (e) {
@@ -2861,6 +2865,11 @@ var GuideLayoutBehavior = function (_Behavior) {
 				width: {
 					type: 'csslength',
 					default: '1280px'
+				},
+				overscroll: {
+					type: 'string',
+					enum: ['yes', 'no'],
+					default: 'yes'
 				}
 			};
 		}
