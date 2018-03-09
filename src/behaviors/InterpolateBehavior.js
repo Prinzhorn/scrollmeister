@@ -9,7 +9,6 @@ import Behavior from 'behaviors/Behavior.js';
 //The values inbetween are interpolated, hence the name of the behavior.
 const keyframesSchema = {
 	type: [[{ anchor: 'string' }, { offset: 'csslength' }, { value: 'number' }]],
-	//TODO: this is sick, use for spacing as well.
 	expand: function(rawProperties) {
 		if (rawProperties.length === 1) {
 			//Default offset to 0 and value to 1.

@@ -17,12 +17,15 @@ export default class LayoutBehavior extends Behavior {
 			},
 			spacing: {
 				type: [{ top: 'csslength' }, { bottom: 'csslength' }],
-				//TODO: in cases like this we might want to accept "100vh" and automatically expand it to "100vh 100vh" (for arity 2 and 4).
-				//When arity is 2, expand 100vh to 100vh 100vh. If it is 4, do the CSS dance.
-				//E.g. 100vh 40vh expands to 100vh 40vh 100vh 40vh
-				//and 100vh 30vh 40vh to 100vh 30vh 40vh 30vh
-				//expand: true,
-				//For now KISS
+				expand: function(rawProperties) {
+					//Allow a single spacing and use it for both top and bottom.
+					if (rawProperties.length === 1) {
+						rawProperties.push(rawProperties[0]);
+						return true;
+					}
+
+					return false;
+				},
 				default: '0 0'
 			},
 			mode: {
