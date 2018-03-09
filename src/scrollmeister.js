@@ -1,27 +1,14 @@
-const lowerCaseAndDashRegex = /^[a-z-]+$/;
+import BehaviorRegistry from 'lib/BehaviorRegistry.js';
 
 const Scrollmeister = {
-	behaviors: {},
-	behaviorsWaitingForDependencies: [],
+	behaviorRegistry: new BehaviorRegistry(),
 
 	getDefinedBehaviorNames: function() {
-		return Object.keys(this.behaviors);
+		return this.behaviorRegistry.getNames();
 	},
 
 	defineBehavior: function(classDefinition) {
-		let name = classDefinition.behaviorName;
-
-		if (this.behaviors.hasOwnProperty(name)) {
-			throw new Error(`You are trying to redefine the "${name}" behavior.`);
-		}
-
-		if (!lowerCaseAndDashRegex.test(name)) {
-			throw new Error(
-				`The behavior "${name}" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.`
-			);
-		}
-
-		this.behaviors[name] = classDefinition;
+		this.behaviorRegistry.add(classDefinition);
 	},
 
 	attachBehaviors: function(element, behaviorPropertiesMap) {
@@ -58,7 +45,7 @@ const Scrollmeister = {
 	},
 
 	attachBehavior: function(element, name, rawProperties) {
-		if (!this.behaviors.hasOwnProperty(name)) {
+		if (!this.behaviorRegistry.has(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes that correspond to defined behaviors.`
 			);
@@ -73,7 +60,7 @@ const Scrollmeister = {
 			//Maybe this should not be allowed at all, but instead always use the attribute?
 			//BUT: if we can make it work then it should work for UX reasons.
 			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-			const Behavior = this.behaviors[name];
+			const Behavior = this.behaviorRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
 			element.behaviors[name] = element[name];
 		}
@@ -111,7 +98,7 @@ const Scrollmeister = {
 	},
 
 	_checkBehaviorDependencies: function(element, name) {
-		const Behavior = this.behaviors[name];
+		const Behavior = this.behaviorRegistry.get(name);
 
 		for (let dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			let dependency = Behavior.dependencies[dependencyIndex];

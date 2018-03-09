@@ -2204,7 +2204,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":26,"ponies/CustomEvent.js":27,"ponies/Object.assign.js":28}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":27,"ponies/CustomEvent.js":28,"ponies/Object.assign.js":29}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2810,7 +2810,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":22,"lib/ScrollState.js":23,"lib/fakeClick.js":24,"lib/isTextInput.js":25,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":23,"lib/ScrollState.js":24,"lib/fakeClick.js":25,"lib/isTextInput.js":26,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3496,7 +3496,7 @@ exports.default = LazyLoadBehavior;
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3514,52 +3514,52 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var TransformBehavior = function (_Behavior) {
-  _inherits(TransformBehavior, _Behavior);
+	_inherits(TransformBehavior, _Behavior);
 
-  function TransformBehavior() {
-    _classCallCheck(this, TransformBehavior);
+	function TransformBehavior() {
+		_classCallCheck(this, TransformBehavior);
 
-    return _possibleConstructorReturn(this, (TransformBehavior.__proto__ || Object.getPrototypeOf(TransformBehavior)).apply(this, arguments));
-  }
+		return _possibleConstructorReturn(this, (TransformBehavior.__proto__ || Object.getPrototypeOf(TransformBehavior)).apply(this, arguments));
+	}
 
-  _createClass(TransformBehavior, [{
-    key: 'attach',
-    value: function attach() {
-      var _this2 = this;
+	_createClass(TransformBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			var _this2 = this;
 
-      this.listen(this.el, 'interpolate:interpolate', function () {
-        //TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
-        //TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
-        //The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
-        //the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
+			this.listen(this.el, 'interpolate:interpolate', function () {
+				//TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
+				//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
+				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
+				//the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
 
-        _this2.css.opacity = _this2.el.interpolate.opacity;
-        _this2.css.transform = 'rotate(' + _this2.el.interpolate.rotate + 'deg) scale(' + _this2.el.interpolate.scale + ')';
+				_this2.css.opacity = _this2.el.interpolate.opacity;
+				_this2.css.transform = 'rotate(' + _this2.el.interpolate.rotate + 'deg) scale(' + _this2.el.interpolate.scale + ')';
 
-        //TODO: in which order will we apply translate, rotate, scale and skew?
-        //I guess translate should always be the first. And scaling the last one.
-        //So... translate, skew, rotate, scale?
-        //This feels natural. Skewing after rotating is nothing people can imagine in their head.
-      });
-    }
-  }], [{
-    key: 'schema',
-    get: function get() {
-      return {};
-    }
-  }, {
-    key: 'dependencies',
-    get: function get() {
-      return ['interpolate'];
-    }
-  }, {
-    key: 'behaviorName',
-    get: function get() {
-      return 'transform';
-    }
-  }]);
+				//TODO: in which order will we apply translate, rotate, scale and skew?
+				//I guess translate should always be the first. And scaling the last one.
+				//So... translate, skew, rotate, scale?
+				//This feels natural. Skewing after rotating is nothing people can imagine in their head.
+			});
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {};
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['interpolate'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'transform';
+		}
+	}]);
 
-  return TransformBehavior;
+	return TransformBehavior;
 }(_Behavior3.default);
 
 exports.default = TransformBehavior;
@@ -3610,7 +3610,7 @@ _scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
 _scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransformBehavior.js":15,"scrollmeister.js":29}],17:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransformBehavior.js":15,"scrollmeister.js":30}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3656,7 +3656,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":18,"scrollmeister.js":29}],18:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":30}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3853,7 +3853,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":4,"scrollmeister.js":29}],19:[function(require,module,exports){
+},{"raf":4,"scrollmeister.js":30}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3899,7 +3899,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":18,"scrollmeister.js":29}],20:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":30}],20:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3928,7 +3928,64 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":16,"./components":20,"./scrollmeister.js":29,"./scrollmeister.sass":30}],22:[function(require,module,exports){
+},{"./behaviors":16,"./components":20,"./scrollmeister.js":30,"./scrollmeister.sass":31}],22:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var lowerCaseAndDashRegex = /^[a-z-]+$/;
+
+var BehaviorRegistry = function () {
+	function BehaviorRegistry() {
+		_classCallCheck(this, BehaviorRegistry);
+
+		this.behaviors = {};
+	}
+
+	_createClass(BehaviorRegistry, [{
+		key: "add",
+		value: function add(classDefinition) {
+			var name = classDefinition.behaviorName;
+
+			if (this.behaviors.hasOwnProperty(name)) {
+				throw new Error("You are trying to redefine the \"" + name + "\" behavior.");
+			}
+
+			if (!lowerCaseAndDashRegex.test(name)) {
+				throw new Error("The behavior \"" + name + "\" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.");
+			}
+
+			this.behaviors[name] = classDefinition;
+		}
+	}, {
+		key: "has",
+		value: function has(name) {
+			return this.behaviors.hasOwnProperty(name);
+		}
+	}, {
+		key: "get",
+		value: function get(name) {
+			return this.behaviors[name];
+		}
+	}, {
+		key: "getNames",
+		value: function getNames() {
+			return Object.keys(this.behaviors);
+		}
+	}]);
+
+	return BehaviorRegistry;
+}();
+
+exports.default = BehaviorRegistry;
+
+},{}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4510,7 +4567,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4613,7 +4670,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4656,7 +4713,7 @@ exports.default = {
 	}
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4675,7 +4732,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4827,7 +4884,7 @@ exports.default = {
 	}
 };
 
-},{"types":37}],27:[function(require,module,exports){
+},{"types":38}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4850,7 +4907,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4888,34 +4945,28 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var lowerCaseAndDashRegex = /^[a-z-]+$/;
+
+var _BehaviorRegistry = require('lib/BehaviorRegistry.js');
+
+var _BehaviorRegistry2 = _interopRequireDefault(_BehaviorRegistry);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Scrollmeister = {
-	behaviors: {},
-	behaviorsWaitingForDependencies: [],
+	behaviorRegistry: new _BehaviorRegistry2.default(),
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
-		return Object.keys(this.behaviors);
+		return this.behaviorRegistry.getNames();
 	},
 
 	defineBehavior: function defineBehavior(classDefinition) {
-		var name = classDefinition.behaviorName;
-
-		if (this.behaviors.hasOwnProperty(name)) {
-			throw new Error('You are trying to redefine the "' + name + '" behavior.');
-		}
-
-		if (!lowerCaseAndDashRegex.test(name)) {
-			throw new Error('The behavior "' + name + '" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.');
-		}
-
-		this.behaviors[name] = classDefinition;
+		this.behaviorRegistry.add(classDefinition);
 	},
 
 	attachBehaviors: function attachBehaviors(element, behaviorPropertiesMap) {
@@ -4951,7 +5002,7 @@ var Scrollmeister = {
 	},
 
 	attachBehavior: function attachBehavior(element, name, rawProperties) {
-		if (!this.behaviors.hasOwnProperty(name)) {
+		if (!this.behaviorRegistry.has(name)) {
 			throw new Error('Tried to attach an unknown behavior "' + name + '". This should never happen since we only track attributes that correspond to defined behaviors.');
 		}
 
@@ -4964,7 +5015,7 @@ var Scrollmeister = {
 			//Maybe this should not be allowed at all, but instead always use the attribute?
 			//BUT: if we can make it work then it should work for UX reasons.
 			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-			var Behavior = this.behaviors[name];
+			var Behavior = this.behaviorRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
 			element.behaviors[name] = element[name];
 		}
@@ -5002,7 +5053,7 @@ var Scrollmeister = {
 	},
 
 	_checkBehaviorDependencies: function _checkBehaviorDependencies(element, name) {
-		var Behavior = this.behaviors[name];
+		var Behavior = this.behaviorRegistry.get(name);
 
 		for (var dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			var dependency = Behavior.dependencies[dependencyIndex];
@@ -5026,10 +5077,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{}],30:[function(require,module,exports){
+},{"lib/BehaviorRegistry.js":22}],31:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],31:[function(require,module,exports){
+},{"scssify":7}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5044,7 +5095,7 @@ exports.default = {
 	}
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5086,7 +5137,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5132,7 +5183,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":32}],34:[function(require,module,exports){
+},{"types/CSSLengthType.js":33}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5218,7 +5269,7 @@ exports.default = {
 	}
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5247,7 +5298,7 @@ exports.default = {
 	}
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5262,7 +5313,7 @@ exports.default = {
 	}
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5304,4 +5355,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":31,"types/CSSLengthType.js":32,"types/HeightType.js":33,"types/LayoutDependencyType.js":34,"types/NumberType.js":35,"types/StringType.js":36}]},{},[21]);
+},{"types/BooleanType.js":32,"types/CSSLengthType.js":33,"types/HeightType.js":34,"types/LayoutDependencyType.js":35,"types/NumberType.js":36,"types/StringType.js":37}]},{},[21]);
