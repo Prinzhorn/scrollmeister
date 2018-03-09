@@ -60,8 +60,6 @@ export default class InterpolateBehavior extends Behavior {
 			this._createInterpolators();
 		});
 
-		//TODO: if the translate behavior also listens to the scroll event, how do we guarantee that the interpolate behavior gets it FIRST?
-		//This might already be solved because behaviors are attached in order (translate depends on interpolate).
 		this.listen(this.parentEl, 'guidelayout:scroll', e => {
 			this._interpolate(e.detail.scrollState);
 		});
@@ -139,18 +137,26 @@ export default class InterpolateBehavior extends Behavior {
 
 	_interpolate(scrollState) {
 		let schema = this.constructor.schema;
+		let didChange = false;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
+				let previousValue = this[prop];
+
 				if (this._interpolators.hasOwnProperty(prop)) {
 					this[prop] = this._interpolators[prop](scrollState.position);
 				} else {
 					this[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 				}
+
+				if (previousValue !== this[prop]) {
+					didChange = true;
+				}
 			}
 		}
 
-		//TODO: only trigger events when a value was actually changed!
-		this.emit('interpolate');
+		if (didChange) {
+			this.emit('change');
+		}
 	}
 }
