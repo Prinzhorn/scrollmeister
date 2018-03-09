@@ -65,17 +65,17 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null) {
-		if (!this._scheduledBatchUpdate) {
-			this._scheduledBatchUpdate = true;
-			this._batchHandle = raf(this._batchUpdateBehaviors.bind(this));
-		}
-
 		if (newValue === null) {
 			this._scheduledBehaviors.detach[attr] = true;
 			delete this._scheduledBehaviors.attach[attr];
 		} else {
 			this._scheduledBehaviors.attach[attr] = newValue;
 			delete this._scheduledBehaviors.detach[attr];
+		}
+
+		if (!this._scheduledBatchUpdate) {
+			this._scheduledBatchUpdate = true;
+			this._batchHandle = raf(this._batchUpdateBehaviors.bind(this));
 		}
 	}
 

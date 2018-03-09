@@ -1,14 +1,16 @@
-import BehaviorRegistry from 'lib/BehaviorRegistry.js';
+import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
+import ConditionsRegistry from 'lib/ConditionsRegistry.js';
 
 const Scrollmeister = {
-	behaviorRegistry: new BehaviorRegistry(),
+	behaviorsRegistry: new BehaviorsRegistry(),
+	conditionsRegistry: new ConditionsRegistry(),
 
 	getDefinedBehaviorNames: function() {
-		return this.behaviorRegistry.getNames();
+		return this.behaviorsRegistry.getNames();
 	},
 
 	defineBehavior: function(classDefinition) {
-		this.behaviorRegistry.add(classDefinition);
+		this.behaviorsRegistry.add(classDefinition);
 	},
 
 	attachBehaviors: function(element, behaviorPropertiesMap) {
@@ -45,7 +47,7 @@ const Scrollmeister = {
 	},
 
 	attachBehavior: function(element, name, rawProperties) {
-		if (!this.behaviorRegistry.has(name)) {
+		if (!this.behaviorsRegistry.has(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes that correspond to defined behaviors.`
 			);
@@ -60,7 +62,7 @@ const Scrollmeister = {
 			//Maybe this should not be allowed at all, but instead always use the attribute?
 			//BUT: if we can make it work then it should work for UX reasons.
 			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-			const Behavior = this.behaviorRegistry.get(name);
+			const Behavior = this.behaviorsRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
 			element.behaviors[name] = element[name];
 		}
@@ -98,7 +100,7 @@ const Scrollmeister = {
 	},
 
 	_checkBehaviorDependencies: function(element, name) {
-		const Behavior = this.behaviorRegistry.get(name);
+		const Behavior = this.behaviorsRegistry.get(name);
 
 		for (let dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			let dependency = Behavior.dependencies[dependencyIndex];
@@ -117,6 +119,14 @@ const Scrollmeister = {
 		}
 
 		return true;
+	},
+
+	defineCondition: function(name, valueFn) {
+		this.conditionsRegistry.add(name, valueFn);
+	},
+
+	getDefinedConditionNames: function() {
+		return this.conditionsRegistry.getNames();
 	}
 };
 

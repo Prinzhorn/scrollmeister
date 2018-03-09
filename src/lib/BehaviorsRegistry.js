@@ -1,14 +1,14 @@
 const lowerCaseAndDashRegex = /^[a-z-]+$/;
 
-export default class BehaviorRegistry {
+export default class BehaviorsRegistry {
 	constructor() {
-		this.behaviors = {};
+		this._behaviors = {};
 	}
 
 	add(classDefinition) {
 		let name = classDefinition.behaviorName;
 
-		if (this.behaviors.hasOwnProperty(name)) {
+		if (this._behaviors.hasOwnProperty(name)) {
 			throw new Error(`You are trying to redefine the "${name}" behavior.`);
 		}
 
@@ -18,18 +18,18 @@ export default class BehaviorRegistry {
 			);
 		}
 
-		this.behaviors[name] = classDefinition;
+		this._behaviors[name] = classDefinition;
 	}
 
 	has(name) {
-		return this.behaviors.hasOwnProperty(name);
+		return this._behaviors.hasOwnProperty(name);
 	}
 
 	get(name) {
-		return this.behaviors[name];
+		return this._behaviors[name];
 	}
 
 	getNames() {
-		return Object.keys(this.behaviors);
+		return Object.keys(this._behaviors);
 	}
 }

@@ -2204,7 +2204,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":27,"ponies/CustomEvent.js":28,"ponies/Object.assign.js":29}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":29,"ponies/CustomEvent.js":30,"ponies/Object.assign.js":31}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2810,7 +2810,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":23,"lib/ScrollState.js":24,"lib/fakeClick.js":25,"lib/isTextInput.js":26,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":25,"lib/ScrollState.js":26,"lib/fakeClick.js":27,"lib/isTextInput.js":28,"raf":4,"scroll-logic":6}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3610,7 +3610,7 @@ _scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
 _scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransformBehavior.js":15,"scrollmeister.js":30}],17:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransformBehavior.js":15,"scrollmeister.js":32}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3647,7 +3647,25 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 	_createClass(ElementMeisterComponent, null, [{
 		key: 'observedAttributes',
 		get: function get() {
-			return _scrollmeister2.default.getDefinedBehaviorNames();
+			var behaviorNames = _scrollmeister2.default.getDefinedBehaviorNames();
+			var conditionNames = _scrollmeister2.default.getDefinedConditionNames();
+
+			//First of all we observe all attributes that correspond to a behavior.
+			var observedAttributes = behaviorNames.slice();
+
+			//Additionally we need to observe each behavior for each condition as well.
+			//They're separated by an underscore.
+			for (var i = 0; i < behaviorNames.length; i++) {
+				var behavior = behaviorNames[i];
+
+				for (var j = 0; j < conditionNames.length; j++) {
+					var condition = conditionNames[j];
+
+					observedAttributes.push(behavior + '_' + condition);
+				}
+			}
+
+			return observedAttributes;
 		}
 	}]);
 
@@ -3656,7 +3674,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":18,"scrollmeister.js":30}],18:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":32}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3740,17 +3758,17 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'attributeChangedCallback',
 		value: function attributeChangedCallback(attr, oldValue, newValue) {
-			if (!this._scheduledBatchUpdate) {
-				this._scheduledBatchUpdate = true;
-				this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
-			}
-
 			if (newValue === null) {
 				this._scheduledBehaviors.detach[attr] = true;
 				delete this._scheduledBehaviors.attach[attr];
 			} else {
 				this._scheduledBehaviors.attach[attr] = newValue;
 				delete this._scheduledBehaviors.detach[attr];
+			}
+
+			if (!this._scheduledBatchUpdate) {
+				this._scheduledBatchUpdate = true;
+				this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
 			}
 		}
 	}, {
@@ -3853,7 +3871,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":4,"scrollmeister.js":30}],19:[function(require,module,exports){
+},{"raf":4,"scrollmeister.js":32}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3890,7 +3908,25 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 	_createClass(ScrollMeisterComponent, null, [{
 		key: 'observedAttributes',
 		get: function get() {
-			return _scrollmeister2.default.getDefinedBehaviorNames();
+			var behaviorNames = _scrollmeister2.default.getDefinedBehaviorNames();
+			var conditionNames = _scrollmeister2.default.getDefinedConditionNames();
+
+			//First of all we observe all attributes that correspond to a behavior.
+			var observedAttributes = behaviorNames.slice();
+
+			//Additionally we need to observe each behavior for each condition as well.
+			//They're separated by an underscore.
+			for (var i = 0; i < behaviorNames.length; i++) {
+				var behavior = behaviorNames[i];
+
+				for (var j = 0; j < conditionNames.length; j++) {
+					var condition = conditionNames[j];
+
+					observedAttributes.push(behavior + '_' + condition);
+				}
+			}
+
+			return observedAttributes;
 		}
 	}]);
 
@@ -3899,7 +3935,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":18,"scrollmeister.js":30}],20:[function(require,module,exports){
+},{"./MeisterComponent.js":18,"scrollmeister.js":32}],20:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -3920,15 +3956,52 @@ customElements.define('el-meister', _ElementMeisterComponent2.default);
 },{"components/ElementMeisterComponent.js":17,"components/ScrollMeisterComponent.js":19,"document-register-element":1}],21:[function(require,module,exports){
 'use strict';
 
+var _scrollmeister = require('scrollmeister.js');
+
+var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_scrollmeister2.default.defineCondition('s', function () {
+  return window.innerWidth >= 576;
+});
+_scrollmeister2.default.defineCondition('m', function () {
+  return window.innerWidth >= 768;
+});
+_scrollmeister2.default.defineCondition('l', function () {
+  return window.innerWidth >= 992;
+});
+_scrollmeister2.default.defineCondition('xl', function () {
+  return window.innerWidth >= 1200;
+});
+
+_scrollmeister2.default.defineCondition('s-down', function () {
+  return window.innerWidth < 576;
+});
+_scrollmeister2.default.defineCondition('m-down', function () {
+  return window.innerWidth < 768;
+});
+_scrollmeister2.default.defineCondition('l-down', function () {
+  return window.innerWidth < 992;
+});
+_scrollmeister2.default.defineCondition('xl-down', function () {
+  return window.innerWidth < 1200;
+});
+
+},{"scrollmeister.js":32}],22:[function(require,module,exports){
+'use strict';
+
 require('./scrollmeister.sass');
 
 require('./scrollmeister.js');
+
+require('./conditions');
 
 require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":16,"./components":20,"./scrollmeister.js":30,"./scrollmeister.sass":31}],22:[function(require,module,exports){
+},{"./behaviors":16,"./components":20,"./conditions":21,"./scrollmeister.js":32,"./scrollmeister.sass":33}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3941,19 +4014,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var lowerCaseAndDashRegex = /^[a-z-]+$/;
 
-var BehaviorRegistry = function () {
-	function BehaviorRegistry() {
-		_classCallCheck(this, BehaviorRegistry);
+var BehaviorsRegistry = function () {
+	function BehaviorsRegistry() {
+		_classCallCheck(this, BehaviorsRegistry);
 
-		this.behaviors = {};
+		this._behaviors = {};
 	}
 
-	_createClass(BehaviorRegistry, [{
+	_createClass(BehaviorsRegistry, [{
 		key: "add",
 		value: function add(classDefinition) {
 			var name = classDefinition.behaviorName;
 
-			if (this.behaviors.hasOwnProperty(name)) {
+			if (this._behaviors.hasOwnProperty(name)) {
 				throw new Error("You are trying to redefine the \"" + name + "\" behavior.");
 			}
 
@@ -3961,31 +4034,86 @@ var BehaviorRegistry = function () {
 				throw new Error("The behavior \"" + name + "\" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.");
 			}
 
-			this.behaviors[name] = classDefinition;
+			this._behaviors[name] = classDefinition;
 		}
 	}, {
 		key: "has",
 		value: function has(name) {
-			return this.behaviors.hasOwnProperty(name);
+			return this._behaviors.hasOwnProperty(name);
 		}
 	}, {
 		key: "get",
 		value: function get(name) {
-			return this.behaviors[name];
+			return this._behaviors[name];
 		}
 	}, {
 		key: "getNames",
 		value: function getNames() {
-			return Object.keys(this.behaviors);
+			return Object.keys(this._behaviors);
 		}
 	}]);
 
-	return BehaviorRegistry;
+	return BehaviorsRegistry;
 }();
 
-exports.default = BehaviorRegistry;
+exports.default = BehaviorsRegistry;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var lowerCaseAndDashRegex = /^[a-z-]+$/;
+
+var ConditionsRegistry = function () {
+	function ConditionsRegistry() {
+		_classCallCheck(this, ConditionsRegistry);
+
+		this._conditions = {};
+	}
+
+	_createClass(ConditionsRegistry, [{
+		key: "add",
+		value: function add(name, valueFn) {
+			if (this._conditions.hasOwnProperty(name)) {
+				throw new Error("You are trying to redefine the \"" + name + "\" condition.");
+			}
+
+			if (!lowerCaseAndDashRegex.test(name)) {
+				throw new Error("The condition \"" + name + "\" you are trying to define uses invalid characters. Conditions can only use lower case characters and dashes.");
+			}
+
+			this._conditions[name] = valueFn;
+		}
+	}, {
+		key: "has",
+		value: function has(name) {
+			return this._conditions.hasOwnProperty(name);
+		}
+	}, {
+		key: "get",
+		value: function get(name) {
+			return this._conditions[name];
+		}
+	}, {
+		key: "getNames",
+		value: function getNames() {
+			return Object.keys(this._conditions);
+		}
+	}]);
+
+	return ConditionsRegistry;
+}();
+
+exports.default = ConditionsRegistry;
+
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4567,7 +4695,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4670,7 +4798,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4713,7 +4841,7 @@ exports.default = {
 	}
 };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4732,7 +4860,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4884,7 +5012,7 @@ exports.default = {
 	}
 };
 
-},{"types":38}],28:[function(require,module,exports){
+},{"types":40}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4907,7 +5035,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4945,28 +5073,33 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _BehaviorRegistry = require('lib/BehaviorRegistry.js');
+var _BehaviorsRegistry = require('lib/BehaviorsRegistry.js');
 
-var _BehaviorRegistry2 = _interopRequireDefault(_BehaviorRegistry);
+var _BehaviorsRegistry2 = _interopRequireDefault(_BehaviorsRegistry);
+
+var _ConditionsRegistry = require('lib/ConditionsRegistry.js');
+
+var _ConditionsRegistry2 = _interopRequireDefault(_ConditionsRegistry);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Scrollmeister = {
-	behaviorRegistry: new _BehaviorRegistry2.default(),
+	behaviorsRegistry: new _BehaviorsRegistry2.default(),
+	conditionsRegistry: new _ConditionsRegistry2.default(),
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
-		return this.behaviorRegistry.getNames();
+		return this.behaviorsRegistry.getNames();
 	},
 
 	defineBehavior: function defineBehavior(classDefinition) {
-		this.behaviorRegistry.add(classDefinition);
+		this.behaviorsRegistry.add(classDefinition);
 	},
 
 	attachBehaviors: function attachBehaviors(element, behaviorPropertiesMap) {
@@ -5002,7 +5135,7 @@ var Scrollmeister = {
 	},
 
 	attachBehavior: function attachBehavior(element, name, rawProperties) {
-		if (!this.behaviorRegistry.has(name)) {
+		if (!this.behaviorsRegistry.has(name)) {
 			throw new Error('Tried to attach an unknown behavior "' + name + '". This should never happen since we only track attributes that correspond to defined behaviors.');
 		}
 
@@ -5015,7 +5148,7 @@ var Scrollmeister = {
 			//Maybe this should not be allowed at all, but instead always use the attribute?
 			//BUT: if we can make it work then it should work for UX reasons.
 			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
-			var Behavior = this.behaviorRegistry.get(name);
+			var Behavior = this.behaviorsRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
 			element.behaviors[name] = element[name];
 		}
@@ -5053,7 +5186,7 @@ var Scrollmeister = {
 	},
 
 	_checkBehaviorDependencies: function _checkBehaviorDependencies(element, name) {
-		var Behavior = this.behaviorRegistry.get(name);
+		var Behavior = this.behaviorsRegistry.get(name);
 
 		for (var dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			var dependency = Behavior.dependencies[dependencyIndex];
@@ -5072,15 +5205,23 @@ var Scrollmeister = {
 		}
 
 		return true;
+	},
+
+	defineCondition: function defineCondition(name, valueFn) {
+		this.conditionsRegistry.add(name, valueFn);
+	},
+
+	getDefinedConditionNames: function getDefinedConditionNames() {
+		return this.conditionsRegistry.getNames();
 	}
 };
 
 exports.default = Scrollmeister;
 
-},{"lib/BehaviorRegistry.js":22}],31:[function(require,module,exports){
+},{"lib/BehaviorsRegistry.js":23,"lib/ConditionsRegistry.js":24}],33:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],32:[function(require,module,exports){
+},{"scssify":7}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5095,7 +5236,7 @@ exports.default = {
 	}
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5137,7 +5278,7 @@ exports.default = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5183,7 +5324,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":33}],35:[function(require,module,exports){
+},{"types/CSSLengthType.js":35}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5269,7 +5410,7 @@ exports.default = {
 	}
 };
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5298,7 +5439,7 @@ exports.default = {
 	}
 };
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5313,7 +5454,7 @@ exports.default = {
 	}
 };
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5355,4 +5496,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":32,"types/CSSLengthType.js":33,"types/HeightType.js":34,"types/LayoutDependencyType.js":35,"types/NumberType.js":36,"types/StringType.js":37}]},{},[21]);
+},{"types/BooleanType.js":34,"types/CSSLengthType.js":35,"types/HeightType.js":36,"types/LayoutDependencyType.js":37,"types/NumberType.js":38,"types/StringType.js":39}]},{},[22]);
