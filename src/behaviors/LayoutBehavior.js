@@ -236,8 +236,8 @@ export default class LayoutBehavior extends Behavior {
 		let overflow = 'visible';
 		let width = this.layout.width;
 		let height = this.layout.height;
+		let contain = 'strict';
 
-		//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
 		if (this.props.clip) {
 			height = this.layout.clipRect.height;
 			overflow = 'hidden';
@@ -247,6 +247,7 @@ export default class LayoutBehavior extends Behavior {
 		style.overflow = overflow;
 		style.width = Math.round(width) + 'px';
 		style.height = Math.round(height) + 'px';
+		style.contain = contain;
 	}
 
 	_renderInner() {

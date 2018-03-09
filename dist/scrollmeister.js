@@ -3301,8 +3301,8 @@ var LayoutBehavior = function (_Behavior) {
 			var overflow = 'visible';
 			var width = this.layout.width;
 			var height = this.layout.height;
+			var contain = 'strict';
 
-			//TODO: the layout engine shouldn't directly add values to the behavior, but scope them like props and state.
 			if (this.props.clip) {
 				height = this.layout.clipRect.height;
 				overflow = 'hidden';
@@ -3312,6 +3312,7 @@ var LayoutBehavior = function (_Behavior) {
 			style.overflow = overflow;
 			style.width = Math.round(width) + 'px';
 			style.height = Math.round(height) + 'px';
+			style.contain = contain;
 		}
 	}, {
 		key: '_renderInner',
