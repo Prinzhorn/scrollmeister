@@ -238,14 +238,10 @@ export default class GuideLayoutBehavior extends Behavior {
 	_pollScrollPosition(now, lastRenderTime) {
 		let currentScrollPosition;
 
-		if (this._scrollAnimation) {
-			currentScrollPosition = this._getScrollPositionFromAnimation();
+		if (this.state.scrollMode === 'touch') {
+			currentScrollPosition = this._scrollLogic.getOffset();
 		} else {
-			if (this.state.scrollMode === 'touch') {
-				currentScrollPosition = this._scrollLogic.getOffset();
-			} else {
-				currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
-			}
+			currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
 		}
 
 		this.scrollState.tick(now, currentScrollPosition);

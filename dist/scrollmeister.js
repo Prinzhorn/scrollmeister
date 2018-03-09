@@ -2644,14 +2644,10 @@ var GuideLayoutBehavior = function (_Behavior) {
 		value: function _pollScrollPosition(now, lastRenderTime) {
 			var currentScrollPosition = void 0;
 
-			if (this._scrollAnimation) {
-				currentScrollPosition = this._getScrollPositionFromAnimation();
+			if (this.state.scrollMode === 'touch') {
+				currentScrollPosition = this._scrollLogic.getOffset();
 			} else {
-				if (this.state.scrollMode === 'touch') {
-					currentScrollPosition = this._scrollLogic.getOffset();
-				} else {
-					currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
-				}
+				currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
 			}
 
 			this.scrollState.tick(now, currentScrollPosition);
@@ -2882,8 +2878,6 @@ var InterpolateBehavior = function (_Behavior) {
 				_this2._createInterpolators();
 			});
 
-			//TODO: if the translate behavior also listens to the scroll event, how do we guarantee that the interpolate behavior gets it FIRST?
-			//This might already be solved because behaviors are attached in order (translate depends on interpolate).
 			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
 				_this2._interpolate(e.detail.scrollState);
 			});
@@ -2969,19 +2963,27 @@ var InterpolateBehavior = function (_Behavior) {
 		key: '_interpolate',
 		value: function _interpolate(scrollState) {
 			var schema = this.constructor.schema;
+			var didChange = false;
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
+					var previousValue = this[prop];
+
 					if (this._interpolators.hasOwnProperty(prop)) {
 						this[prop] = this._interpolators[prop](scrollState.position);
 					} else {
 						this[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 					}
+
+					if (previousValue !== this[prop]) {
+						didChange = true;
+					}
 				}
 			}
 
-			//TODO: only trigger events when a value was actually changed!
-			this.emit('interpolate');
+			if (didChange) {
+				this.emit('change');
+			}
 		}
 	}], [{
 		key: 'schema',
@@ -3529,7 +3531,7 @@ var TransformBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
-			this.listen(this.el, 'interpolate:interpolate', function () {
+			this.listen(this.el, 'interpolate:change', function () {
 				//TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
 				//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
 				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
