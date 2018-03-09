@@ -81,6 +81,7 @@ export default class LayoutBehavior extends Behavior {
 		this.layout = {};
 
 		//TODO: only wrap if needed? In most cases we don't need innerEl at all. Only for specific cases, e.g. followers with clipping.
+		//But still always define innerEl, even if it is === el
 		this._wrapContents();
 
 		this.listen(this.parentEl, 'guidelayout:layout', () => {
@@ -139,6 +140,7 @@ export default class LayoutBehavior extends Behavior {
 			//There are no text nodes, just this one element. #winning
 			if (childNodes.length === 1) {
 				this.innerEl = childElements[0];
+				this.contentEl = this.el;
 				return;
 			}
 
@@ -153,7 +155,7 @@ export default class LayoutBehavior extends Behavior {
 			for (let i = 0; i < childNodes.length; i++) {
 				let child = childNodes[i];
 
-				if (child.textContent.trim() !== '') {
+				if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== '') {
 					onlyEmptyTextNodes = false;
 					break;
 				}
@@ -161,28 +163,28 @@ export default class LayoutBehavior extends Behavior {
 
 			if (onlyEmptyTextNodes) {
 				this.innerEl = childElements[0];
+				this.contentEl = this.el;
 				return;
 			}
 		}
 
 		console.log(`Wrapped ${childNodes.length} children in a <div>`);
 
-		this._wrappedContents = true;
-
 		let fragment = document.createDocumentFragment();
 		this.innerEl = document.createElement('div');
 
-		//childNodes is a live list.
+		//childNodes is a live list, so length gets smaller.
 		while (childNodes.length > 0) {
 			fragment.appendChild(childNodes[0]);
 		}
 
 		this.innerEl.appendChild(fragment);
 		this.el.appendChild(this.innerEl);
+		this.contentEl = this.innerEl;
 	}
 
 	_unwrapContents() {
-		if (this._wrappedContents) {
+		if (this.innerEl === this.contentEl) {
 			let childNodes = this.innerEl.childNodes;
 			let fragment = document.createDocumentFragment();
 
@@ -219,6 +221,8 @@ export default class LayoutBehavior extends Behavior {
 
 		//Force a scroll update.
 		this._scroll(this.parentEl.guidelayout.scrollState, true);
+
+		this.emit('render');
 	}
 
 	_canSafelyBeUnloadedFromGPU() {

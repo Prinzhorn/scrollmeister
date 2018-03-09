@@ -8,6 +8,7 @@ import LayoutBehavior from 'behaviors/LayoutBehavior.js';
 import InterpolateBehavior from 'behaviors/InterpolateBehavior.js';
 import TransformBehavior from 'behaviors/TransformBehavior.js';
 import LazyLoadBehavior from 'behaviors/LazyLoadBehavior.js';
+import FluidTextBehavior from 'behaviors/FluidTextBehavior.js';
 
 Scrollmeister.defineBehavior(GuideLayoutBehavior);
 Scrollmeister.defineBehavior(DebugGuidesBehavior);
@@ -17,4 +18,4 @@ Scrollmeister.defineBehavior(LayoutBehavior);
 Scrollmeister.defineBehavior(InterpolateBehavior);
 Scrollmeister.defineBehavior(TransformBehavior);
 Scrollmeister.defineBehavior(LazyLoadBehavior);
-
+Scrollmeister.defineBehavior(FluidTextBehavior);
