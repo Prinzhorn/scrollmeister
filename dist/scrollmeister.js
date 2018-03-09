@@ -2047,6 +2047,7 @@ var Behavior = function () {
 		this.props = {};
 		this.state = {};
 
+		this.proxyCSS();
 		this.parseProperties(rawProperties);
 
 		this.attach();
@@ -2064,6 +2065,8 @@ var Behavior = function () {
 					this.unlisten(listener.element, listener.eventName, listener.callback);
 				}
 			}
+
+			this.unproxyCSS();
 
 			if (this.detach) {
 				this.detach();
@@ -2159,6 +2162,36 @@ var Behavior = function () {
 			this.emit('update');
 		}
 	}, {
+		key: 'proxyCSS',
+		value: function proxyCSS() {
+			var behaviorName = this.constructor.behaviorName;
+			var element = this.el;
+
+			this.css = {
+				set transform(value) {
+					if (value === null) {
+						element.resetBehaviorStyle(behaviorName, 'transform');
+					} else {
+						element.setBehaviorStyle(behaviorName, 'transform', value);
+					}
+				},
+				set opacity(value) {
+					if (value === null) {
+						element.resetBehaviorStyle(behaviorName, 'opacity');
+					} else {
+						element.setBehaviorStyle(behaviorName, 'opacity', value);
+					}
+				}
+			};
+		}
+	}, {
+		key: 'unproxyCSS',
+		value: function unproxyCSS() {
+			var behaviorName = this.constructor.behaviorName;
+
+			this.el.resetBehaviorStyles(behaviorName);
+		}
+	}, {
 		key: 'parseProperties',
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
@@ -2210,7 +2243,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 
 			//Whenever the guide layout updates, render the guides.
 			this.listenAndInvoke(this.el, 'guidelayout:layout', function () {
-				_this2._renderGuides();
+				_this2._render();
 			});
 		}
 	}, {
@@ -2236,8 +2269,8 @@ var DebugGuidesBehavior = function (_Behavior) {
 			}
 		}
 	}, {
-		key: '_renderGuides',
-		value: function _renderGuides() {
+		key: '_render',
+		value: function _render() {
 			var _this3 = this;
 
 			var guides = this.el.guidelayout.engine.guides;
@@ -2670,7 +2703,8 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 			var width = documentElement.clientWidth;
 			var outerWidth = width + this._getScrollbarWidth();
-			var height = outerHeight = documentElement.clientHeight;
+			var height = documentElement.clientHeight;
+			var outerHeight = height;
 
 			return {
 				width: width,
@@ -2859,16 +2893,16 @@ var InterpolateBehavior = function (_Behavior) {
 				delete this._interpolateOpacity;
 			}
 
-			if (this.props.scale.length > 0) {
-				this._interpolateScale = this._createInterpolator(this.props.scale);
-			} else {
-				delete this._interpolateScale;
-			}
-
 			if (this.props.rotate.length > 0) {
 				this._interpolateRotate = this._createInterpolator(this.props.rotate);
 			} else {
 				delete this._interpolateRotate;
+			}
+
+			if (this.props.scale.length > 0) {
+				this._interpolateScale = this._createInterpolator(this.props.scale);
+			} else {
+				delete this._interpolateScale;
 			}
 
 			if (this.props.alpha.length > 0) {
@@ -2955,16 +2989,16 @@ var InterpolateBehavior = function (_Behavior) {
 				this.opacity = 1;
 			}
 
-			if (this._interpolateScale) {
-				this.scale = this._interpolateScale(scrollState.position);
-			} else {
-				this.scale = 1;
-			}
-
 			if (this._interpolateRotate) {
 				this.rotate = this._interpolateRotate(scrollState.position);
 			} else {
 				this.rotate = 0;
+			}
+
+			if (this._interpolateScale) {
+				this.scale = this._interpolateScale(scrollState.position);
+			} else {
+				this.scale = 1;
 			}
 
 			if (this._interpolateAlpha) {
@@ -2985,6 +3019,7 @@ var InterpolateBehavior = function (_Behavior) {
 				this.gamma = 0;
 			}
 
+			//TODO: only trigger events when a value was actually changed!
 			this.emit('interpolate');
 		}
 	}], [{
@@ -2992,8 +3027,8 @@ var InterpolateBehavior = function (_Behavior) {
 		get: function get() {
 			return {
 				opacity: keyframesSchema,
-				scale: keyframesSchema,
 				rotate: keyframesSchema,
+				scale: keyframesSchema,
 				alpha: keyframesSchema,
 				beta: keyframesSchema,
 				gamma: keyframesSchema
@@ -3068,6 +3103,7 @@ var LayoutBehavior = function (_Behavior) {
 			this.scrollUpdate = {};
 			this.layout = {};
 
+			//TODO: only wrap if needed? In most cases we don't need innerEl at all. Only for specific cases, e.g. followers with clipping.
 			this._wrapContents();
 
 			this.listen(this.parentEl, 'guidelayout:layout', function () {
@@ -3110,6 +3146,9 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_wrapContents',
 		value: function _wrapContents() {
+			//TODO: use a custom element instead of a div, so we can use .css. and not worry about clean up.
+			//But need be innerCSS? Ugh.
+
 			//Includes elements and also text nodes.
 			var childNodes = this.el.childNodes;
 			var childElements = this.el.children;
@@ -3231,8 +3270,6 @@ var LayoutBehavior = function (_Behavior) {
 			style.overflow = overflow;
 			style.width = Math.round(width) + 'px';
 			style.height = Math.round(height) + 'px';
-			style.msTransform = 'translate(0, 0)';
-			style.transform = style.WebkitTransform = 'translate3d(0, 0, 0.00001)';
 		}
 	}, {
 		key: '_renderInner',
@@ -3272,8 +3309,7 @@ var LayoutBehavior = function (_Behavior) {
 					style.willChange = 'transform';
 				}
 
-				style.msTransform = 'translate(' + _left + 'px, ' + _top + 'px)';
-				style.transform = style.WebkitTransform = 'translate3d(' + _left + 'px, ' + _top + 'px, 0)';
+				this.css.transform = 'translate(' + _left + 'px, ' + _top + 'px)';
 
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
@@ -3515,22 +3551,33 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TransitionBehavior = function (_Behavior) {
-  _inherits(TransitionBehavior, _Behavior);
+var TransformBehavior = function (_Behavior) {
+  _inherits(TransformBehavior, _Behavior);
 
-  function TransitionBehavior() {
-    _classCallCheck(this, TransitionBehavior);
+  function TransformBehavior() {
+    _classCallCheck(this, TransformBehavior);
 
-    return _possibleConstructorReturn(this, (TransitionBehavior.__proto__ || Object.getPrototypeOf(TransitionBehavior)).apply(this, arguments));
+    return _possibleConstructorReturn(this, (TransformBehavior.__proto__ || Object.getPrototypeOf(TransformBehavior)).apply(this, arguments));
   }
 
-  _createClass(TransitionBehavior, [{
+  _createClass(TransformBehavior, [{
     key: 'attach',
     value: function attach() {
       var _this2 = this;
 
       this.listen(this.el, 'interpolate:interpolate', function () {
-        _this2.el.style.opacity = _this2.el.interpolate.opacity;
+        //TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
+        //TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
+        //The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
+        //the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
+
+        _this2.css.opacity = _this2.el.interpolate.opacity;
+        _this2.css.transform = 'rotate(' + _this2.el.interpolate.rotate + 'deg) scale(' + _this2.el.interpolate.scale + ')';
+
+        //TODO: in which order will we apply translate, rotate, scale and skew?
+        //I guess translate should always be the first. And scaling the last one.
+        //So... translate, skew, rotate, scale?
+        //This feels natural. Skewing after rotating is nothing people can imagine in their head.
       });
     }
   }], [{
@@ -3546,14 +3593,14 @@ var TransitionBehavior = function (_Behavior) {
   }, {
     key: 'behaviorName',
     get: function get() {
-      return 'transition';
+      return 'transform';
     }
   }]);
 
-  return TransitionBehavior;
+  return TransformBehavior;
 }(_Behavior3.default);
 
-exports.default = TransitionBehavior;
+exports.default = TransformBehavior;
 
 },{"behaviors/Behavior.js":8}],16:[function(require,module,exports){
 'use strict';
@@ -3582,9 +3629,9 @@ var _InterpolateBehavior = require('behaviors/InterpolateBehavior.js');
 
 var _InterpolateBehavior2 = _interopRequireDefault(_InterpolateBehavior);
 
-var _TransitionBehavior = require('behaviors/TransitionBehavior.js');
+var _TransformBehavior = require('behaviors/TransformBehavior.js');
 
-var _TransitionBehavior2 = _interopRequireDefault(_TransitionBehavior);
+var _TransformBehavior2 = _interopRequireDefault(_TransformBehavior);
 
 var _LazyLoadBehavior = require('behaviors/LazyLoadBehavior.js');
 
@@ -3598,10 +3645,10 @@ _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
-_scrollmeister2.default.defineBehavior(_TransitionBehavior2.default);
+_scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransitionBehavior.js":15,"scrollmeister.js":29}],17:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":11,"behaviors/InterpolateBehavior.js":12,"behaviors/LayoutBehavior.js":13,"behaviors/LazyLoadBehavior.js":14,"behaviors/TransformBehavior.js":15,"scrollmeister.js":29}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3696,6 +3743,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		value: function init() {
 			this.behaviors = {};
 
+			this._behaviorStyles = {};
 			this._scheduledBatchUpdate = false;
 			this._scheduledBehaviors = {
 				attach: {},
@@ -3741,6 +3789,88 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			} else {
 				this._scheduledBehaviors.attach[attr] = newValue;
 				delete this._scheduledBehaviors.detach[attr];
+			}
+		}
+	}, {
+		key: 'setBehaviorStyle',
+		value: function setBehaviorStyle(behaviorName, property, value) {
+			if (!this._behaviorStyles.hasOwnProperty(property)) {
+				this._behaviorStyles[property] = {};
+			}
+
+			//Remember that the given behavior just set this style.
+			this._behaviorStyles[property][behaviorName] = value;
+
+			this.applyBehaviorStyle(property);
+		}
+
+		//TODO: we need a consistent order.
+
+	}, {
+		key: 'applyBehaviorStyle',
+		value: function applyBehaviorStyle(property) {
+			if (property === 'transform') {
+				var transforms = [];
+
+				//Collect all transforms across all behaviors.
+				for (var behaviorName in this._behaviorStyles[property]) {
+					if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+						transforms.push(this._behaviorStyles[property][behaviorName]);
+					}
+				}
+
+				if (transforms.length > 0) {
+					this.style[property] = this.style.WebkitTransform = this.style.msTransform = transforms.join(' ');
+				} else {
+					this.style[property] = '';
+				}
+			} else if (property === 'opacity') {
+				var combinedOpacity = 1;
+
+				//Multiply all opacity across all behaviors.
+				for (var _behaviorName in this._behaviorStyles[property]) {
+					if (this._behaviorStyles[property].hasOwnProperty(_behaviorName)) {
+						combinedOpacity *= this._behaviorStyles[property][_behaviorName];
+					}
+				}
+
+				this.style[property] = combinedOpacity;
+			} else {
+				var hasProperty = false;
+
+				for (var _behaviorName2 in this._behaviorStyles[property]) {
+					if (this._behaviorStyles[property].hasOwnProperty(_behaviorName2)) {
+						this.style[property] = this._behaviorStyles[property][_behaviorName2];
+
+						if (hasProperty) {
+							throw new Error('The "' + property + '" property was set by multiple behaviors (' + Object.keys(this._behaviorStyles[property]).join(', ') + ') but it cannot be merged.');
+						}
+
+						hasProperty = true;
+					}
+				}
+
+				//No behavior had a style for this property. Reset it completely.
+				if (!hasProperty) {
+					this.style[property] = '';
+				}
+			}
+		}
+	}, {
+		key: 'resetBehaviorStyle',
+		value: function resetBehaviorStyle(behaviorName, property) {
+			if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+				delete this._behaviorStyles[property][behaviorName];
+				this.applyBehaviorStyle(property);
+			}
+		}
+	}, {
+		key: 'resetBehaviorStyles',
+		value: function resetBehaviorStyles(behaviorName) {
+			for (var property in this._behaviorStyles) {
+				if (this._behaviorStyles.hasOwnProperty(property)) {
+					this.resetBehaviorStyle(behaviorName, property);
+				}
 			}
 		}
 	}, {

@@ -25,7 +25,7 @@ export default class DebugGuidesBehavior extends Behavior {
 
 		//Whenever the guide layout updates, render the guides.
 		this.listenAndInvoke(this.el, 'guidelayout:layout', () => {
-			this._renderGuides();
+			this._render();
 		});
 	}
 
@@ -55,7 +55,7 @@ export default class DebugGuidesBehavior extends Behavior {
 		}
 	}
 
-	_renderGuides() {
+	_render() {
 		let guides = this.el.guidelayout.engine.guides;
 
 		let html = guides.map(guide => {

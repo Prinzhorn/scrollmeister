@@ -31,7 +31,10 @@
           },
           "postcss": {
             "autoprefixer": {
-              "browsers": ["last 2 versions", "ie >= 9"]
+              "browsers": [
+                "last 2 versions",
+                "ie >= 9"
+              ]
             }
           }
         }
@@ -39,7 +42,10 @@
     ]
   },
   "babel": {
-    "presets": ["env", "flow"]
+    "presets": [
+      "env",
+      "flow"
+    ]
   },
   "prettier": {
     "singleQuote": true,
@@ -80,6 +86,7 @@
     "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
     "browser-sync": "^2.23.6",
+    "eslint": "^4.18.2",
     "flow-bin": "^0.66.0",
     "http-server": "^0.11.1",
     "jest": "^22.1.4",

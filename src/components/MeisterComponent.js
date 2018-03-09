@@ -31,6 +31,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	init() {
 		this.behaviors = {};
 
+		this._behaviorStyles = {};
 		this._scheduledBatchUpdate = false;
 		this._scheduledBehaviors = {
 			attach: {},
@@ -75,6 +76,86 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		} else {
 			this._scheduledBehaviors.attach[attr] = newValue;
 			delete this._scheduledBehaviors.detach[attr];
+		}
+	}
+
+	setBehaviorStyle(behaviorName, property, value) {
+		if (!this._behaviorStyles.hasOwnProperty(property)) {
+			this._behaviorStyles[property] = {};
+		}
+
+		//Remember that the given behavior just set this style.
+		this._behaviorStyles[property][behaviorName] = value;
+
+		this.applyBehaviorStyle(property);
+	}
+
+	//TODO: we need a consistent order.
+	applyBehaviorStyle(property) {
+		if (property === 'transform') {
+			let transforms = [];
+
+			//Collect all transforms across all behaviors.
+			for (let behaviorName in this._behaviorStyles[property]) {
+				if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+					transforms.push(this._behaviorStyles[property][behaviorName]);
+				}
+			}
+
+			if (transforms.length > 0) {
+				this.style[property] = this.style.WebkitTransform = this.style.msTransform = transforms.join(' ');
+			} else {
+				this.style[property] = '';
+			}
+		} else if (property === 'opacity') {
+			let combinedOpacity = 1;
+
+			//Multiply all opacity across all behaviors.
+			for (let behaviorName in this._behaviorStyles[property]) {
+				if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+					combinedOpacity *= this._behaviorStyles[property][behaviorName];
+				}
+			}
+
+			this.style[property] = combinedOpacity;
+		} else {
+			let hasProperty = false;
+
+			for (let behaviorName in this._behaviorStyles[property]) {
+				if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+					this.style[property] = this._behaviorStyles[property][behaviorName];
+
+					if (hasProperty) {
+						throw new Error(
+							`The "${property}" property was set by multiple behaviors (${Object.keys(
+								this._behaviorStyles[property]
+							).join(', ')}) but it cannot be merged.`
+						);
+					}
+
+					hasProperty = true;
+				}
+			}
+
+			//No behavior had a style for this property. Reset it completely.
+			if (!hasProperty) {
+				this.style[property] = '';
+			}
+		}
+	}
+
+	resetBehaviorStyle(behaviorName, property) {
+		if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
+			delete this._behaviorStyles[property][behaviorName];
+			this.applyBehaviorStyle(property);
+		}
+	}
+
+	resetBehaviorStyles(behaviorName) {
+		for (let property in this._behaviorStyles) {
+			if (this._behaviorStyles.hasOwnProperty(property)) {
+				this.resetBehaviorStyle(behaviorName, property);
+			}
 		}
 	}
 

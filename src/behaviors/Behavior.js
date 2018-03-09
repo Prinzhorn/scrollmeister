@@ -52,6 +52,7 @@ export default class Behavior {
 		this.props = {};
 		this.state = {};
 
+		this.proxyCSS();
 		this.parseProperties(rawProperties);
 
 		this.attach();
@@ -67,6 +68,8 @@ export default class Behavior {
 				this.unlisten(listener.element, listener.eventName, listener.callback);
 			}
 		}
+
+		this.unproxyCSS();
 
 		if (this.detach) {
 			this.detach();
@@ -151,6 +154,34 @@ export default class Behavior {
 		}
 
 		this.emit('update');
+	}
+
+	proxyCSS() {
+		let behaviorName = this.constructor.behaviorName;
+		let element = this.el;
+
+		this.css = {
+			set transform(value) {
+				if (value === null) {
+					element.resetBehaviorStyle(behaviorName, 'transform');
+				} else {
+					element.setBehaviorStyle(behaviorName, 'transform', value);
+				}
+			},
+			set opacity(value) {
+				if (value === null) {
+					element.resetBehaviorStyle(behaviorName, 'opacity');
+				} else {
+					element.setBehaviorStyle(behaviorName, 'opacity', value);
+				}
+			}
+		};
+	}
+
+	unproxyCSS() {
+		let behaviorName = this.constructor.behaviorName;
+
+		this.el.resetBehaviorStyles(behaviorName);
 	}
 
 	parseProperties(rawProperties) {

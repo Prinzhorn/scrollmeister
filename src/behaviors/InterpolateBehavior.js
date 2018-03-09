@@ -30,8 +30,8 @@ export default class InterpolateBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			opacity: keyframesSchema,
-			scale: keyframesSchema,
 			rotate: keyframesSchema,
+			scale: keyframesSchema,
 			alpha: keyframesSchema,
 			beta: keyframesSchema,
 			gamma: keyframesSchema
@@ -69,16 +69,16 @@ export default class InterpolateBehavior extends Behavior {
 			delete this._interpolateOpacity;
 		}
 
-		if (this.props.scale.length > 0) {
-			this._interpolateScale = this._createInterpolator(this.props.scale);
-		} else {
-			delete this._interpolateScale;
-		}
-
 		if (this.props.rotate.length > 0) {
 			this._interpolateRotate = this._createInterpolator(this.props.rotate);
 		} else {
 			delete this._interpolateRotate;
+		}
+
+		if (this.props.scale.length > 0) {
+			this._interpolateScale = this._createInterpolator(this.props.scale);
+		} else {
+			delete this._interpolateScale;
 		}
 
 		if (this.props.alpha.length > 0) {
@@ -159,16 +159,16 @@ export default class InterpolateBehavior extends Behavior {
 			this.opacity = 1;
 		}
 
-		if (this._interpolateScale) {
-			this.scale = this._interpolateScale(scrollState.position);
-		} else {
-			this.scale = 1;
-		}
-
 		if (this._interpolateRotate) {
 			this.rotate = this._interpolateRotate(scrollState.position);
 		} else {
 			this.rotate = 0;
+		}
+
+		if (this._interpolateScale) {
+			this.scale = this._interpolateScale(scrollState.position);
+		} else {
+			this.scale = 1;
 		}
 
 		if (this._interpolateAlpha) {
@@ -189,6 +189,7 @@ export default class InterpolateBehavior extends Behavior {
 			this.gamma = 0;
 		}
 
+		//TODO: only trigger events when a value was actually changed!
 		this.emit('interpolate');
 	}
 }

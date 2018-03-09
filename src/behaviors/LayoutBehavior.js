@@ -77,6 +77,7 @@ export default class LayoutBehavior extends Behavior {
 		this.scrollUpdate = {};
 		this.layout = {};
 
+		//TODO: only wrap if needed? In most cases we don't need innerEl at all. Only for specific cases, e.g. followers with clipping.
 		this._wrapContents();
 
 		this.listen(this.parentEl, 'guidelayout:layout', () => {
@@ -123,6 +124,9 @@ export default class LayoutBehavior extends Behavior {
 
 	//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
 	_wrapContents() {
+		//TODO: use a custom element instead of a div, so we can use .css. and not worry about clean up.
+		//But need be innerCSS? Ugh.
+
 		//Includes elements and also text nodes.
 		let childNodes = this.el.childNodes;
 		let childElements = this.el.children;
@@ -236,8 +240,6 @@ export default class LayoutBehavior extends Behavior {
 		style.overflow = overflow;
 		style.width = Math.round(width) + 'px';
 		style.height = Math.round(height) + 'px';
-		style.msTransform = `translate(0, 0)`;
-		style.transform = style.WebkitTransform = `translate3d(0, 0, 0.00001)`;
 	}
 
 	_renderInner() {
@@ -273,8 +275,7 @@ export default class LayoutBehavior extends Behavior {
 				style.willChange = 'transform';
 			}
 
-			style.msTransform = `translate(${left}px, ${top}px)`;
-			style.transform = style.WebkitTransform = `translate3d(${left}px, ${top}px, 0)`;
+			this.css.transform = `translate(${left}px, ${top}px)`;
 
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
