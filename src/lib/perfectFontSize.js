@@ -1,14 +1,20 @@
 let container = document.createElement('div');
-let line = document.createElement('span');
 
 //Offscreen container.
-container.style.cssText = 'position:fixed;bottom:-100px;right:-100px;opacity:0;pointer-events:none;';
-
-container.appendChild(line);
+container.style.cssText = `
+	width: 0;
+	height: 0;
+	overflow: hidden;
+	position: fixed;
+	bottom: -100px;
+	right: -100px;
+	opacity:0;
+	pointer-events:none;
+`;
 
 export default function(node) {
-	line.innerHTML = node.innerHTML;
-	line.style.cssText = window.getComputedStyle(node).cssText;
+	const line = node.cloneNode(true);
+	container.appendChild(line);
 
 	//Force a single line of text.
 	line.style.display = 'inline-block';
@@ -19,11 +25,10 @@ export default function(node) {
 	line.style.fontSize = '100px';
 	line.style.width = 'auto';
 
-	if (!container.parentNode) {
-		document.body.appendChild(container);
-	}
-
-	let perfectFontSize = Math.round(100 * node.clientWidth / line.clientWidth);
+	node.parentNode.appendChild(container);
+	let perfectFontSize = 100 * node.clientWidth / line.clientWidth;
+	node.parentNode.removeChild(container);
+	container.removeChild(line);
 
 	return perfectFontSize + 'px';
 }

@@ -5029,8 +5029,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (node) {
-	line.innerHTML = node.innerHTML;
-	line.style.cssText = window.getComputedStyle(node).cssText;
+	var line = node.cloneNode(true);
+	container.appendChild(line);
 
 	//Force a single line of text.
 	line.style.display = 'inline-block';
@@ -5041,22 +5041,18 @@ exports.default = function (node) {
 	line.style.fontSize = '100px';
 	line.style.width = 'auto';
 
-	if (!container.parentNode) {
-		document.body.appendChild(container);
-	}
-
-	var perfectFontSize = Math.round(100 * node.clientWidth / line.clientWidth);
+	node.parentNode.appendChild(container);
+	var perfectFontSize = 100 * node.clientWidth / line.clientWidth;
+	node.parentNode.removeChild(container);
+	container.removeChild(line);
 
 	return perfectFontSize + 'px';
 };
 
 var container = document.createElement('div');
-var line = document.createElement('span');
 
 //Offscreen container.
-container.style.cssText = 'position:fixed;bottom:-100px;right:-100px;opacity:0;pointer-events:none;';
-
-container.appendChild(line);
+container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
 },{}],31:[function(require,module,exports){
 'use strict';
