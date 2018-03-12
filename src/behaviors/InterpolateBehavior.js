@@ -54,6 +54,8 @@ export default class InterpolateBehavior extends Behavior {
 			scale: 1
 		};
 
+		this.values = {};
+
 		//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
 		//Maybe ask the element nicely for a cached value of the last time it fired, if any?
 		this.listen(this.parentEl, 'guidelayout:layout', () => {
@@ -141,15 +143,15 @@ export default class InterpolateBehavior extends Behavior {
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
-				let previousValue = this[prop];
+				let previousValue = this.values[prop];
 
 				if (this._interpolators.hasOwnProperty(prop)) {
-					this[prop] = this._interpolators[prop](scrollState.position);
+					this.values[prop] = this._interpolators[prop](scrollState.position);
 				} else {
-					this[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
+					this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 				}
 
-				if (previousValue !== this[prop]) {
+				if (previousValue !== this.values[prop]) {
 					didChange = true;
 				}
 			}
