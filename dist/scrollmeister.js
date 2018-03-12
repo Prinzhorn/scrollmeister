@@ -2283,7 +2283,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":31,"ponies/CustomEvent.js":32,"ponies/Object.assign.js":33}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":32,"ponies/CustomEvent.js":33,"ponies/Object.assign.js":34}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2541,7 +2541,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/fontSizeWidthRatio.js":29}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/fontSizeWidthRatio.js":30}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2978,7 +2978,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":26,"lib/ScrollState.js":27,"lib/fakeClick.js":28,"lib/isTextInput.js":30,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":27,"lib/ScrollState.js":28,"lib/fakeClick.js":29,"lib/isTextInput.js":31,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3798,7 +3798,7 @@ _scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FluidTextBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/FluidTextBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/InterpolateBehavior.js":13,"behaviors/LayoutBehavior.js":14,"behaviors/LazyLoadBehavior.js":15,"behaviors/TransformBehavior.js":16,"scrollmeister.js":34}],18:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/FluidTextBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/InterpolateBehavior.js":13,"behaviors/LayoutBehavior.js":14,"behaviors/LazyLoadBehavior.js":15,"behaviors/TransformBehavior.js":16,"scrollmeister.js":35}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3862,7 +3862,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":19,"scrollmeister.js":34}],19:[function(require,module,exports){
+},{"./MeisterComponent.js":19,"scrollmeister.js":35}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3874,6 +3874,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
+
+var _BehaviorsStyleMerger = require('lib/BehaviorsStyleMerger.js');
+
+var _BehaviorsStyleMerger2 = _interopRequireDefault(_BehaviorsStyleMerger);
 
 var _scrollmeister = require('scrollmeister.js');
 
@@ -3911,7 +3915,8 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		value: function init() {
 			this.behaviors = {};
 
-			this._behaviorStyles = {};
+			this._behaviorsStyleMerger = new _BehaviorsStyleMerger2.default(this);
+
 			this._scheduledBatchUpdate = false;
 			this._scheduledBehaviors = {
 				attach: {},
@@ -3962,84 +3967,17 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'setBehaviorStyle',
 		value: function setBehaviorStyle(behaviorName, property, value) {
-			if (!this._behaviorStyles.hasOwnProperty(property)) {
-				this._behaviorStyles[property] = {};
-			}
-
-			//Remember that the given behavior just set this style.
-			this._behaviorStyles[property][behaviorName] = value;
-
-			this.applyBehaviorStyle(property);
-		}
-
-		//TODO: we need a consistent order.
-
-	}, {
-		key: 'applyBehaviorStyle',
-		value: function applyBehaviorStyle(property) {
-			if (property === 'transform') {
-				var transforms = [];
-
-				//Collect all transforms across all behaviors.
-				for (var behaviorName in this._behaviorStyles[property]) {
-					if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
-						transforms.push(this._behaviorStyles[property][behaviorName]);
-					}
-				}
-
-				if (transforms.length > 0) {
-					this.style[property] = this.style.WebkitTransform = this.style.msTransform = transforms.join(' ');
-				} else {
-					this.style[property] = '';
-				}
-			} else if (property === 'opacity') {
-				var combinedOpacity = 1;
-
-				//Multiply all opacity across all behaviors.
-				for (var _behaviorName in this._behaviorStyles[property]) {
-					if (this._behaviorStyles[property].hasOwnProperty(_behaviorName)) {
-						combinedOpacity *= this._behaviorStyles[property][_behaviorName];
-					}
-				}
-
-				this.style[property] = combinedOpacity;
-			} else {
-				var hasProperty = false;
-
-				for (var _behaviorName2 in this._behaviorStyles[property]) {
-					if (this._behaviorStyles[property].hasOwnProperty(_behaviorName2)) {
-						this.style[property] = this._behaviorStyles[property][_behaviorName2];
-
-						if (hasProperty) {
-							throw new Error('The "' + property + '" property was set by multiple behaviors (' + Object.keys(this._behaviorStyles[property]).join(', ') + ') but it cannot be merged.');
-						}
-
-						hasProperty = true;
-					}
-				}
-
-				//No behavior had a style for this property. Reset it completely.
-				if (!hasProperty) {
-					this.style[property] = '';
-				}
-			}
+			this._behaviorsStyleMerger.setBehaviorStyle(behaviorName, property, value);
 		}
 	}, {
 		key: 'resetBehaviorStyle',
 		value: function resetBehaviorStyle(behaviorName, property) {
-			if (this._behaviorStyles[property].hasOwnProperty(behaviorName)) {
-				delete this._behaviorStyles[property][behaviorName];
-				this.applyBehaviorStyle(property);
-			}
+			this._behaviorsStyleMerger.resetBehaviorStyle(behaviorName, property);
 		}
 	}, {
 		key: 'resetBehaviorStyles',
 		value: function resetBehaviorStyles(behaviorName) {
-			for (var property in this._behaviorStyles) {
-				if (this._behaviorStyles.hasOwnProperty(property)) {
-					this.resetBehaviorStyle(behaviorName, property);
-				}
-			}
+			this._behaviorsStyleMerger.resetBehaviorStyles(behaviorName);
 		}
 	}, {
 		key: '_batchUpdateBehaviors',
@@ -4059,7 +3997,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"raf":4,"scrollmeister.js":34}],20:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":25,"raf":4,"scrollmeister.js":35}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4123,7 +4061,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":19,"scrollmeister.js":34}],21:[function(require,module,exports){
+},{"./MeisterComponent.js":19,"scrollmeister.js":35}],21:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -4176,7 +4114,7 @@ _scrollmeister2.default.defineCondition('xl-down', function () {
   return window.innerWidth < 1200;
 });
 
-},{"scrollmeister.js":34}],23:[function(require,module,exports){
+},{"scrollmeister.js":35}],23:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -4189,8 +4127,8 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":17,"./components":21,"./conditions":22,"./scrollmeister.js":34,"./scrollmeister.sass":35}],24:[function(require,module,exports){
-"use strict";
+},{"./behaviors":17,"./components":21,"./conditions":22,"./scrollmeister.js":35,"./scrollmeister.sass":36}],24:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
@@ -4207,37 +4145,65 @@ var BehaviorsRegistry = function () {
 		_classCallCheck(this, BehaviorsRegistry);
 
 		this._behaviors = {};
+		this._order = [];
 	}
 
 	_createClass(BehaviorsRegistry, [{
-		key: "add",
+		key: 'add',
 		value: function add(classDefinition) {
 			var name = classDefinition.behaviorName;
 
 			if (this._behaviors.hasOwnProperty(name)) {
-				throw new Error("You are trying to redefine the \"" + name + "\" behavior.");
+				throw new Error('You are trying to redefine the "' + name + '" behavior.');
 			}
 
 			if (!lowerCaseAndDashRegex.test(name)) {
-				throw new Error("The behavior \"" + name + "\" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.");
+				throw new Error('The behavior "' + name + '" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.');
+			}
+
+			var dependencies = classDefinition.dependencies;
+
+			for (var i = 0; i < dependencies.length; i++) {
+				var dependency = dependencies[i];
+
+				if (dependency.charAt(0) === '^') {
+					dependency = dependency.slice(1);
+				}
+
+				if (!this._behaviors.hasOwnProperty(dependency)) {
+					throw new Error('You are trying to define a "' + name + '" behavior that depends on "' + dependency + '", which is not defined. Make sure to define behaviors in the correct order.');
+				}
 			}
 
 			this._behaviors[name] = classDefinition;
+
+			//This is an insanely clever "hack".
+			//Every behavior can have dependencies, so behaviors are like a graph.
+			//We could sort/linearize this graph to initialize behaviors in the correct order.
+			//However, we simply assume they are _defined_ in the correct order and track this here.
+			//This totally makes sense and we even throw when defining a behavior that declares
+			//a dependency that does not exist (yet). So the order is guaranteed to be correct.
+			this._order.push(name);
 		}
 	}, {
-		key: "has",
+		key: 'has',
 		value: function has(name) {
 			return this._behaviors.hasOwnProperty(name);
 		}
 	}, {
-		key: "get",
+		key: 'get',
 		value: function get(name) {
 			return this._behaviors[name];
 		}
 	}, {
-		key: "getNames",
+		key: 'getNames',
 		value: function getNames() {
 			return Object.keys(this._behaviors);
+		}
+	}, {
+		key: 'getOrder',
+		value: function getOrder() {
+			return this._order.slice();
 		}
 	}]);
 
@@ -4247,6 +4213,121 @@ var BehaviorsRegistry = function () {
 exports.default = BehaviorsRegistry;
 
 },{}],25:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _scrollmeister = require('scrollmeister.js');
+
+var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var BehaviorsStyleMerger = function () {
+	function BehaviorsStyleMerger(element) {
+		_classCallCheck(this, BehaviorsStyleMerger);
+
+		this._styles = {};
+		this.el = element;
+	}
+
+	_createClass(BehaviorsStyleMerger, [{
+		key: 'setBehaviorStyle',
+		value: function setBehaviorStyle(behaviorName, property, value) {
+			if (!this._styles.hasOwnProperty(property)) {
+				this._styles[property] = {};
+			}
+
+			//Remember that the given behavior just set this style.
+			this._styles[property][behaviorName] = value;
+
+			this.applyBehaviorStyle(property);
+		}
+
+		//TODO: we need a consistent order.
+		//I was literally about to use Scrollmeister.getBehaviorOrder to make the order of applying consistent.
+
+	}, {
+		key: 'applyBehaviorStyle',
+		value: function applyBehaviorStyle(property) {
+			if (property === 'transform') {
+				var transforms = [];
+
+				//Collect all transforms across all behaviors.
+				for (var behaviorName in this._styles[property]) {
+					if (this._styles[property].hasOwnProperty(behaviorName)) {
+						transforms.push(this._styles[property][behaviorName]);
+					}
+				}
+
+				if (transforms.length > 0) {
+					this.el.style[property] = this.el.style.WebkitTransform = this.el.style.msTransform = transforms.join(' ');
+				} else {
+					this.el.style[property] = '';
+				}
+
+				return;
+			} else if (property === 'opacity') {
+				var combinedOpacity = 1;
+
+				//Multiply all opacity across all behaviors.
+				for (var _behaviorName in this._styles[property]) {
+					if (this._styles[property].hasOwnProperty(_behaviorName)) {
+						combinedOpacity *= this._styles[property][_behaviorName];
+					}
+				}
+
+				this.el.style[property] = combinedOpacity;
+			} else {
+				var hasProperty = false;
+
+				for (var _behaviorName2 in this._styles[property]) {
+					if (this._styles[property].hasOwnProperty(_behaviorName2)) {
+						this.el.style[property] = this._styles[property][_behaviorName2];
+
+						if (hasProperty) {
+							throw new Error('The "' + property + '" property was set by multiple behaviors (' + Object.keys(this._styles[property]).join(', ') + ') but it cannot be merged.');
+						}
+
+						hasProperty = true;
+					}
+				}
+
+				//No behavior had a style for this property. Reset it completely.
+				if (!hasProperty) {
+					this.el.style[property] = '';
+				}
+			}
+		}
+	}, {
+		key: 'resetBehaviorStyle',
+		value: function resetBehaviorStyle(behaviorName, property) {
+			if (this._styles.hasOwnProperty(property) && this._styles[property].hasOwnProperty(behaviorName)) {
+				delete this._styles[property][behaviorName];
+				this.applyBehaviorStyle(property);
+			}
+		}
+	}, {
+		key: 'resetBehaviorStyles',
+		value: function resetBehaviorStyles(behaviorName) {
+			for (var property in this._styles) {
+				this.resetBehaviorStyle(behaviorName, property);
+			}
+		}
+	}]);
+
+	return BehaviorsStyleMerger;
+}();
+
+exports.default = BehaviorsStyleMerger;
+
+},{"scrollmeister.js":35}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4301,7 +4382,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4883,7 +4964,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4986,7 +5067,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5029,7 +5110,7 @@ exports.default = {
 	}
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5062,7 +5143,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5081,7 +5162,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5276,7 +5357,7 @@ exports.default = {
 	}
 };
 
-},{"types":42}],32:[function(require,module,exports){
+},{"types":43}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5299,7 +5380,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5337,7 +5418,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5360,6 +5441,10 @@ var Scrollmeister = {
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
+	},
+
+	getBehaviorOrder: function getBehaviorOrder() {
+		this.behaviorsRegistry.getOrder();
 	},
 
 	defineBehavior: function defineBehavior(classDefinition) {
@@ -5482,10 +5567,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"lib/BehaviorsRegistry.js":24,"lib/ConditionsRegistry.js":25}],35:[function(require,module,exports){
+},{"lib/BehaviorsRegistry.js":24,"lib/ConditionsRegistry.js":26}],36:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],36:[function(require,module,exports){
+},{"scssify":7}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5500,7 +5585,7 @@ exports.default = {
 	}
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5542,7 +5627,7 @@ exports.default = {
 	}
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5588,7 +5673,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":37}],39:[function(require,module,exports){
+},{"types/CSSLengthType.js":38}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5682,7 +5767,7 @@ exports.default = {
 	}
 };
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5711,7 +5796,7 @@ exports.default = {
 	}
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5726,7 +5811,7 @@ exports.default = {
 	}
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5768,4 +5853,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":36,"types/CSSLengthType.js":37,"types/HeightType.js":38,"types/LayoutDependencyType.js":39,"types/NumberType.js":40,"types/StringType.js":41}]},{},[23]);
+},{"types/BooleanType.js":37,"types/CSSLengthType.js":38,"types/HeightType.js":39,"types/LayoutDependencyType.js":40,"types/NumberType.js":41,"types/StringType.js":42}]},{},[23]);
