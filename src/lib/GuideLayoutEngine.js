@@ -85,7 +85,7 @@ export default class GuideLayoutEngine {
 					continue;
 				}
 
-				let dependencies = node.props.dependencies;
+				let dependencies = node.props.dependencies.nodes;
 
 				//Check if any of the dependencies is still dirty.
 				for (let j = 0; j < dependencies.length; j++) {

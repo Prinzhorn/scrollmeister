@@ -18,62 +18,70 @@ function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
 	return null;
 }
 
-//TODO: do we need stringify at all?
-//TODO: Also I believe SelectorType needs to be reavaluated (live) all the time!
+function findDependencies(value: string, element: HTMLElement): Array<HTMLElement> {
+	if (value === 'none') {
+		return [];
+	}
+
+	//"inherit" mimics a regular document flow by rendering the element behind the previous one.
+	if (value === 'inherit') {
+		element = findPreviousFlowElement(element);
+
+		if (element) {
+			return [element.layout];
+		} else {
+			return [];
+		}
+	}
+
+	if (value.indexOf('skip') === 0) {
+		let numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
+
+		if (numberOfSkips < 0) {
+			throw new Error(`You've specified a negative number of skips (${numberOfSkips}) for the layout dependencies.`);
+		}
+
+		do {
+			element = findPreviousFlowElement(element);
+		} while (element && numberOfSkips--);
+
+		if (element) {
+			return [element.layout];
+		} else {
+			return [];
+		}
+	}
+
+	//TODO: nope, this should do sth. like "prevSiblings()"
+	//Double nope: we can get into circular-dependencies here (which the layout engine would catch though)
+	//Maybe allow negative skips to reverse the order like flexbox?
+	//I need to put some thought into this. KISS.
+	let dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+
+	if (dependencies.length === 0) {
+		throw new Error(
+			`Couldn't resolve the layout dependency "${value}". No flow elements found matching this selector.`
+		);
+	}
+
+	return dependencies.map(el => el.layout);
+}
+
+//TODO: I believe SelectorType needs to be reavaluated (live) all the time!
 //https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 export default {
 	parse: function(value: string, element: HTMLElement): Array<HTMLElement> {
 		value = value.trim();
 
-		if (value === 'none') {
-			return [];
-		}
+		let dependencies = findDependencies(value, element);
 
-		//"inherit" mimics a regular document flow by rendering the element behind the previous one.
-		if (value === 'inherit') {
-			element = findPreviousFlowElement(element);
-
-			if (element) {
-				return [element.layout];
-			} else {
-				return [];
-			}
-		}
-
-		if (value.indexOf('skip') === 0) {
-			let numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
-
-			if (numberOfSkips < 0) {
-				throw new Error(`You've specified a negative number of skips (${numberOfSkips}) for the layout dependencies.`);
-			}
-
-			do {
-				element = findPreviousFlowElement(element);
-			} while (element && numberOfSkips--);
-
-			if (element) {
-				return [element.layout];
-			} else {
-				return [];
-			}
-		}
-
-		//TODO: nope, this should do sth. like "prevSiblings()"
-		//Double nope: we can get into circular-dependencies here (which the layout engine would catch though)
-		//Maybe allow negative skips to reverse the order like flexbox?
-		//I need to put some thought into this. KISS.
-		let dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
-
-		if (dependencies.length === 0) {
-			throw new Error(
-				`Couldn't resolve the layout dependency "${value}". No flow elements found matching this selector.`
-			);
-		}
-
-		return dependencies.map(el => el.layout);
+		return {
+			nodes: dependencies,
+			value: value
+		};
 	},
-	stringify: function(value: string): string {
-		return value;
+	stringify: function(value: Array<HTMLElement>): string {
+		return value.value;
 	}
 };
