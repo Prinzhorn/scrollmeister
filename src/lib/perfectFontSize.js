@@ -23,7 +23,7 @@ export default function(node) {
 		document.body.appendChild(container);
 	}
 
-	let perfectFontSize = Math.floor(100 * node.clientWidth / line.clientWidth);
+	let perfectFontSize = Math.round(100 * node.clientWidth / line.clientWidth);
 
 	return perfectFontSize + 'px';
 }

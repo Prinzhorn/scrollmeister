@@ -2479,6 +2479,8 @@ var FadeInBehavior = function (_Behavior) {
 				throw new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.');
 			}
 
+			this.el.layout.innerEl.style.whiteSpace = 'nowrap';
+
 			//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
 			this.listen(this.el, 'layout:render', function () {
 				_this2.el.layout.innerEl.style.fontSize = (0, _perfectFontSize2.default)(_this2.el.layout.innerEl);
@@ -2487,6 +2489,7 @@ var FadeInBehavior = function (_Behavior) {
 	}, {
 		key: 'detach',
 		value: function detach() {
+			this.el.layout.innerEl.style.whiteSpace = '';
 			this.el.layout.innerEl.style.fontSize = '';
 		}
 	}], [{
@@ -5042,7 +5045,7 @@ exports.default = function (node) {
 		document.body.appendChild(container);
 	}
 
-	var perfectFontSize = Math.floor(100 * node.clientWidth / line.clientWidth);
+	var perfectFontSize = Math.round(100 * node.clientWidth / line.clientWidth);
 
 	return perfectFontSize + 'px';
 };

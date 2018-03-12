@@ -24,6 +24,8 @@ export default class FadeInBehavior extends Behavior {
 			);
 		}
 
+		this.el.layout.innerEl.style.whiteSpace = 'nowrap';
+
 		//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
 		this.listen(this.el, 'layout:render', () => {
 			this.el.layout.innerEl.style.fontSize = perfectFontSize(this.el.layout.innerEl);
@@ -31,6 +33,7 @@ export default class FadeInBehavior extends Behavior {
 	}
 
 	detach() {
+		this.el.layout.innerEl.style.whiteSpace = '';
 		this.el.layout.innerEl.style.fontSize = '';
 	}
 }
