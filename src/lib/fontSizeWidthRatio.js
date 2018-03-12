@@ -1,4 +1,4 @@
-let container = document.createElement('div');
+const container = document.createElement('div');
 
 //Offscreen container.
 container.style.cssText = `
@@ -20,15 +20,15 @@ export default function(node) {
 	line.style.display = 'inline-block';
 	line.style.whiteSpace = 'nowrap';
 
-	//We set the font size to 100 to get our baseline width calculation
-	//and then change the font proportionally to the width of the element.
+	//We set the font size to 100 to get our baseline width calculation.
+	//This means we then know the width of the text when the font size is 100.
 	line.style.fontSize = '100px';
 	line.style.width = 'auto';
 
 	node.parentNode.appendChild(container);
-	let perfectFontSize = 100 * node.clientWidth / line.clientWidth;
+	let ratio = 100 / line.clientWidth;
 	node.parentNode.removeChild(container);
 	container.removeChild(line);
 
-	return perfectFontSize + 'px';
+	return ratio;
 }

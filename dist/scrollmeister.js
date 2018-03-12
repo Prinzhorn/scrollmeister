@@ -2449,9 +2449,9 @@ var _Behavior2 = require('behaviors/Behavior.js');
 
 var _Behavior3 = _interopRequireDefault(_Behavior2);
 
-var _perfectFontSize = require('lib/perfectFontSize.js');
+var _fontSizeWidthRatio = require('lib/fontSizeWidthRatio.js');
 
-var _perfectFontSize2 = _interopRequireDefault(_perfectFontSize);
+var _fontSizeWidthRatio2 = _interopRequireDefault(_fontSizeWidthRatio);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2479,11 +2479,17 @@ var FadeInBehavior = function (_Behavior) {
 				throw new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.');
 			}
 
+			//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
+
 			this.el.layout.innerEl.style.whiteSpace = 'nowrap';
 
 			//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
 			this.listen(this.el, 'layout:render', function () {
-				_this2.el.layout.innerEl.style.fontSize = (0, _perfectFontSize2.default)(_this2.el.layout.innerEl);
+				if (!_this2._fontSizeWidthRatio) {
+					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.el.layout.innerEl);
+				}
+
+				_this2.el.layout.innerEl.style.fontSize = _this2._fontSizeWidthRatio * _this2.el.layout.layout.width + 'px';
 			});
 		}
 	}, {
@@ -2514,7 +2520,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/perfectFontSize.js":30}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/fontSizeWidthRatio.js":29}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2951,7 +2957,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":26,"lib/ScrollState.js":27,"lib/fakeClick.js":28,"lib/isTextInput.js":29,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":26,"lib/ScrollState.js":27,"lib/fakeClick.js":28,"lib/isTextInput.js":30,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5010,6 +5016,39 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (node) {
+	var line = node.cloneNode(true);
+	container.appendChild(line);
+
+	//Force a single line of text.
+	line.style.display = 'inline-block';
+	line.style.whiteSpace = 'nowrap';
+
+	//We set the font size to 100 to get our baseline width calculation.
+	//This means we then know the width of the text when the font size is 100.
+	line.style.fontSize = '100px';
+	line.style.width = 'auto';
+
+	node.parentNode.appendChild(container);
+	var ratio = 100 / line.clientWidth;
+	node.parentNode.removeChild(container);
+	container.removeChild(line);
+
+	return ratio;
+};
+
+var container = document.createElement('div');
+
+//Offscreen container.
+container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
+
+},{}],30:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+exports.default = function (node) {
 	if (node.tagName === 'TEXTAREA') {
 		return true;
 	}
@@ -5020,39 +5059,6 @@ exports.default = function (node) {
 
 	return false;
 };
-
-},{}],30:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-exports.default = function (node) {
-	var line = node.cloneNode(true);
-	container.appendChild(line);
-
-	//Force a single line of text.
-	line.style.display = 'inline-block';
-	line.style.whiteSpace = 'nowrap';
-
-	//We set the font size to 100 to get our baseline width calculation
-	//and then change the font proportionally to the width of the element.
-	line.style.fontSize = '100px';
-	line.style.width = 'auto';
-
-	node.parentNode.appendChild(container);
-	var perfectFontSize = 100 * node.clientWidth / line.clientWidth;
-	node.parentNode.removeChild(container);
-	container.removeChild(line);
-
-	return perfectFontSize + 'px';
-};
-
-var container = document.createElement('div');
-
-//Offscreen container.
-container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
 },{}],31:[function(require,module,exports){
 'use strict';

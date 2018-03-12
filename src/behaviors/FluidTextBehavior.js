@@ -2,7 +2,7 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
-import perfectFontSize from 'lib/perfectFontSize.js';
+import fontSizeWidthRatio from 'lib/fontSizeWidthRatio.js';
 
 export default class FadeInBehavior extends Behavior {
 	static get schema(): any {
@@ -24,11 +24,17 @@ export default class FadeInBehavior extends Behavior {
 			);
 		}
 
+		//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
+
 		this.el.layout.innerEl.style.whiteSpace = 'nowrap';
 
 		//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
 		this.listen(this.el, 'layout:render', () => {
-			this.el.layout.innerEl.style.fontSize = perfectFontSize(this.el.layout.innerEl);
+			if (!this._fontSizeWidthRatio) {
+				this._fontSizeWidthRatio = fontSizeWidthRatio(this.el.layout.innerEl);
+			}
+
+			this.el.layout.innerEl.style.fontSize = this._fontSizeWidthRatio * this.el.layout.layout.width + 'px';
 		});
 	}
 
