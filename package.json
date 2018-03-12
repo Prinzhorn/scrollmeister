@@ -9,9 +9,11 @@
     "flow": "flow check",
     "server": "http-server",
     "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/index.html, dist/scrollmeister.js'",
-    "watch": "NODE_PATH='./src' watchify ./src/index.js -o ./dist/scrollmeister.js -v",
+    "watch": "NODE_PATH='./src' watchify ./src/index-extras.js -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
-    "build": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js"
+    "build": "npm run build-scrollmeister && npm run build-extras",
+    "build-scrollmeister": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js",
+    "build-extras": "NODE_PATH='./src' browserify ./src/index-extras.js -p tinyify > ./dist/scrollmeister-extras.js"
   },
   "repository": {
     "type": "git",
@@ -31,10 +33,7 @@
           },
           "postcss": {
             "autoprefixer": {
-              "browsers": [
-                "last 2 versions",
-                "ie >= 9"
-              ]
+              "browsers": ["last 2 versions", "ie >= 9"]
             }
           }
         }
@@ -42,10 +41,7 @@
     ]
   },
   "babel": {
-    "presets": [
-      "env",
-      "flow"
-    ]
+    "presets": ["env", "flow"]
   },
   "prettier": {
     "singleQuote": true,

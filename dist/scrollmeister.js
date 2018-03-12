@@ -2283,7 +2283,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":32,"ponies/CustomEvent.js":33,"ponies/Object.assign.js":34}],9:[function(require,module,exports){
+},{"lib/schemaParser.js":34,"ponies/CustomEvent.js":35,"ponies/Object.assign.js":36}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2541,7 +2541,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/fontSizeWidthRatio.js":30}],12:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/fontSizeWidthRatio.js":32}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2978,7 +2978,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":27,"lib/ScrollState.js":28,"lib/fakeClick.js":29,"lib/isTextInput.js":31,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":8,"lib/GuideLayoutEngine.js":29,"lib/ScrollState.js":30,"lib/fakeClick.js":31,"lib/isTextInput.js":33,"raf":4,"scroll-logic":6}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3754,6 +3754,26 @@ var _scrollmeister = require('scrollmeister.js');
 
 var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 
+var _LazyLoadBehavior = require('behaviors/LazyLoadBehavior.js');
+
+var _LazyLoadBehavior2 = _interopRequireDefault(_LazyLoadBehavior);
+
+var _FluidTextBehavior = require('behaviors/FluidTextBehavior.js');
+
+var _FluidTextBehavior2 = _interopRequireDefault(_FluidTextBehavior);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
+_scrollmeister2.default.defineBehavior(_FluidTextBehavior2.default);
+
+},{"behaviors/FluidTextBehavior.js":11,"behaviors/LazyLoadBehavior.js":15,"scrollmeister.js":37}],18:[function(require,module,exports){
+'use strict';
+
+var _scrollmeister = require('scrollmeister.js');
+
+var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
 var _GuideLayoutBehavior = require('behaviors/GuideLayoutBehavior.js');
 
 var _GuideLayoutBehavior2 = _interopRequireDefault(_GuideLayoutBehavior);
@@ -3778,14 +3798,6 @@ var _TransformBehavior = require('behaviors/TransformBehavior.js');
 
 var _TransformBehavior2 = _interopRequireDefault(_TransformBehavior);
 
-var _LazyLoadBehavior = require('behaviors/LazyLoadBehavior.js');
-
-var _LazyLoadBehavior2 = _interopRequireDefault(_LazyLoadBehavior);
-
-var _FluidTextBehavior = require('behaviors/FluidTextBehavior.js');
-
-var _FluidTextBehavior2 = _interopRequireDefault(_FluidTextBehavior);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
@@ -3795,10 +3807,8 @@ _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
 _scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
-_scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FluidTextBehavior2.default);
 
-},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/FluidTextBehavior.js":11,"behaviors/GuideLayoutBehavior.js":12,"behaviors/InterpolateBehavior.js":13,"behaviors/LayoutBehavior.js":14,"behaviors/LazyLoadBehavior.js":15,"behaviors/TransformBehavior.js":16,"scrollmeister.js":35}],18:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":9,"behaviors/FadeInBehavior.js":10,"behaviors/GuideLayoutBehavior.js":12,"behaviors/InterpolateBehavior.js":13,"behaviors/LayoutBehavior.js":14,"behaviors/TransformBehavior.js":16,"scrollmeister.js":37}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3862,7 +3872,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":19,"scrollmeister.js":35}],19:[function(require,module,exports){
+},{"./MeisterComponent.js":20,"scrollmeister.js":37}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3997,7 +4007,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":25,"raf":4,"scrollmeister.js":35}],20:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":27,"raf":4,"scrollmeister.js":37}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4061,10 +4071,14 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":19,"scrollmeister.js":35}],21:[function(require,module,exports){
+},{"./MeisterComponent.js":20,"scrollmeister.js":37}],22:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
+
+var _raf = require('raf');
+
+var _raf2 = _interopRequireDefault(_raf);
 
 var _ScrollMeisterComponent = require('components/ScrollMeisterComponent.js');
 
@@ -4076,10 +4090,12 @@ var _ElementMeisterComponent2 = _interopRequireDefault(_ElementMeisterComponent)
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
-customElements.define('el-meister', _ElementMeisterComponent2.default);
+(0, _raf2.default)(function () {
+	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
+	customElements.define('el-meister', _ElementMeisterComponent2.default);
+});
 
-},{"components/ElementMeisterComponent.js":18,"components/ScrollMeisterComponent.js":20,"document-register-element":1}],22:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":19,"components/ScrollMeisterComponent.js":21,"document-register-element":1,"raf":4}],23:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -4114,7 +4130,14 @@ _scrollmeister2.default.defineCondition('xl-down', function () {
   return window.innerWidth < 1200;
 });
 
-},{"scrollmeister.js":35}],23:[function(require,module,exports){
+},{"scrollmeister.js":37}],24:[function(require,module,exports){
+'use strict';
+
+require('./index.js');
+
+require('behaviors/extras.js');
+
+},{"./index.js":25,"behaviors/extras.js":17}],25:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -4127,7 +4150,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":17,"./components":21,"./conditions":22,"./scrollmeister.js":35,"./scrollmeister.sass":36}],24:[function(require,module,exports){
+},{"./behaviors":18,"./components":22,"./conditions":23,"./scrollmeister.js":37,"./scrollmeister.sass":38}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4212,7 +4235,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4327,7 +4350,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{"scrollmeister.js":35}],26:[function(require,module,exports){
+},{"scrollmeister.js":37}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4382,7 +4405,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -4964,7 +4987,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5067,7 +5090,7 @@ ScrollState.prototype._calculateScrollVelocity = function (now) {
 
 exports.default = ScrollState;
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5110,7 +5133,7 @@ exports.default = {
 	}
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5143,7 +5166,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5162,7 +5185,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5357,7 +5380,7 @@ exports.default = {
 	}
 };
 
-},{"types":43}],33:[function(require,module,exports){
+},{"types":45}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5380,7 +5403,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5418,7 +5441,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5567,10 +5590,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"lib/BehaviorsRegistry.js":24,"lib/ConditionsRegistry.js":26}],36:[function(require,module,exports){
+},{"lib/BehaviorsRegistry.js":26,"lib/ConditionsRegistry.js":28}],38:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":7}],37:[function(require,module,exports){
+},{"scssify":7}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5585,7 +5608,7 @@ exports.default = {
 	}
 };
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5627,7 +5650,7 @@ exports.default = {
 	}
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5673,7 +5696,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":38}],40:[function(require,module,exports){
+},{"types/CSSLengthType.js":40}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5767,7 +5790,7 @@ exports.default = {
 	}
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5796,7 +5819,7 @@ exports.default = {
 	}
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5811,7 +5834,7 @@ exports.default = {
 	}
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5853,4 +5876,4 @@ exports.default = {
 	string: _StringType2.default
 };
 
-},{"types/BooleanType.js":37,"types/CSSLengthType.js":38,"types/HeightType.js":39,"types/LayoutDependencyType.js":40,"types/NumberType.js":41,"types/StringType.js":42}]},{},[23]);
+},{"types/BooleanType.js":39,"types/CSSLengthType.js":40,"types/HeightType.js":41,"types/LayoutDependencyType.js":42,"types/NumberType.js":43,"types/StringType.js":44}]},{},[24]);
