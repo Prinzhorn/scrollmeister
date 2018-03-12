@@ -1,9 +1,6 @@
 import types from 'types';
 
 //property:value; pairs (separated by colons) separated by semicolons.
-//TODO: if this isn't the perfect thing to write unit tests for then call me steve.
-//TODO: a-frame allows stuff like "databaseURL: https://aframe-firebase-component.firebaseio.com;". So the left part should not be greedy to only search for the first colon.
-//However, the right part should allow colons bruh. This also solves the issue with selectors like "target: .foo:not(bar)". The only reserved character is the semicolon.
 const propertiesAndValuesRegex = /([^:;]+):([^;]+)/g;
 const whiteSpaceRegex = /\s+/;
 
