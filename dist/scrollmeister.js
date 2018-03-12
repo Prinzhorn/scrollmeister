@@ -2048,6 +2048,7 @@ var Behavior = function () {
 		this.state = {};
 
 		this.proxyCSS();
+		this.proxyProps();
 		this.parseProperties(rawProperties);
 
 		this.attach();
@@ -2162,6 +2163,19 @@ var Behavior = function () {
 			this.emit('update');
 		}
 	}, {
+		key: 'updateProperty',
+		value: function updateProperty(name, rawValue) {
+			var prevProps = (0, _ObjectAssign2.default)({}, this.props);
+
+			this.parseProperty(name, rawValue);
+
+			if (this.update) {
+				this.update(prevProps, this.state);
+			}
+
+			this.emit('update');
+		}
+	}, {
 		key: 'proxyCSS',
 		value: function proxyCSS() {
 			var behaviorName = this.constructor.behaviorName;
@@ -2192,10 +2206,54 @@ var Behavior = function () {
 			this.el.resetBehaviorStyles(behaviorName);
 		}
 	}, {
+		key: 'proxyProps',
+		value: function proxyProps() {
+			var _this2 = this;
+
+			var schema = this.constructor.schema;
+
+			var _loop = function _loop(property) {
+				if (schema.hasOwnProperty(property)) {
+					Object.defineProperty(_this2, property, {
+						get: function get() {
+							return _schemaParser2.default.stringifyProperty(this.el, this.props[property], schema[property].type);
+						},
+						set: function set(value) {
+							this.updateProperty(property, value);
+						}
+					});
+				}
+			};
+
+			for (var property in schema) {
+				_loop(property);
+			}
+		}
+	}, {
 		key: 'parseProperties',
 		value: function parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
 			_schemaParser2.default.parseProperties(this.el, schema, rawProperties, this.props);
+		}
+	}, {
+		key: 'parseProperty',
+		value: function parseProperty(property, rawValue) {
+			rawValue = rawValue.trim();
+
+			var schema = this.constructor.schema[property];
+			var propertyType = schema.type;
+			var valueExpander = schema.expand;
+
+			//Setting the empty string resets the property to the default value.
+			if (rawValue === '') {
+				if (!schema.hasOwnProperty('default')) {
+					throw new Error('The "' + property + '" property does not have a default value. It cannot be unset using an empty string.');
+				}
+
+				rawValue = schema.default;
+			}
+
+			this.props[property] = _schemaParser2.default.parseProperty(this.el, property, rawValue, propertyType, valueExpander);
 		}
 	}]);
 
@@ -2541,7 +2599,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 				this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
 			}
 
-			this._updateScrollHeight();
+			this._scheduleLayout();
 		}
 	}, {
 		key: '_setupScrolling',
@@ -2956,6 +3014,8 @@ var InterpolateBehavior = function (_Behavior) {
 				scale: 1
 			};
 
+			this.values = {};
+
 			//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
 			//Maybe ask the element nicely for a cached value of the last time it fired, if any?
 			this.listen(this.parentEl, 'guidelayout:layout', function () {
@@ -3051,15 +3111,15 @@ var InterpolateBehavior = function (_Behavior) {
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
-					var previousValue = this[prop];
+					var previousValue = this.values[prop];
 
 					if (this._interpolators.hasOwnProperty(prop)) {
-						this[prop] = this._interpolators[prop](scrollState.position);
+						this.values[prop] = this._interpolators[prop](scrollState.position);
 					} else {
-						this[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
+						this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 					}
 
-					if (previousValue !== this[prop]) {
+					if (previousValue !== this.values[prop]) {
 						didChange = true;
 					}
 				}
@@ -3626,8 +3686,8 @@ var TransformBehavior = function (_Behavior) {
 				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
 				//the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
 
-				_this2.css.opacity = _this2.el.interpolate.opacity;
-				_this2.css.transform = 'rotate(' + _this2.el.interpolate.rotate + 'deg) scale(' + _this2.el.interpolate.scale + ')';
+				_this2.css.opacity = _this2.el.interpolate.values.opacity;
+				_this2.css.transform = 'rotate(' + _this2.el.interpolate.values.rotate + 'deg) scale(' + _this2.el.interpolate.values.scale + ')';
 
 				//TODO: in which order will we apply translate, rotate, scale and skew?
 				//I guess translate should always be the first. And scaling the last one.
@@ -4308,7 +4368,7 @@ var GuideLayoutEngine = function () {
 						continue;
 					}
 
-					var dependencies = _node.props.dependencies;
+					var dependencies = _node.props.dependencies.nodes;
 
 					//Check if any of the dependencies is still dirty.
 					for (var j = 0; j < dependencies.length; j++) {
@@ -5095,6 +5155,10 @@ exports.default = {
 						return _this.parseProperty(element, property, rawValue, propertyType, valueExpander);
 					});
 				} else {
+					if (rawValue === '') {
+						return [];
+					}
+
 					//thing: keyword, anotherone, and, more
 					//a.thing = ['keyword', 'anotherone', 'and', 'more']
 					var _rawValuesList = rawValue.split(',');
@@ -5137,12 +5201,54 @@ exports.default = {
 
 				return map;
 			} else {
+				//TODO: add a validateSchema method and remove the mix of validation and parsing all over this place.
 				throw new Error('You have defined an empty array as schema type for the "' + property + '" property.');
 			}
 		} else {
 			//thing: keyword
 			//a.thing = 'keyword'
 			return _types2.default[propertyType].parse(rawValue, element);
+		}
+	},
+
+	stringifyProperties: function stringifyProperties(element, schema, properties) {
+		var stringifiedProps = [];
+
+		for (var property in properties) {
+			var value = properties[property];
+			var propertyType = schema[property].type;
+			var stringValue = this.stringifyProperty(element, value, propertyType);
+
+			stringifiedProps.push(property + ': ' + stringValue);
+		}
+
+		return stringifiedProps.join('; ') + ';';
+	},
+	stringifyProperty: function stringifyProperty(element, value, propertyType) {
+		var _this2 = this;
+
+		if (propertyType instanceof Array) {
+			if (propertyType.length === 1) {
+				var nestedPropertyType = propertyType[0];
+
+				if (nestedPropertyType instanceof Array) {
+					return value.map(function (value) {
+						return _this2.stringifyProperty(element, value, nestedPropertyType);
+					}).join(', ');
+				} else {
+					return value.map(function (value) {
+						return _types2.default[nestedPropertyType].stringify(value, element);
+					}).join(', ');
+				}
+			} else if (propertyType.length > 1) {
+				return propertyType.map(function (type) {
+					var key = Object.keys(type)[0];
+					var typeName = type[key];
+					return _types2.default[typeName].stringify(value[key]);
+				}).join(' ');
+			}
+		} else {
+			return _types2.default[propertyType].stringify(value, element);
 		}
 	}
 };
@@ -5485,63 +5591,71 @@ function findPreviousFlowElement(element) {
 	return null;
 }
 
-//TODO: do we need stringify at all?
-//TODO: Also I believe SelectorType needs to be reavaluated (live) all the time!
+function findDependencies(value, element) {
+	if (value === 'none') {
+		return [];
+	}
+
+	//"inherit" mimics a regular document flow by rendering the element behind the previous one.
+	if (value === 'inherit') {
+		element = findPreviousFlowElement(element);
+
+		if (element) {
+			return [element.layout];
+		} else {
+			return [];
+		}
+	}
+
+	if (value.indexOf('skip') === 0) {
+		var numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
+
+		if (numberOfSkips < 0) {
+			throw new Error('You\'ve specified a negative number of skips (' + numberOfSkips + ') for the layout dependencies.');
+		}
+
+		do {
+			element = findPreviousFlowElement(element);
+		} while (element && numberOfSkips--);
+
+		if (element) {
+			return [element.layout];
+		} else {
+			return [];
+		}
+	}
+
+	//TODO: nope, this should do sth. like "prevSiblings()"
+	//Double nope: we can get into circular-dependencies here (which the layout engine would catch though)
+	//Maybe allow negative skips to reverse the order like flexbox?
+	//I need to put some thought into this. KISS.
+	var dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
+
+	if (dependencies.length === 0) {
+		throw new Error('Couldn\'t resolve the layout dependency "' + value + '". No flow elements found matching this selector.');
+	}
+
+	return dependencies.map(function (el) {
+		return el.layout;
+	});
+}
+
+//TODO: I believe SelectorType needs to be reavaluated (live) all the time!
 //https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 exports.default = {
 	parse: function parse(value, element) {
 		value = value.trim();
 
-		if (value === 'none') {
-			return [];
-		}
+		var dependencies = findDependencies(value, element);
 
-		//"inherit" mimics a regular document flow by rendering the element behind the previous one.
-		if (value === 'inherit') {
-			element = findPreviousFlowElement(element);
-
-			if (element) {
-				return [element.layout];
-			} else {
-				return [];
-			}
-		}
-
-		if (value.indexOf('skip') === 0) {
-			var numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
-
-			if (numberOfSkips < 0) {
-				throw new Error('You\'ve specified a negative number of skips (' + numberOfSkips + ') for the layout dependencies.');
-			}
-
-			do {
-				element = findPreviousFlowElement(element);
-			} while (element && numberOfSkips--);
-
-			if (element) {
-				return [element.layout];
-			} else {
-				return [];
-			}
-		}
-
-		//TODO: nope, this should do sth. like "prevSiblings()"
-		//Double nope: we can get into circular-dependencies here (which the layout engine would catch though)
-		//Maybe allow negative skips to reverse the order like flexbox?
-		//I need to put some thought into this. KISS.
-		var dependencies = Array.prototype.slice.call(document.querySelectorAll(value)).filter(isFlowElement);
-
-		if (dependencies.length === 0) {
-			throw new Error('Couldn\'t resolve the layout dependency "' + value + '". No flow elements found matching this selector.');
-		}
-
-		return dependencies.map(function (el) {
-			return el.layout;
-		});
+		return {
+			nodes: dependencies,
+			value: value
+		};
 	},
 	stringify: function stringify(value) {
-		return value;
+		return value.value;
 	}
 };
 

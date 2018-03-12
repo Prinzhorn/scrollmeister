@@ -81,7 +81,7 @@ export default class GuideLayoutBehavior extends Behavior {
 			this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
 		}
 
-		this._updateScrollHeight();
+		this._scheduleLayout();
 	}
 
 	_setupScrolling() {

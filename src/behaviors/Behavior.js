@@ -53,6 +53,7 @@ export default class Behavior {
 		this.state = {};
 
 		this.proxyCSS();
+		this.proxyProps();
 		this.parseProperties(rawProperties);
 
 		this.attach();
@@ -156,6 +157,18 @@ export default class Behavior {
 		this.emit('update');
 	}
 
+	updateProperty(name, rawValue) {
+		const prevProps = assign({}, this.props);
+
+		this.parseProperty(name, rawValue);
+
+		if (this.update) {
+			this.update(prevProps, this.state);
+		}
+
+		this.emit('update');
+	}
+
 	proxyCSS() {
 		let behaviorName = this.constructor.behaviorName;
 		let element = this.el;
@@ -184,8 +197,46 @@ export default class Behavior {
 		this.el.resetBehaviorStyles(behaviorName);
 	}
 
+	proxyProps() {
+		let schema = this.constructor.schema;
+
+		for (let property in schema) {
+			if (schema.hasOwnProperty(property)) {
+				Object.defineProperty(this, property, {
+					get() {
+						return schemaParser.stringifyProperty(this.el, this.props[property], schema[property].type);
+					},
+					set(value) {
+						this.updateProperty(property, value);
+					}
+				});
+			}
+		}
+	}
+
 	parseProperties(rawProperties) {
 		const schema = this.constructor.schema;
 		schemaParser.parseProperties(this.el, schema, rawProperties, this.props);
+	}
+
+	parseProperty(property, rawValue) {
+		rawValue = rawValue.trim();
+
+		let schema = this.constructor.schema[property];
+		let propertyType = schema.type;
+		let valueExpander = schema.expand;
+
+		//Setting the empty string resets the property to the default value.
+		if (rawValue === '') {
+			if (!schema.hasOwnProperty('default')) {
+				throw new Error(
+					`The "${property}" property does not have a default value. It cannot be unset using an empty string.`
+				);
+			}
+
+			rawValue = schema.default;
+		}
+
+		this.props[property] = schemaParser.parseProperty(this.el, property, rawValue, propertyType, valueExpander);
 	}
 }

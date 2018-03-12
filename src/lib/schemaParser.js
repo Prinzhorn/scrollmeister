@@ -87,6 +87,10 @@ export default {
 						return this.parseProperty(element, property, rawValue, propertyType, valueExpander);
 					});
 				} else {
+					if (rawValue === '') {
+						return [];
+					}
+
 					//thing: keyword, anotherone, and, more
 					//a.thing = ['keyword', 'anotherone', 'and', 'more']
 					let rawValuesList = rawValue.split(',');
@@ -133,12 +137,59 @@ export default {
 
 				return map;
 			} else {
+				//TODO: add a validateSchema method and remove the mix of validation and parsing all over this place.
 				throw new Error(`You have defined an empty array as schema type for the "${property}" property.`);
 			}
 		} else {
 			//thing: keyword
 			//a.thing = 'keyword'
 			return types[propertyType].parse(rawValue, element);
+		}
+	},
+
+	stringifyProperties(element, schema, properties) {
+		const stringifiedProps = [];
+
+		for (let property in properties) {
+			let value = properties[property];
+			let propertyType = schema[property].type;
+			let stringValue = this.stringifyProperty(element, value, propertyType);
+
+			stringifiedProps.push(property + ': ' + stringValue);
+		}
+
+		return stringifiedProps.join('; ') + ';';
+	},
+
+	stringifyProperty(element, value, propertyType) {
+		if (propertyType instanceof Array) {
+			if (propertyType.length === 1) {
+				let nestedPropertyType = propertyType[0];
+
+				if (nestedPropertyType instanceof Array) {
+					return value
+						.map(value => {
+							return this.stringifyProperty(element, value, nestedPropertyType);
+						})
+						.join(', ');
+				} else {
+					return value
+						.map(value => {
+							return types[nestedPropertyType].stringify(value, element);
+						})
+						.join(', ');
+				}
+			} else if (propertyType.length > 1) {
+				return propertyType
+					.map(type => {
+						let key = Object.keys(type)[0];
+						let typeName = type[key];
+						return types[typeName].stringify(value[key]);
+					})
+					.join(' ');
+			}
+		} else {
+			return types[propertyType].stringify(value, element);
 		}
 	}
 };
