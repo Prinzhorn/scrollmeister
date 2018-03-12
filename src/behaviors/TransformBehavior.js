@@ -16,7 +16,7 @@ export default class TransformBehavior extends Behavior {
 	}
 
 	attach() {
-		this.listen(this.el, 'interpolate:change', () => {
+		this.listen('interpolate:change', () => {
 			//TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
 			//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
 			//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive

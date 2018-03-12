@@ -92,6 +92,13 @@ export default class Behavior {
 	}
 
 	listen(element, eventName, callback) {
+		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+		if (arguments.length === 2) {
+			callback = eventName;
+			eventName = element;
+			element = this.el;
+		}
+
 		//Space separated list of event names for the same element and callback.
 		if (eventName.indexOf(' ') !== -1) {
 			eventName
@@ -119,11 +126,25 @@ export default class Behavior {
 	}
 
 	listenAndInvoke(element, eventName, callback) {
+		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+		if (arguments.length === 2) {
+			callback = eventName;
+			eventName = element;
+			element = this.el;
+		}
+
 		this.listen(element, eventName, callback);
 		callback();
 	}
 
 	unlisten(element, eventName, callback) {
+		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+		if (arguments.length === 2) {
+			callback = eventName;
+			eventName = element;
+			element = this.el;
+		}
+
 		//listen works for both DOM elements and event emitters using on/off.
 		if (typeof element.removeEventListener === 'function') {
 			element.removeEventListener(eventName, callback, thirdEventListenerArgument);

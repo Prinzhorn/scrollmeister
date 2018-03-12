@@ -2093,6 +2093,13 @@ var Behavior = function () {
 		value: function listen(element, eventName, callback) {
 			var _this = this;
 
+			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+			if (arguments.length === 2) {
+				callback = eventName;
+				eventName = element;
+				element = this.el;
+			}
+
 			//Space separated list of event names for the same element and callback.
 			if (eventName.indexOf(' ') !== -1) {
 				eventName.split(' ').map(function (s) {
@@ -2120,12 +2127,26 @@ var Behavior = function () {
 	}, {
 		key: 'listenAndInvoke',
 		value: function listenAndInvoke(element, eventName, callback) {
+			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+			if (arguments.length === 2) {
+				callback = eventName;
+				eventName = element;
+				element = this.el;
+			}
+
 			this.listen(element, eventName, callback);
 			callback();
 		}
 	}, {
 		key: 'unlisten',
 		value: function unlisten(element, eventName, callback) {
+			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+			if (arguments.length === 2) {
+				callback = eventName;
+				eventName = element;
+				element = this.el;
+			}
+
 			//listen works for both DOM elements and event emitters using on/off.
 			if (typeof element.removeEventListener === 'function') {
 				element.removeEventListener(eventName, callback, thirdEventListenerArgument);
@@ -2484,7 +2505,7 @@ var FadeInBehavior = function (_Behavior) {
 			this.el.layout.innerEl.style.whiteSpace = 'nowrap';
 
 			//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
-			this.listen(this.el, 'layout:render', function () {
+			this.listen('layout:render', function () {
 				if (!_this2._fontSizeWidthRatio) {
 					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.el.layout.innerEl);
 				}
@@ -3629,7 +3650,7 @@ var LazyLoadBehavior = function (_Behavior) {
 				_this2.unlisten(_this2.parentEl, 'guidelayout:pause', handleScrollPause);
 			};
 
-			this.listen(this.el, 'layout:viewport:enter', handleViewportEnter);
+			this.listen('layout:viewport:enter', handleViewportEnter);
 			this.listen(this.parentEl, 'guidelayout:pause', handleScrollPause);
 		}
 	}], [{
@@ -3689,7 +3710,7 @@ var TransformBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
-			this.listen(this.el, 'interpolate:change', function () {
+			this.listen('interpolate:change', function () {
 				//TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
 				//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
 				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive

@@ -47,7 +47,7 @@ export default class LazyLoadBehavior extends Behavior {
 			this.unlisten(this.parentEl, 'guidelayout:pause', handleScrollPause);
 		};
 
-		this.listen(this.el, 'layout:viewport:enter', handleViewportEnter);
+		this.listen('layout:viewport:enter', handleViewportEnter);
 		this.listen(this.parentEl, 'guidelayout:pause', handleScrollPause);
 	}
 }
