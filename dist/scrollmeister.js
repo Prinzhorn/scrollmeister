@@ -2202,16 +2202,16 @@ var Behavior = function () {
 			var behaviorName = this.constructor.behaviorName;
 			var element = this.el;
 
-			this.css = {
+			this.style = {
 				set transform(value) {
-					if (value === null) {
+					if (value === '') {
 						element.resetBehaviorStyle(behaviorName, 'transform');
 					} else {
 						element.setBehaviorStyle(behaviorName, 'transform', value);
 					}
 				},
 				set opacity(value) {
-					if (value === null) {
+					if (value === '') {
 						element.resetBehaviorStyle(behaviorName, 'opacity');
 					} else {
 						element.setBehaviorStyle(behaviorName, 'opacity', value);
@@ -3451,7 +3451,7 @@ var LayoutBehavior = function (_Behavior) {
 					style.willChange = 'transform';
 				}
 
-				this.css.transform = 'translate(' + _left + 'px, ' + _top + 'px)';
+				this.style.transform = 'translate(' + _left + 'px, ' + _top + 'px)';
 
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
@@ -3716,8 +3716,8 @@ var TransformBehavior = function (_Behavior) {
 				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
 				//the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
 
-				_this2.css.opacity = _this2.el.interpolate.values.opacity;
-				_this2.css.transform = 'rotate(' + _this2.el.interpolate.values.rotate + 'deg) scale(' + _this2.el.interpolate.values.scale + ')';
+				_this2.style.opacity = _this2.el.interpolate.values.opacity;
+				_this2.style.transform = 'rotate(' + _this2.el.interpolate.values.rotate + 'deg) scale(' + _this2.el.interpolate.values.scale + ')';
 
 				//TODO: in which order will we apply translate, rotate, scale and skew?
 				//I guess translate should always be the first. And scaling the last one.

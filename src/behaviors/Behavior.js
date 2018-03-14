@@ -194,16 +194,16 @@ export default class Behavior {
 		let behaviorName = this.constructor.behaviorName;
 		let element = this.el;
 
-		this.css = {
+		this.style = {
 			set transform(value) {
-				if (value === null) {
+				if (value === '') {
 					element.resetBehaviorStyle(behaviorName, 'transform');
 				} else {
 					element.setBehaviorStyle(behaviorName, 'transform', value);
 				}
 			},
 			set opacity(value) {
-				if (value === null) {
+				if (value === '') {
 					element.resetBehaviorStyle(behaviorName, 'opacity');
 				} else {
 					element.setBehaviorStyle(behaviorName, 'opacity', value);

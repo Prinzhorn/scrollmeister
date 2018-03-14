@@ -283,7 +283,7 @@ export default class LayoutBehavior extends Behavior {
 				style.willChange = 'transform';
 			}
 
-			this.css.transform = `translate(${left}px, ${top}px)`;
+			this.style.transform = `translate(${left}px, ${top}px)`;
 
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
