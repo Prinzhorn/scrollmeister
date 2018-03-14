@@ -4076,10 +4076,6 @@ exports.default = ScrollMeisterComponent;
 
 require('document-register-element');
 
-var _raf = require('raf');
-
-var _raf2 = _interopRequireDefault(_raf);
-
 var _ScrollMeisterComponent = require('components/ScrollMeisterComponent.js');
 
 var _ScrollMeisterComponent2 = _interopRequireDefault(_ScrollMeisterComponent);
@@ -4090,12 +4086,17 @@ var _ElementMeisterComponent2 = _interopRequireDefault(_ElementMeisterComponent)
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-(0, _raf2.default)(function () {
+//https://twitter.com/WebReflection/status/973932114621161473
+//https://github.com/WebReflection/ready
+//We need to defer the define() calls, because the static observedAttributes getter is evaluated immediately.
+//However, we need to know about all defined behaviors to observe the correct attributes.
+//If we would define() synchronously, then behavior authors would need to define their behavior _before_ that.
+document.addEventListener('DOMContentLoaded', function () {
 	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 	customElements.define('el-meister', _ElementMeisterComponent2.default);
-});
+}, { once: true });
 
-},{"components/ElementMeisterComponent.js":19,"components/ScrollMeisterComponent.js":21,"document-register-element":1,"raf":4}],23:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":19,"components/ScrollMeisterComponent.js":21,"document-register-element":1}],23:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -4129,6 +4130,20 @@ _scrollmeister2.default.defineCondition('l-down', function () {
 _scrollmeister2.default.defineCondition('xl-down', function () {
   return window.innerWidth < 1200;
 });
+
+_scrollmeister2.default.defineCondition('portrait', function () {
+  return window.innerWidth < window.innerHeight;
+});
+_scrollmeister2.default.defineCondition('landscape', function () {
+  return window.innerWidth >= window.innerHeight;
+});
+
+//TODO: let's see what Modernizr, feature.js and has.js offer.
+_scrollmeister2.default.defineCondition('webgl', function () {
+  return true;
+});
+
+//TODO: do we allow element-queries? They can potentially end in infinite loops.
 
 },{"scrollmeister.js":37}],24:[function(require,module,exports){
 'use strict';
