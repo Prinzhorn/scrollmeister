@@ -1,0 +1,16 @@
+{
+	"extends": ["eslint:recommended"],
+	"env": {
+		"browser": true,
+		"jest": true
+	},
+	"parserOptions": {
+		"ecmaVersion": 8,
+		"sourceType": "module"
+	},
+	"rules": {
+		"radix": ["warn", "always"],
+		"no-unused-vars": ["error", { "argsIgnorePattern": "next" }],
+		"eqeqeq": ["error", "always"]
+	}
+}

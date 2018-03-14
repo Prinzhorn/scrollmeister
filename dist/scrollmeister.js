@@ -3925,7 +3925,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		value: function init() {
 			this.behaviors = {};
 
-			this._behaviorsStyleMerger = new _BehaviorsStyleMerger2.default(this);
+			this._behaviorsStyleMerger = new _BehaviorsStyleMerger2.default(this, _scrollmeister2.default.getBehaviorOrder());
 
 			this._scheduledBatchUpdate = false;
 			this._scheduledBehaviors = {
@@ -4259,20 +4259,16 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _scrollmeister = require('scrollmeister.js');
-
-var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var BehaviorsStyleMerger = function () {
-	function BehaviorsStyleMerger(element) {
+	function BehaviorsStyleMerger(element, order) {
 		_classCallCheck(this, BehaviorsStyleMerger);
 
-		this._styles = {};
 		this.el = element;
+		this.order = order;
+
+		this._styles = {};
 	}
 
 	_createClass(BehaviorsStyleMerger, [{
@@ -4285,29 +4281,45 @@ var BehaviorsStyleMerger = function () {
 			//Remember that the given behavior just set this style.
 			this._styles[property][behaviorName] = value;
 
-			this.applyBehaviorStyle(property);
+			this._applyBehaviorStyle(property);
+		}
+	}, {
+		key: 'resetBehaviorStyle',
+		value: function resetBehaviorStyle(behaviorName, property) {
+			if (this._styles.hasOwnProperty(property) && this._styles[property].hasOwnProperty(behaviorName)) {
+				delete this._styles[property][behaviorName];
+				this._applyBehaviorStyle(property);
+			}
+		}
+	}, {
+		key: 'resetBehaviorStyles',
+		value: function resetBehaviorStyles(behaviorName) {
+			for (var property in this._styles) {
+				this.resetBehaviorStyle(behaviorName, property);
+			}
 		}
 
 		//TODO: we need a consistent order.
 		//I was literally about to use Scrollmeister.getBehaviorOrder to make the order of applying consistent.
 
 	}, {
-		key: 'applyBehaviorStyle',
-		value: function applyBehaviorStyle(property) {
+		key: '_applyBehaviorStyle',
+		value: function _applyBehaviorStyle(property) {
 			if (property === 'transform') {
 				var transforms = [];
 
 				//Collect all transforms across all behaviors.
-				for (var behaviorName in this._styles[property]) {
-					if (this._styles[property].hasOwnProperty(behaviorName)) {
-						transforms.push(this._styles[property][behaviorName]);
+				for (var i = 0; i < this.order.length; i++) {
+					var behaviorName = this.order[i];
+					if (this._styles.transform.hasOwnProperty(behaviorName)) {
+						transforms.push(this._styles.transform[behaviorName]);
 					}
 				}
 
 				if (transforms.length > 0) {
-					this.el.style[property] = this.el.style.WebkitTransform = this.el.style.msTransform = transforms.join(' ');
+					this.el.style.transform = this.el.style.WebkitTransform = this.el.style.msTransform = transforms.join(' ');
 				} else {
-					this.el.style[property] = '';
+					this.el.style.transform = '';
 				}
 
 				return;
@@ -4315,13 +4327,13 @@ var BehaviorsStyleMerger = function () {
 				var combinedOpacity = 1;
 
 				//Multiply all opacity across all behaviors.
-				for (var _behaviorName in this._styles[property]) {
-					if (this._styles[property].hasOwnProperty(_behaviorName)) {
-						combinedOpacity *= this._styles[property][_behaviorName];
+				for (var _behaviorName in this._styles.opacity) {
+					if (this._styles.opacity.hasOwnProperty(_behaviorName)) {
+						combinedOpacity *= this._styles.opacity[_behaviorName];
 					}
 				}
 
-				this.el.style[property] = combinedOpacity;
+				this.el.style.opacity = combinedOpacity;
 			} else {
 				var hasProperty = false;
 
@@ -4343,21 +4355,6 @@ var BehaviorsStyleMerger = function () {
 				}
 			}
 		}
-	}, {
-		key: 'resetBehaviorStyle',
-		value: function resetBehaviorStyle(behaviorName, property) {
-			if (this._styles.hasOwnProperty(property) && this._styles[property].hasOwnProperty(behaviorName)) {
-				delete this._styles[property][behaviorName];
-				this.applyBehaviorStyle(property);
-			}
-		}
-	}, {
-		key: 'resetBehaviorStyles',
-		value: function resetBehaviorStyles(behaviorName) {
-			for (var property in this._styles) {
-				this.resetBehaviorStyle(behaviorName, property);
-			}
-		}
 	}]);
 
 	return BehaviorsStyleMerger;
@@ -4365,7 +4362,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{"scrollmeister.js":37}],28:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5482,7 +5479,7 @@ var Scrollmeister = {
 	},
 
 	getBehaviorOrder: function getBehaviorOrder() {
-		this.behaviorsRegistry.getOrder();
+		return this.behaviorsRegistry.getOrder();
 	},
 
 	defineBehavior: function defineBehavior(classDefinition) {

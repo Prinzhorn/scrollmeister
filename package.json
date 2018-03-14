@@ -4,7 +4,7 @@
   "description": "Open-source JavaScript framework to declaratively build scrolling experiences",
   "main": "./src/index.js",
   "scripts": {
-    "test": "npm run flow && npm run jest",
+    "test": "npm run flow && npm run eslint && npm run jest",
     "jest": "NODE_PATH='./src' jest",
     "flow": "flow check",
     "server": "http-server",

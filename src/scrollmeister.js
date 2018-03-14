@@ -10,7 +10,7 @@ const Scrollmeister = {
 	},
 
 	getBehaviorOrder: function() {
-		this.behaviorsRegistry.getOrder();
+		return this.behaviorsRegistry.getOrder();
 	},
 
 	defineBehavior: function(classDefinition) {

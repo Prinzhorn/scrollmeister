@@ -33,7 +33,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	init() {
 		this.behaviors = {};
 
-		this._behaviorsStyleMerger = new BehaviorsStyleMerger(this);
+		this._behaviorsStyleMerger = new BehaviorsStyleMerger(this, Scrollmeister.getBehaviorOrder());
 
 		this._scheduledBatchUpdate = false;
 		this._scheduledBehaviors = {
