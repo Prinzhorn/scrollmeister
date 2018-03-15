@@ -32,11 +32,11 @@ describe('fakeClick', () => {
 		expect(clicked).toBe(true);
 	});
 
-	test('does not trigger a click event when the touch distance was too large', () => {
+	test('does not trigger a click event when the touch distance was too large', done => {
 		const element = document.createElement('a');
 
 		element.addEventListener('click', () => {
-			fail('there was click');
+			done.fail('there was click');
 		});
 
 		fakeClick.start({
@@ -60,11 +60,11 @@ describe('fakeClick', () => {
 		});
 	});
 
-	test('does not trigger a click event on elements other than <a>', () => {
+	test('does not trigger a click event on elements other than <a>', done => {
 		const element = document.createElement('div');
 
 		element.addEventListener('click', () => {
-			fail('there was click');
+			done.fail('there was click');
 		});
 
 		fakeClick.start({
