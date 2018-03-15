@@ -4305,10 +4305,6 @@ var BehaviorsStyleMerger = function () {
 				this.resetBehaviorStyle(behaviorName, property);
 			}
 		}
-
-		//TODO: we need a consistent order.
-		//I was literally about to use Scrollmeister.getBehaviorOrder to make the order of applying consistent.
-
 	}, {
 		key: '_applyBehaviorStyle',
 		value: function _applyBehaviorStyle(property) {

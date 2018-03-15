@@ -30,8 +30,6 @@ export default class BehaviorsStyleMerger {
 		}
 	}
 
-	//TODO: we need a consistent order.
-	//I was literally about to use Scrollmeister.getBehaviorOrder to make the order of applying consistent.
 	_applyBehaviorStyle(property) {
 		if (property === 'transform') {
 			let transforms = [];
