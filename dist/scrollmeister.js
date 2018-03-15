@@ -5537,10 +5537,6 @@ var Scrollmeister = {
 			element[name].updateProperties(rawProperties);
 		} else {
 			//Make the behavior available as a property on the DOM node.
-			//TODO: What if people assign a plain rawProperties to the property?
-			//Maybe this should not be allowed at all, but instead always use the attribute?
-			//BUT: if we can make it work then it should work for UX reasons.
-			//See also comments in _renderGuides of DebugGuidesBehavior. Läuft.
 			var Behavior = this.behaviorsRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
 			element.behaviors[name] = element[name];
