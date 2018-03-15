@@ -3048,6 +3048,8 @@ var InterpolateBehavior = function (_Behavior) {
 
 			//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
 			//Maybe ask the element nicely for a cached value of the last time it fired, if any?
+
+			//LAYOUT IS ASYNC, not immediately when attached.
 			this.listen(this.parentEl, 'guidelayout:layout', function () {
 				_this2._createInterpolators();
 			});
@@ -3711,19 +3713,23 @@ var TransformBehavior = function (_Behavior) {
 			var _this2 = this;
 
 			this.listen('interpolate:change', function () {
-				//TODO: only set these if interpolate actually did something. Maybe use separate events, e.g. interpolate:opacity
 				//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
 				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
 				//the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
-
-				_this2.style.opacity = _this2.el.interpolate.values.opacity;
-				_this2.style.transform = 'rotate(' + _this2.el.interpolate.values.rotate + 'deg) scale(' + _this2.el.interpolate.values.scale + ')';
-
 				//TODO: in which order will we apply translate, rotate, scale and skew?
 				//I guess translate should always be the first. And scaling the last one.
 				//So... translate, skew, rotate, scale?
 				//This feels natural. Skewing after rotating is nothing people can imagine in their head.
+				//Or just add an order property with a default.
+
+				_this2._render();
 			});
+		}
+	}, {
+		key: '_render',
+		value: function _render() {
+			this.style.opacity = this.el.interpolate.values.opacity;
+			this.style.transform = 'rotate(' + this.el.interpolate.values.rotate + 'deg) scale(' + this.el.interpolate.values.scale + ')';
 		}
 	}], [{
 		key: 'schema',
@@ -4144,6 +4150,9 @@ _scrollmeister2.default.defineCondition('webgl', function () {
 });
 
 //TODO: do we allow element-queries? They can potentially end in infinite loops.
+
+//TODO: allow composing conditions from existing
+//Scrollmeister.defineCondition('omfg', 's-down and landscape');
 
 },{"scrollmeister.js":37}],24:[function(require,module,exports){
 'use strict';

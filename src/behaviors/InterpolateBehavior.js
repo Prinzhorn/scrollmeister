@@ -58,6 +58,8 @@ export default class InterpolateBehavior extends Behavior {
 
 		//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
 		//Maybe ask the element nicely for a cached value of the last time it fired, if any?
+
+		//LAYOUT IS ASYNC, not immediately when attached.
 		this.listen(this.parentEl, 'guidelayout:layout', () => {
 			this._createInterpolators();
 		});

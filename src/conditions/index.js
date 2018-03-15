@@ -17,3 +17,6 @@ Scrollmeister.defineCondition('landscape', () => window.innerWidth >= window.inn
 Scrollmeister.defineCondition('webgl', () => true);
 
 //TODO: do we allow element-queries? They can potentially end in infinite loops.
+
+//TODO: allow composing conditions from existing
+//Scrollmeister.defineCondition('omfg', 's-down and landscape');
