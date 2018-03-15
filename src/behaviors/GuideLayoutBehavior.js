@@ -32,8 +32,6 @@ export default class GuideLayoutBehavior extends Behavior {
 					return false;
 				},
 				default: ''
-				//TODO: can we default to an empty array here by using an empty string?
-				//Answer: write a test. multiple. a whole suite.
 			},
 			width: {
 				type: 'csslength',
