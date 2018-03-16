@@ -38,13 +38,24 @@ export default class GuideLayoutEngine {
 	}
 
 	//E.g. calculate the scroll position when the element's anchor is at the anchor of the viewport.
-	calculateAnchorPosition(layout, anchor, offset) {
+	calculateAnchorPosition(node, anchor, offset) {
+		const { layout, props } = node;
+		let height;
+
+		//TODO: for pin/parallax we basically need the reverse operation of transformTop()
+		//Basically a function which, given a top position returns the scroll position when it is achieved.
+		if (props.mode === 'follow') {
+			height = layout.leaderHeight;
+		} else {
+			height = layout.height;
+		}
+
 		let position = layout.top;
 
 		if (anchor === 'bottom') {
-			position = position - this.viewport.height + layout.height;
+			position = position - this.viewport.height + height;
 		} else if (anchor === 'center') {
-			position = position - this.viewport.height / 2 + layout.height / 2;
+			position = position - this.viewport.height / 2 + height / 2;
 		}
 
 		return position + offset;
@@ -366,7 +377,7 @@ export default class GuideLayoutEngine {
 			layout.transformTopPosition = this._createFollowerTopPositionTransformer(layout, props);
 		}
 		/*
-			var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
+			let progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
 
 			layout
 				.set('progressScrollStart', progressAnchors.progressScrollStart)
@@ -380,7 +391,7 @@ export default class GuideLayoutEngine {
 		if (layoutMode === 'follow') {
 			layout.set('transformTopPosition', this.createFollowerTopPositionTransformer(item, layout, dependencies));
 
-			var progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
+			let progressAnchors = this.calculateProgressAnchors(item, layout, dependencies);
 
 			layout
 				.set('progressScrollStart', progressAnchors.progressScrollStart)
@@ -466,17 +477,17 @@ export default class GuideLayoutEngine {
 		} else if (props.followerMode === 'parallax') {
 			//The distance the leader and the follower need to travel inside the viewport
 			//from top-bottom to bottom-top.
-			var leaderScrollDistance = this.viewport.height + layout.leaderHeight;
-			var scrollDistance = this.viewport.height + layout.outerHeight;
+			let leaderScrollDistance = this.viewport.height + layout.leaderHeight;
+			let scrollDistance = this.viewport.height + layout.outerHeight;
 
 			//The follower needs to move a little slower/faster than 1.0
 			//to travel the viewport in the same time the leader does.
-			var speedFactor = scrollDistance / leaderScrollDistance;
+			let speedFactor = scrollDistance / leaderScrollDistance;
 
 			//This is the scroll position where the outer top spacing of the
 			//follower enters the viewport. It's not necessarily visible then
 			//as you need to scroll for a bit (spacingTop) before it actually enters.
-			var enterScroll = layout.outerTop - this.viewport.height;
+			let enterScroll = layout.outerTop - this.viewport.height;
 
 			return scrollPosition => {
 				//The distance the follower would have travelled from the bottom of the viewport

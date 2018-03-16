@@ -125,6 +125,33 @@ export default class Behavior {
 		this.listeners.push({ element, eventName, callback });
 	}
 
+	listenOnce(element, eventName, callback) {
+		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+		if (arguments.length === 2) {
+			callback = eventName;
+			eventName = element;
+			element = this.el;
+		}
+
+		const self = this;
+
+		function oneCallback() {
+			self.unlisten(element, eventName, oneCallback);
+			callback.apply(this, arguments);
+		}
+
+		//I was too lazy to implement it more cleanly. At least we throw instead of having unpredictable behavior.
+		//This is needed because below we store a reference to the actual listener as _once property.
+		//If you use the same callback for two events they would overwrite each other and we
+		//could never unlisten() the first one.
+		if (typeof callback._once === 'function') {
+			throw new Error('You cannot use the same listener for multiple events with listenOnce');
+		}
+
+		callback._once = oneCallback;
+		this.listen(element, eventName, oneCallback);
+	}
+
 	listenAndInvoke(element, eventName, callback) {
 		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
 		if (arguments.length === 2) {
@@ -143,6 +170,13 @@ export default class Behavior {
 			callback = eventName;
 			eventName = element;
 			element = this.el;
+		}
+
+		//This is a hack to make listenOnce work.
+		//We store a reference to the original listener as _once property.
+		if (typeof callback._once === 'function') {
+			callback = callback._once;
+			delete callback._once;
 		}
 
 		//listen works for both DOM elements and event emitters using on/off.

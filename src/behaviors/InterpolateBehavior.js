@@ -96,7 +96,7 @@ export default class InterpolateBehavior extends Behavior {
 		//Map the keyframe anchor and offset to scroll positions.
 		keyframes = keyframes.map(keyframe => {
 			let pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, this.el.layout.layout.height);
-			let position = layoutEngine.calculateAnchorPosition(this.el.layout.layout, keyframe.anchor, pixelOffset);
+			let position = layoutEngine.calculateAnchorPosition(this.el.layout, keyframe.anchor, pixelOffset);
 
 			return {
 				position: position,
