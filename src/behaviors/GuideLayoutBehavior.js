@@ -130,7 +130,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	//It also preserves scroll position when switching.
 	_handleScrollModes() {
 		let waitForNativeAction = () => {
-			let oneNative = e => {
+			let oneNative = () => {
 				window.removeEventListener('mousemove', threeMousemove, false);
 				window.removeEventListener('scroll', oneNative, false);
 
@@ -236,13 +236,13 @@ export default class GuideLayoutBehavior extends Behavior {
 			this._lastRenderTime = now;
 		}
 
-		this._pollScrollPosition(now, this._lastRenderTime);
+		this._pollScrollPosition(now);
 
 		this._lastRenderTime = now;
 		raf(this._scrollLoop.bind(this));
 	}
 
-	_pollScrollPosition(now, lastRenderTime) {
+	_pollScrollPosition(now) {
 		let currentScrollPosition;
 
 		if (this.state.scrollMode === 'touch') {

@@ -27,7 +27,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	// $FlowFixMe: Won't be fixed ;)
 	constructor(_) {
 		// $FlowFixMe: Won't be fixed ;)
-		return (_ = super(_)).init(), _;
+		return (_ = super(_)).init(), _; // eslint-disable-line
 	}
 
 	init() {

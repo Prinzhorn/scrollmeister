@@ -1,5 +1,7 @@
 {
-	"extends": ["eslint:recommended"],
+	"parser": "babel-eslint",
+	"plugins": ["flowtype"],
+	"extends": ["plugin:flowtype/recommended", "eslint:recommended"],
 	"env": {
 		"browser": true,
 		"jest": true
@@ -11,6 +13,6 @@
 	"rules": {
 		"radix": ["warn", "always"],
 		"no-unused-vars": ["error", { "argsIgnorePattern": "next" }],
-		"eqeqeq": ["error", "always"]
+		"eqeqeq": ["error", "always", { "null": "ignore" }]
 	}
 }

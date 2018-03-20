@@ -1,3 +1,5 @@
+// @flow
+
 function isFlowElement(element) {
 	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
 }

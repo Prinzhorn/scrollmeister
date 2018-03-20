@@ -55,7 +55,7 @@ export default class ScrubBehavior extends Behavior {
 		return value;
 	}
 
-	_seek(progress) {
+	_seek() {
 		const video = this.videoEl;
 
 		//Video not ready yet.

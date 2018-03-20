@@ -58,6 +58,8 @@ describe('fakeClick', () => {
 				}
 			]
 		});
+
+		done();
 	});
 
 	test('does not trigger a click event on elements other than <a>', done => {
@@ -86,5 +88,7 @@ describe('fakeClick', () => {
 				}
 			]
 		});
+
+		done();
 	});
 });

@@ -12458,7 +12458,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 			var _this3 = this;
 
 			var waitForNativeAction = function waitForNativeAction() {
-				var oneNative = function oneNative(e) {
+				var oneNative = function oneNative() {
 					window.removeEventListener('mousemove', threeMousemove, false);
 					window.removeEventListener('scroll', oneNative, false);
 
@@ -12570,14 +12570,14 @@ var GuideLayoutBehavior = function (_Behavior) {
 				this._lastRenderTime = now;
 			}
 
-			this._pollScrollPosition(now, this._lastRenderTime);
+			this._pollScrollPosition(now);
 
 			this._lastRenderTime = now;
 			(0, _raf2.default)(this._scrollLoop.bind(this));
 		}
 	}, {
 		key: '_pollScrollPosition',
-		value: function _pollScrollPosition(now, lastRenderTime) {
+		value: function _pollScrollPosition(now) {
 			var currentScrollPosition = void 0;
 
 			if (this.state.scrollMode === 'touch') {
@@ -13102,7 +13102,7 @@ var LayoutBehavior = function (_Behavior) {
 
 			//TODO: event if childElements.length is > 1, we might still not need to wrap if length - 1 are just <script> tags.
 
-			console.log('Wrapped ' + childNodes.length + ' children in a <div>');
+			console.log('Wrapped ' + childNodes.length + ' children in a <div>'); // eslint-disable-line
 
 			var fragment = document.createDocumentFragment();
 			this.innerEl = document.createElement('div');
@@ -13234,9 +13234,8 @@ var LayoutBehavior = function (_Behavior) {
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 				//or elements with appear effects using scaling/rotation.
-				var _innerStyle = this.innerEl.style;
-				_innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
-				_innerStyle.transform = _innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+				innerStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
+				innerStyle.transform = innerStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
 
 				//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
 				//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
@@ -13523,7 +13522,7 @@ var ScrubBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_seek',
-		value: function _seek(progress) {
+		value: function _seek() {
 			var _this3 = this;
 
 			var video = this.videoEl;
@@ -13835,7 +13834,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		_classCallCheck(this, ScrollMeisterComponent);
 
 		// $FlowFixMe: Won't be fixed ;)
-		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (ScrollMeisterComponent.__proto__ || Object.getPrototypeOf(ScrollMeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret);
+		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (ScrollMeisterComponent.__proto__ || Object.getPrototypeOf(ScrollMeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret); // eslint-disable-line
 	}
 
 	_createClass(ScrollMeisterComponent, [{

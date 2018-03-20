@@ -170,7 +170,7 @@ export default class LayoutBehavior extends Behavior {
 
 		//TODO: event if childElements.length is > 1, we might still not need to wrap if length - 1 are just <script> tags.
 
-		console.log(`Wrapped ${childNodes.length} children in a <div>`);
+		console.log(`Wrapped ${childNodes.length} children in a <div>`); // eslint-disable-line
 
 		let fragment = document.createDocumentFragment();
 		this.innerEl = document.createElement('div');
@@ -290,7 +290,6 @@ export default class LayoutBehavior extends Behavior {
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 			//or elements with appear effects using scaling/rotation.
-			let innerStyle = this.innerEl.style;
 			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
 			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
 
