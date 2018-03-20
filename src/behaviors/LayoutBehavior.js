@@ -168,6 +168,8 @@ export default class LayoutBehavior extends Behavior {
 			}
 		}
 
+		//TODO: event if childElements.length is > 1, we might still not need to wrap if length - 1 are just <script> tags.
+
 		console.log(`Wrapped ${childNodes.length} children in a <div>`);
 
 		let fragment = document.createDocumentFragment();

@@ -1,7 +1,10 @@
 import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
 import ConditionsRegistry from 'lib/ConditionsRegistry.js';
+import Behavior from 'behaviors/Behavior.js';
 
 const Scrollmeister = {
+	Behavior,
+
 	behaviorsRegistry: new BehaviorsRegistry(),
 	conditionsRegistry: new ConditionsRegistry(),
 

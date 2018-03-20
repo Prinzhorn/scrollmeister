@@ -33,7 +33,7 @@
 				background: rgba(0, 0, 255, 0.5);
 			}
 
-			el-meister.follower > img {
+			.cover > img {
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
@@ -44,7 +44,6 @@
 				max-width: 100%;
 			}
 		</style>
-		<script src="scrollmeister.js"></script>
 	</head>
 	<body>
 		<scroll-meister debugguides fadein
@@ -63,7 +62,74 @@
 			<el-meister id="foo" layout="guides: contentleft contentright;" fluidtext>
 				<h1>Scrollmeister thing</h1>
 			</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" _layout_xl="guides: contentleft center;">1</el-meister>
+
+			<el-meister interpolate gl-effect layout="guides: contentleft contentright; height: 1920/1080; spacing: 50vh;" _layout_xl="guides: contentleft center;">
+				<img class="cover" src="bogdan-dada-156739-unsplash.jpg" />
+				<!--<video src="./chrome.mp4" type="video/mp4" muted playsInline autoplay loop></video>-->
+				<script type="text/plain">
+				precision mediump float;
+
+				uniform float progress;
+				uniform sampler2D image;
+				uniform vec2 size;
+
+				varying vec2 uv;
+
+				void main() {
+					vec2 center = size / 2.0;
+					float radius = progress * max(size.x, size.y) / 2.0;
+					float angle = progress * 3.14159 * 5.0;
+
+					vec2 coord = uv * size;
+
+					coord -= center;
+
+					float distance = length(coord);
+
+					if (distance < radius) {
+						float percent = (radius - distance) / radius;
+						float theta = percent * percent * angle;
+						float s = sin(theta);
+						float c = cos(theta);
+
+						coord = vec2(
+							coord.x * c - coord.y * s,
+							coord.x * s + coord.y * c
+						);
+					}
+
+					coord += center;
+
+					gl_FragColor = texture2D(image, coord / size);
+				}
+				</script>
+				<script type="text/plain">
+				precision mediump float;
+
+				uniform float progress;
+				uniform vec2 size;
+				uniform sampler2D image;
+
+				varying vec2 uv;
+
+				void main() {
+					//This way we see the pixels much earlier. We skip the boring part were they're just like a little bigger than original.
+					float easedProgress = pow(progress, 0.1);
+
+					//The grid size in whole squares, e.g. 15x7.
+					vec2 grid = floor(size * (1.0 - easedProgress) + 0.5);
+
+					//The size of a single pixelated block, e.g. 0.1x0.07 (10%x7% of the texture size).
+					vec2 pixelSize = 1.0 / grid;
+
+					//We use the color at the center of the block for all pixels inside of it.
+					vec2 transformedUV = (floor(uv / pixelSize) / grid) + (pixelSize / 2.0);
+
+					gl_FragColor = texture2D(image, transformedUV);
+				}
+				</script>
+			</el-meister>
+
 			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" interpolate="opacity: center 1, top 0.5; rotate: center 0, top: 360" transform></el-meister>
 
 			<el-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">
@@ -84,7 +150,7 @@
 			<el-meister layout="guides: contentleft leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</el-meister>
 
 			<el-meister layout="guides: viewport viewport; mode: follow; clip: true; height: 75vh;" lazyload class="follower">
-				<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="bogdan-dada-156739-unsplash.jpg" />
+				<img class="cover" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="bogdan-dada-156739-unsplash.jpg" />
 			</el-meister>
 
 			<el-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">

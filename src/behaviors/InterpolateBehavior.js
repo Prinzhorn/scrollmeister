@@ -1,5 +1,6 @@
 // @flow
 
+import assign from 'ponies/Object.assign.js';
 import Behavior from 'behaviors/Behavior.js';
 
 //Parameters are a comma separated list of keyframes.
@@ -26,22 +27,25 @@ const keyframesSchema = {
 };
 
 export default class InterpolateBehavior extends Behavior {
-	static get schema(): any {
+	static get schema() {
 		return {
+			progress: assign({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
 			opacity: keyframesSchema,
 			rotate: keyframesSchema,
 			scale: keyframesSchema,
 			alpha: keyframesSchema,
 			beta: keyframesSchema,
-			gamma: keyframesSchema
+			gamma: keyframesSchema,
+			delta: keyframesSchema,
+			epsilon: keyframesSchema
 		};
 	}
 
-	static get dependencies(): Array<string> {
+	static get dependencies() {
 		return ['^guidelayout', 'layout'];
 	}
 
-	static get behaviorName(): string {
+	static get behaviorName() {
 		return 'interpolate';
 	}
 

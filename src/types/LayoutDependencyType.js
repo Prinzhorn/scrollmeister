@@ -81,7 +81,7 @@ export default {
 			value: value
 		};
 	},
-	stringify: function(value: Array<HTMLElement>): string {
+	stringify: function(value: { nodes: Array<HTMLElement>, value: string }): string {
 		return value.value;
 	}
 };

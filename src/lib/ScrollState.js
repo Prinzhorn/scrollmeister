@@ -23,6 +23,7 @@ ScrollState.prototype.tick = function(now, newPosition) {
 	this.history.push(this.position, now);
 
 	//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
+	//TODO: a ring buffer would make this much nicer. But meh.
 	if (this.history.length > MAX_HISTORY_LENGTH * 2) {
 		this.history.splice(0, MAX_HISTORY_LENGTH);
 	}
@@ -56,7 +57,7 @@ ScrollState.prototype.tick = function(now, newPosition) {
 	}
 };
 
-ScrollState.prototype.destroy = function(now, newPosition) {
+ScrollState.prototype.destroy = function() {
 	clearTimeout(this.pauseTimer);
 };
 

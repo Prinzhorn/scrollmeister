@@ -229,6 +229,7 @@ export default class Behavior {
 		let element = this.el;
 
 		this.style = {
+			//TODO: add transition as well (e.g. fullscreenable will make use of it)
 			set transform(value) {
 				if (value === '') {
 					element.resetBehaviorStyle(behaviorName, 'transform');
