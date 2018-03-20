@@ -30,15 +30,15 @@ export default class Behavior {
 		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the static "schema" getter.`);
 	}
 
-	static get dependencies() {
-		throw new Error(
-			`Your behavior class "${this.constructor.name}" needs to implement the static "dependencies" getter.`
-		);
-	}
-
 	static get behaviorName() {
 		throw new Error(
 			`Your behavior class "${this.constructor.name}" needs to implement the static "behaviorName" getter.`
+		);
+	}
+
+	static get dependencies() {
+		throw new Error(
+			`Your behavior class "${this.constructor.name}" needs to implement the static "dependencies" getter.`
 		);
 	}
 

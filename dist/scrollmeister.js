@@ -11551,14 +11551,14 @@ var Behavior = function () {
 			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "schema" getter.');
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "dependencies" getter.');
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "behaviorName" getter.');
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "dependencies" getter.');
 		}
 	}]);
 
@@ -11938,14 +11938,14 @@ var DebugGuidesBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['guidelayout'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'debugguides';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['guidelayout'];
 		}
 	}]);
 
@@ -12000,14 +12000,14 @@ var FadeInBehavior = function (_Behavior) {
 			return {};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return [];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'fadein';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return [];
 		}
 	}]);
 
@@ -12084,14 +12084,14 @@ var FadeInBehavior = function (_Behavior) {
 			return {};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['layout'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'fluidtext';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['layout'];
 		}
 	}]);
 
@@ -12294,14 +12294,14 @@ var GLEffectBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['layout', 'interpolate'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'gl-effect';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['layout', 'interpolate'];
 		}
 	}]);
 
@@ -12729,14 +12729,14 @@ var GuideLayoutBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return [];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'guidelayout';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return [];
 		}
 	}]);
 
@@ -12948,14 +12948,14 @@ var InterpolateBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['^guidelayout', 'layout'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'interpolate';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['^guidelayout', 'layout'];
 		}
 	}]);
 
@@ -13346,14 +13346,14 @@ var LayoutBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'layout';
-		}
-	}, {
 		key: 'dependencies',
 		get: function get() {
 			return ['^guidelayout'];
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'layout';
 		}
 	}]);
 
@@ -13437,14 +13437,14 @@ var LazyLoadBehavior = function (_Behavior) {
 			return {};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['^guidelayout', 'layout'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'lazyload';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['^guidelayout', 'layout'];
 		}
 	}]);
 
@@ -13563,14 +13563,14 @@ var ScrubBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['interpolate'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'scrub';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['interpolate'];
 		}
 	}]);
 
@@ -13639,14 +13639,14 @@ var TransformBehavior = function (_Behavior) {
 			return {};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['interpolate'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'transform';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['interpolate'];
 		}
 	}]);
 

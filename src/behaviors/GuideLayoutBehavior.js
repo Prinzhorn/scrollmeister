@@ -45,12 +45,12 @@ export default class GuideLayoutBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies(): Array<string> {
-		return [];
-	}
-
 	static get behaviorName(): string {
 		return 'guidelayout';
+	}
+
+	static get dependencies(): Array<string> {
+		return [];
 	}
 
 	attach() {

@@ -7,12 +7,12 @@ export default class TransformBehavior extends Behavior {
 		return {};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['interpolate'];
-	}
-
 	static get behaviorName(): string {
 		return 'transform';
+	}
+
+	static get dependencies(): Array<string> {
+		return ['interpolate'];
 	}
 
 	attach() {

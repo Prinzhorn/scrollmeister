@@ -7,12 +7,12 @@ export default class FadeInBehavior extends Behavior {
 		return {};
 	}
 
-	static get dependencies(): Array<string> {
-		return [];
-	}
-
 	static get behaviorName(): string {
 		return 'fadein';
+	}
+
+	static get dependencies(): Array<string> {
+		return [];
 	}
 
 	attach() {

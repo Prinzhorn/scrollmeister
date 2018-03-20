@@ -13,12 +13,12 @@ export default class ScrubBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['interpolate'];
-	}
-
 	static get behaviorName(): string {
 		return 'scrub';
+	}
+
+	static get dependencies(): Array<string> {
+		return ['interpolate'];
 	}
 
 	attach() {

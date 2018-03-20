@@ -41,12 +41,12 @@ export default class InterpolateBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies() {
-		return ['^guidelayout', 'layout'];
-	}
-
 	static get behaviorName() {
 		return 'interpolate';
+	}
+
+	static get dependencies() {
+		return ['^guidelayout', 'layout'];
 	}
 
 	attach() {

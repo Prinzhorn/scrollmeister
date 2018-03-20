@@ -11,12 +11,12 @@ export default class GLEffectBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies() {
-		return ['layout', 'interpolate'];
-	}
-
 	static get behaviorName() {
 		return 'gl-effect';
+	}
+
+	static get dependencies() {
+		return ['layout', 'interpolate'];
 	}
 
 	attach() {

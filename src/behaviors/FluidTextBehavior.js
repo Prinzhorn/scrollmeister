@@ -9,12 +9,12 @@ export default class FadeInBehavior extends Behavior {
 		return {};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['layout'];
-	}
-
 	static get behaviorName(): string {
 		return 'fluidtext';
+	}
+
+	static get dependencies(): Array<string> {
+		return ['layout'];
 	}
 
 	attach() {

@@ -12,12 +12,12 @@ export default class DebugGuidesBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['guidelayout'];
-	}
-
 	static get behaviorName(): string {
 		return 'debugguides';
+	}
+
+	static get dependencies(): Array<string> {
+		return ['guidelayout'];
 	}
 
 	attach() {

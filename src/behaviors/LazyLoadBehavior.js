@@ -7,12 +7,12 @@ export default class LazyLoadBehavior extends Behavior {
 		return {};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['^guidelayout', 'layout'];
-	}
-
 	static get behaviorName(): string {
 		return 'lazyload';
+	}
+
+	static get dependencies(): Array<string> {
+		return ['^guidelayout', 'layout'];
 	}
 
 	attach() {
