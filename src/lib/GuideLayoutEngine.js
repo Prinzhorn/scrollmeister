@@ -1,20 +1,101 @@
 // @flow
 
+import type { CSSLength } from 'types/CSSLengthType.js';
+
+type RawGuide = {
+	name: string,
+	position: CSSLength,
+	width: CSSLength
+};
+
+type Guide = {
+	name: string,
+	width: number,
+	position: number,
+	leftPosition: number,
+	rightPosition: number
+};
+
+type Viewport = {
+	width: number,
+	height: number,
+	outerWidth: number,
+	outerHeight: number
+};
+
+type ScrollUpdate = {
+	wrapperTop: number,
+	wrapperHeight: number,
+	wrapperBottom: number,
+	contentTop: number,
+	contentTopOffset: number,
+	contentBottom: number,
+	absoluteWrapperTop: number,
+	absoluteContentTop: number,
+	inCenter: boolean,
+	inViewport: boolean,
+	inExtendedViewport: boolean,
+	wrapperTopChanged: boolean,
+	inCenterChanged: boolean,
+	inViewportChanged: boolean,
+	inExtendedViewportChanged: boolean
+};
+
+type Layout = {
+	dirty: boolean,
+	spacingTop: number,
+	spacingBottom: number,
+	leaderHeight: number,
+	left: number,
+	right: number,
+	width: number,
+	height: number,
+	outerHeight: number,
+	top: number,
+	outerTop: number,
+	bottom: number,
+	outerBottom: number,
+	requiredHeight: number,
+	transformTopPosition: ?Function,
+	clipRect: ?{ top: number, bottom: number, height: number }
+};
+
+type Props = {
+	guides: { left: 'string', right: 'string' },
+	height: 'auto' | CSSLength,
+	spacing: { top: CSSLength, bottom: CSSLength },
+	mode: 'flow' | 'follow',
+	followerMode: 'pin' | 'parallax',
+	pinAnchor: 'top' | 'center' | 'bottom',
+	pinOffset: CSSLength,
+	clip: boolean,
+	dependencies: {
+		nodes: Array<Node>,
+		value: string
+	}
+};
+
+type Node = {
+	layout: Layout,
+	props: Props,
+	state: { height: number }
+};
+
 export default class GuideLayoutEngine {
-	guides: Array<{ name: string, width: number, position: number, leftPosition: number, rightPosition: number }>;
+	guides: Array<Guide>;
 	requiredHeight: number;
-	viewport: { width: number, height: number, outerWidth: number, outerHeight: number };
+	viewport: Viewport;
 
 	constructor() {
 		this.guides = [];
 		this.requiredHeight = 0;
 	}
 
-	updateViewport(viewport: { width: number, height: number, outerWidth: number, outerHeight: number }) {
+	updateViewport(viewport: Viewport) {
 		this.viewport = viewport;
 	}
 
-	lengthToPixel(value: { length: number, unit: string }, percentageReference: ?number): number {
+	lengthToPixel(value: CSSLength, percentageReference: ?number): number {
 		switch (value.unit) {
 			case 'px':
 				return value.length;
@@ -38,7 +119,7 @@ export default class GuideLayoutEngine {
 	}
 
 	//E.g. calculate the scroll position when the element's anchor is at the anchor of the viewport.
-	calculateAnchorPosition(node, anchor, offset) {
+	calculateAnchorPosition(node: Node, anchor: 'top' | 'center' | 'bottom', offset: number) {
 		const { layout, props } = node;
 		let height;
 
@@ -61,11 +142,7 @@ export default class GuideLayoutEngine {
 		return position + offset;
 	}
 
-	doLayout(
-		nodes: Array<{ layout: any, props: any, state: { height: number } }>,
-		rawGuides: Array<{ name: string, position: number, width: { length: number, unit: string } }>,
-		contentWidth: { length: number, unit: string }
-	) {
+	doLayout(nodes: Array<Node>, rawGuides: Array<RawGuide>, contentWidth: CSSLength) {
 		this._computeGuides(rawGuides, contentWidth);
 
 		//First we invalidate all existing layout for each node so we know which ones we touched.
@@ -134,7 +211,7 @@ export default class GuideLayoutEngine {
 	//Does not return anything, instead we pass it an object that it fills.
 	//This minimizes the amount of garbage we create on the hot path, we reuse this object.
 	//This also has the nice side effect that we can make optimization by comparing to the previous scroll data.
-	doScroll(layout, scrollPosition, scrollUpdate) {
+	doScroll(layout: Layout, scrollPosition: number, scrollUpdate: ScrollUpdate) {
 		let verticalCenter = this.viewport.height / 2;
 		let contentHeight = layout.height;
 		let prevWrapperTop = scrollUpdate.wrapperTop;
@@ -203,7 +280,7 @@ export default class GuideLayoutEngine {
 	}
 
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
-	_doNodeLayout(node: { layout: any, props: any, state: { height: number } }, dependencies: Array<{ layout: any }>) {
+	_doNodeLayout(node: Node, dependencies: Array<Node>) {
 		let layout = node.layout;
 		let props = node.props;
 		let state = node.state;
@@ -417,7 +494,11 @@ export default class GuideLayoutEngine {
 		if (props.clip && layoutMode === 'follow') {
 			//Reuse the object.
 			if (!layout.clipRect) {
-				layout.clipRect = {};
+				layout.clipRect = {
+					top: 0,
+					bottom: 0,
+					height: 0
+				};
 			}
 
 			layout.clipRect.top = dependencies[0].layout.top;
@@ -435,7 +516,7 @@ export default class GuideLayoutEngine {
 	}
 
 	//Parallax and pinning is achieved by simply transforming the top position for those (follower-) elements.
-	_createFollowerTopPositionTransformer(layout, props) {
+	_createFollowerTopPositionTransformer(layout: Layout, props: Props) {
 		if (props.followerMode === 'pin') {
 			let pinTopPosition;
 
@@ -450,6 +531,8 @@ export default class GuideLayoutEngine {
 				case 'bottom':
 					pinTopPosition = this.viewport.height - layout.height;
 					break;
+				default:
+					throw new Error(`Unknown pinAnchor "${props.pinAnchor}".`);
 			}
 
 			//The scroll position at which the element starts being pinned and does not move anymore.
@@ -458,7 +541,7 @@ export default class GuideLayoutEngine {
 			let pinDuration = Math.abs(layout.leaderHeight - layout.outerHeight);
 			let pinStopScroll = pinStartScroll + pinDuration;
 
-			return scrollPosition => {
+			return (scrollPosition: number): number => {
 				let transformedTop;
 
 				//Pinning hasn't started, scroll normally.
@@ -489,7 +572,7 @@ export default class GuideLayoutEngine {
 			//as you need to scroll for a bit (spacingTop) before it actually enters.
 			let enterScroll = layout.outerTop - this.viewport.height;
 
-			return scrollPosition => {
+			return (scrollPosition: number): number => {
 				//The distance the follower would have travelled from the bottom of the viewport
 				//at a speed of 1.0.
 				let distanceTravelled = scrollPosition - enterScroll;
@@ -499,14 +582,7 @@ export default class GuideLayoutEngine {
 		}
 	}
 
-	_computeGuides(
-		rawGuides: Array<{
-			name: string,
-			position: { length: number, unit: string },
-			width: { length: number, unit: string }
-		}>,
-		contentWidth: { length: number, unit: string }
-	) {
+	_computeGuides(rawGuides: Array<RawGuide>, contentWidth: CSSLength) {
 		let pixelWidth = this.lengthToPixel(contentWidth, this.viewport.width);
 
 		//If the wrapper element does not have enough room, make it full width fluid.

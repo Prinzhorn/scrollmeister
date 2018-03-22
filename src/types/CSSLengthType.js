@@ -39,3 +39,8 @@ export default {
 		return '' + value.length + value.unit;
 	}
 };
+
+export type CSSLength = {
+	length: number,
+	unit: 'px' | 'vw' | 'vh' | 'vmin' | 'vmax' | '%'
+};

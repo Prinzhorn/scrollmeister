@@ -3,6 +3,27 @@
 import assign from 'ponies/Object.assign.js';
 import Behavior from 'behaviors/Behavior.js';
 
+import type ScrollState from 'lib/ScrollState.js';
+import type { CSSLength } from 'types/CSSLengthType.js';
+
+type Keyframe = {
+	anchor: 'string',
+	offset: CSSLength,
+	value: number
+};
+
+type Props = {
+	progress: Array<Keyframe>,
+	opacity: Array<Keyframe>,
+	rotate: Array<Keyframe>,
+	scale: Array<Keyframe>,
+	alpha: Array<Keyframe>,
+	beta: Array<Keyframe>,
+	gamma: Array<Keyframe>,
+	delta: Array<Keyframe>,
+	epsilon: Array<Keyframe>
+};
+
 //Parameters are a comma separated list of keyframes.
 //A keyframe is defined by a position inside the viewport and a value.
 //E.g. "alpha: top 1, bottom 0;" would set the alpha parameter to 1
@@ -27,7 +48,9 @@ const keyframesSchema = {
 };
 
 export default class InterpolateBehavior extends Behavior {
-	static get schema() {
+	props: Props;
+
+	static get schema(): any {
 		return {
 			progress: assign({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
 			opacity: keyframesSchema,
@@ -41,11 +64,11 @@ export default class InterpolateBehavior extends Behavior {
 		};
 	}
 
-	static get behaviorName() {
+	static get behaviorName(): string {
 		return 'interpolate';
 	}
 
-	static get dependencies() {
+	static get dependencies(): Array<string> {
 		return ['^guidelayout', 'layout'];
 	}
 
@@ -94,11 +117,11 @@ export default class InterpolateBehavior extends Behavior {
 		this._interpolate(this.parentEl.guidelayout.scrollState);
 	}
 
-	_createInterpolator(keyframes) {
+	_createInterpolator(keyframes: Array<Keyframe>) {
 		let layoutEngine = this.parentEl.guidelayout.engine;
 
 		//Map the keyframe anchor and offset to scroll positions.
-		keyframes = keyframes.map(keyframe => {
+		let mappedKeyframes = keyframes.map(keyframe => {
 			let pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, this.el.layout.layout.height);
 			let position = layoutEngine.calculateAnchorPosition(this.el.layout, keyframe.anchor, pixelOffset);
 
@@ -109,13 +132,13 @@ export default class InterpolateBehavior extends Behavior {
 		});
 
 		//Sort them by scroll position from top to bottom.
-		keyframes = keyframes.sort((a, b) => a.position - b.position);
+		mappedKeyframes = mappedKeyframes.sort((a, b) => a.position - b.position);
 
-		let firstKeyframe = keyframes[0];
-		let lastKeyframe = keyframes[keyframes.length - 1];
+		let firstKeyframe = mappedKeyframes[0];
+		let lastKeyframe = mappedKeyframes[mappedKeyframes.length - 1];
 
 		//Return a function which, given the current scrollPosition, returns the interpolated value.
-		return function(scrollPosition) {
+		return function(scrollPosition: number): number {
 			//If the top position is out of bounds, use the edge values.
 			if (scrollPosition <= firstKeyframe.position) {
 				return firstKeyframe.value;
@@ -126,12 +149,12 @@ export default class InterpolateBehavior extends Behavior {
 			}
 
 			//Figure out between which two keyframes we are.
-			for (let i = 1; i < keyframes.length; i++) {
-				let rightKeyframe = keyframes[i];
+			for (let i = 1; i < mappedKeyframes.length; i++) {
+				let rightKeyframe = mappedKeyframes[i];
 
 				//We found the right keyframe!
 				if (scrollPosition < rightKeyframe.position) {
-					let leftKeyframe = keyframes[i - 1];
+					let leftKeyframe = mappedKeyframes[i - 1];
 
 					let progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
 
@@ -143,7 +166,7 @@ export default class InterpolateBehavior extends Behavior {
 		};
 	}
 
-	_interpolate(scrollState) {
+	_interpolate(scrollState: ScrollState) {
 		let schema = this.constructor.schema;
 		let didChange = false;
 

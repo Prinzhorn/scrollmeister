@@ -1,10 +1,10 @@
-// @flow
-
 function isFlowElement(element) {
 	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
 }
 
-function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
+function findPreviousFlowElement(context) {
+	let element = context;
+
 	while (element.previousSibling) {
 		element = element.previousSibling;
 
@@ -20,14 +20,14 @@ function findPreviousFlowElement(element: HTMLElement): HTMLElement | null {
 	return null;
 }
 
-function findDependencies(value: string, element: HTMLElement): Array<HTMLElement> {
+function findDependencies(value, context) {
 	if (value === 'none') {
 		return [];
 	}
 
 	//"inherit" mimics a regular document flow by rendering the element behind the previous one.
 	if (value === 'inherit') {
-		element = findPreviousFlowElement(element);
+		let element = findPreviousFlowElement(context);
 
 		if (element) {
 			return [element.layout];
@@ -43,8 +43,10 @@ function findDependencies(value: string, element: HTMLElement): Array<HTMLElemen
 			throw new Error(`You've specified a negative number of skips (${numberOfSkips}) for the layout dependencies.`);
 		}
 
+		let element;
+
 		do {
-			element = findPreviousFlowElement(element);
+			element = findPreviousFlowElement(context);
 		} while (element && numberOfSkips--);
 
 		if (element) {
@@ -73,17 +75,17 @@ function findDependencies(value: string, element: HTMLElement): Array<HTMLElemen
 //https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 export default {
-	parse: function(value: string, element: HTMLElement): Array<HTMLElement> {
+	parse: function(value, context) {
 		value = value.trim();
 
-		let dependencies = findDependencies(value, element);
+		let dependencies = findDependencies(value, context);
 
 		return {
 			nodes: dependencies,
 			value: value
 		};
 	},
-	stringify: function(value: { nodes: Array<HTMLElement>, value: string }): string {
+	stringify: function(value) {
 		return value.value;
 	}
 };

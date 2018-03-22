@@ -3,6 +3,7 @@
 import ResizeObserver from 'resize-observer-polyfill';
 
 import Behavior from 'behaviors/Behavior.js';
+import type ScrollState from 'lib/ScrollState.js';
 
 export default class LayoutBehavior extends Behavior {
 	static get schema(): any {
@@ -255,17 +256,21 @@ export default class LayoutBehavior extends Behavior {
 	_renderInner() {
 		let style = this.innerEl.style;
 		let width = this.layout.width;
-		let height = this.props.height === 'auto' ? 'auto' : this.layout.height;
 
 		style.width = Math.round(width) + 'px';
-		style.height = Math.round(height) + 'px';
+
+		if (this.props.height === 'auto') {
+			style.height = 'auto';
+		} else {
+			style.height = Math.round(this.layout.height) + 'px';
+		}
 
 		if (this.props.clip) {
 			style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
 		}
 	}
 
-	_scroll(scrollState, forceUpdate = false) {
+	_scroll(scrollState: ScrollState, forceUpdate: boolean = false) {
 		let scrollUpdate = this.scrollUpdate;
 
 		let style = this.el.style;

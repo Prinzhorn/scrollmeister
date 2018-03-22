@@ -16,6 +16,7 @@ const invalidMarkupSelectors = [
 
 export default class ScrollMeisterComponent extends HTMLElement {
 	behaviors: any;
+	_behaviorsStyleMerger: BehaviorsStyleMerger;
 	_scheduledBatchUpdate: boolean;
 	_scheduledBehaviors: { attach: any, detach: any };
 	_batchHandle: number;
@@ -82,15 +83,15 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		}
 	}
 
-	setBehaviorStyle(behaviorName, property, value) {
+	setBehaviorStyle(behaviorName: string, property: string, value: string | number) {
 		this._behaviorsStyleMerger.setBehaviorStyle(behaviorName, property, value);
 	}
 
-	resetBehaviorStyle(behaviorName, property) {
+	resetBehaviorStyle(behaviorName: string, property: string) {
 		this._behaviorsStyleMerger.resetBehaviorStyle(behaviorName, property);
 	}
 
-	resetBehaviorStyles(behaviorName) {
+	resetBehaviorStyles(behaviorName: string) {
 		this._behaviorsStyleMerger.resetBehaviorStyles(behaviorName);
 	}
 

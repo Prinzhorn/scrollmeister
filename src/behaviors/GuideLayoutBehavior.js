@@ -10,6 +10,18 @@ import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
 
 import Behavior from 'behaviors/Behavior.js';
 
+import type { CSSLength } from 'types/CSSLengthType.js';
+
+type Props = {
+	guides: {
+		name: 'string',
+		position: CSSLength,
+		width: CSSLength
+	},
+	width: CSSLength,
+	overscroll: 'yes' | 'no'
+};
+
 const isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
 const isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 const isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -74,7 +86,7 @@ export default class GuideLayoutBehavior extends Behavior {
 		this.scrollState.destroy();
 	}
 
-	update(prevProps) {
+	update(prevProps: Props) {
 		if (prevProps.overscroll !== this.props.overscroll) {
 			this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
 		}
@@ -150,7 +162,7 @@ export default class GuideLayoutBehavior extends Behavior {
 				waitForFakeAction();
 			};
 
-			let threeMousemove = e => {
+			let threeMousemove = () => {
 				//Cheez. Some mobile browsers (*cough* Android *cough*) trigger mousemove before ANYTHING else.
 				//Even before touchstart. But they will only trigger a single mousemove for any touch sequence.
 				//To make sure we only get real mousemoves, we wait for three consecutive events.
@@ -164,7 +176,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 				this._mousemoveCounter = 0;
 
-				oneNative(e);
+				oneNative();
 			};
 
 			//A "mousemove" event is a strong indicator that we're on a desktop device.
@@ -204,10 +216,14 @@ export default class GuideLayoutBehavior extends Behavior {
 	}
 
 	_getNativeScrollPosition() {
+		if (!document.documentElement || !document.body) {
+			throw new Error('There is no documentElement or body to get the scroll position from.');
+		}
+
 		return document.documentElement.scrollTop || document.body.scrollTop;
 	}
 
-	scrollTo(position) {
+	scrollTo(position: number) {
 		position = Math.round(position);
 
 		if (this.state.scrollMode === 'native') {
@@ -230,7 +246,7 @@ export default class GuideLayoutBehavior extends Behavior {
 		this.listen(document, 'layout:attach layout:update', this._scheduleLayout.bind(this));
 	}
 
-	_scrollLoop(now) {
+	_scrollLoop(now: number) {
 		//The very first frame doesn't have a previous one.
 		if (this._lastRenderTime === -1) {
 			this._lastRenderTime = now;
@@ -242,7 +258,7 @@ export default class GuideLayoutBehavior extends Behavior {
 		raf(this._scrollLoop.bind(this));
 	}
 
-	_pollScrollPosition(now) {
+	_pollScrollPosition(now: number) {
 		let currentScrollPosition;
 
 		if (this.state.scrollMode === 'touch') {

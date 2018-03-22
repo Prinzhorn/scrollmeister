@@ -5,6 +5,6 @@ export default {
 		return value.trim() === 'true';
 	},
 	stringify: function(value: boolean): string {
-		return '' + value;
+		return String(value);
 	}
 };

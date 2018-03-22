@@ -12478,7 +12478,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 					waitForFakeAction();
 				};
 
-				var threeMousemove = function threeMousemove(e) {
+				var threeMousemove = function threeMousemove() {
 					//Cheez. Some mobile browsers (*cough* Android *cough*) trigger mousemove before ANYTHING else.
 					//Even before touchstart. But they will only trigger a single mousemove for any touch sequence.
 					//To make sure we only get real mousemoves, we wait for three consecutive events.
@@ -12492,7 +12492,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 					_this3._mousemoveCounter = 0;
 
-					oneNative(e);
+					oneNative();
 				};
 
 				//A "mousemove" event is a strong indicator that we're on a desktop device.
@@ -12533,6 +12533,10 @@ var GuideLayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_getNativeScrollPosition',
 		value: function _getNativeScrollPosition() {
+			if (!document.documentElement || !document.body) {
+				throw new Error('There is no documentElement or body to get the scroll position from.');
+			}
+
 			return document.documentElement.scrollTop || document.body.scrollTop;
 		}
 	}, {
@@ -12860,7 +12864,7 @@ var InterpolateBehavior = function (_Behavior) {
 			var layoutEngine = this.parentEl.guidelayout.engine;
 
 			//Map the keyframe anchor and offset to scroll positions.
-			keyframes = keyframes.map(function (keyframe) {
+			var mappedKeyframes = keyframes.map(function (keyframe) {
 				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, _this3.el.layout.layout.height);
 				var position = layoutEngine.calculateAnchorPosition(_this3.el.layout, keyframe.anchor, pixelOffset);
 
@@ -12871,12 +12875,12 @@ var InterpolateBehavior = function (_Behavior) {
 			});
 
 			//Sort them by scroll position from top to bottom.
-			keyframes = keyframes.sort(function (a, b) {
+			mappedKeyframes = mappedKeyframes.sort(function (a, b) {
 				return a.position - b.position;
 			});
 
-			var firstKeyframe = keyframes[0];
-			var lastKeyframe = keyframes[keyframes.length - 1];
+			var firstKeyframe = mappedKeyframes[0];
+			var lastKeyframe = mappedKeyframes[mappedKeyframes.length - 1];
 
 			//Return a function which, given the current scrollPosition, returns the interpolated value.
 			return function (scrollPosition) {
@@ -12890,16 +12894,16 @@ var InterpolateBehavior = function (_Behavior) {
 				}
 
 				//Figure out between which two keyframes we are.
-				for (var i = 1; i < keyframes.length; i++) {
-					var rightKeyframe = keyframes[i];
+				for (var i = 1; i < mappedKeyframes.length; i++) {
+					var rightKeyframe = mappedKeyframes[i];
 
 					//We found the right keyframe!
 					if (scrollPosition < rightKeyframe.position) {
-						var leftKeyframe = keyframes[i - 1];
+						var leftKeyframe = mappedKeyframes[i - 1];
 
-						var progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
+						var _progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
 
-						return progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
+						return _progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
 					}
 				}
 
@@ -13196,10 +13200,14 @@ var LayoutBehavior = function (_Behavior) {
 		value: function _renderInner() {
 			var style = this.innerEl.style;
 			var width = this.layout.width;
-			var height = this.props.height === 'auto' ? 'auto' : this.layout.height;
 
 			style.width = Math.round(width) + 'px';
-			style.height = Math.round(height) + 'px';
+
+			if (this.props.height === 'auto') {
+				style.height = 'auto';
+			} else {
+				style.height = Math.round(this.layout.height) + 'px';
+			}
 
 			if (this.props.clip) {
 				style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
@@ -14443,11 +14451,11 @@ var GuideLayoutEngine = function () {
 						continue;
 					}
 
-					var dependencies = _node.props.dependencies.nodes;
+					var _dependencies = _node.props.dependencies.nodes;
 
 					//Check if any of the dependencies is still dirty.
-					for (var j = 0; j < dependencies.length; j++) {
-						var otherNode = dependencies[j];
+					for (var j = 0; j < _dependencies.length; j++) {
+						var otherNode = _dependencies[j];
 
 						if (otherNode.layout.dirty) {
 							skippedNode = true;
@@ -14458,7 +14466,7 @@ var GuideLayoutEngine = function () {
 						}
 					}
 
-					this._doNodeLayout(_node, dependencies);
+					this._doNodeLayout(_node, _dependencies);
 
 					//We found a layout we can compute, yay!
 					_node.layout.dirty = false;
@@ -14758,7 +14766,11 @@ var GuideLayoutEngine = function () {
 			if (props.clip && layoutMode === 'follow') {
 				//Reuse the object.
 				if (!layout.clipRect) {
-					layout.clipRect = {};
+					layout.clipRect = {
+						top: 0,
+						bottom: 0,
+						height: 0
+					};
 				}
 
 				layout.clipRect.top = dependencies[0].layout.top;
@@ -14796,6 +14808,8 @@ var GuideLayoutEngine = function () {
 					case 'bottom':
 						pinTopPosition = this.viewport.height - layout.height;
 						break;
+					default:
+						throw new Error('Unknown pinAnchor "' + props.pinAnchor + '".');
 				}
 
 				//The scroll position at which the element starts being pinned and does not move anymore.
@@ -14934,101 +14948,115 @@ exports.default = GuideLayoutEngine;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-//TODO: this has not been migrated to classes yet. Who cares.
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var PAUSE_DELAY = 300; //ms
 var MAX_HISTORY_LENGTH = 30;
 var MAX_HISTORY_AGE = 300; //ms
 
-var ScrollState = function ScrollState(onScroll, onPause) {
-	this.onScroll = onScroll;
-	this.onPause = onPause;
+var ScrollState = function () {
+	function ScrollState(onScroll, onPause) {
+		_classCallCheck(this, ScrollState);
 
-	this.position = 0;
-	this.maxPosition = 0;
-	this.velocity = 0;
-	this.progress = 0;
-	this.direction = 'down';
-	this.history = [];
-};
+		this.onScroll = onScroll;
+		this.onPause = onPause;
 
-ScrollState.prototype.tick = function (now, newPosition) {
-	var direction;
-
-	//We keep track of the position and time for calculating an accurate velocity in later frames.
-	this.history.push(this.position, now);
-
-	//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
-	//TODO: a ring buffer would make this much nicer. But meh.
-	if (this.history.length > MAX_HISTORY_LENGTH * 2) {
-		this.history.splice(0, MAX_HISTORY_LENGTH);
+		this.position = 0;
+		this.maxPosition = 0;
+		this.velocity = 0;
+		this.progress = 0;
+		this.direction = 'down';
+		this.history = [];
 	}
 
-	this.velocity = this._calculateScrollVelocity(now);
+	_createClass(ScrollState, [{
+		key: 'tick',
+		value: function tick(now, newPosition) {
+			var direction = void 0;
 
-	if (this.position !== newPosition) {
-		direction = newPosition > this.position ? 'down' : 'up';
+			//We keep track of the position and time for calculating an accurate velocity in later frames.
+			this.history.push(this.position, now);
 
-		this.position = newPosition;
-		this.progress = newPosition / this.maxPosition;
+			//Keep the history short, but don't splice() at every frame (only when it's twice as large as the max).
+			//TODO: a ring buffer would make this much nicer. But meh.
+			if (this.history.length > MAX_HISTORY_LENGTH * 2) {
+				this.history.splice(0, MAX_HISTORY_LENGTH);
+			}
 
-		//When the direction changed, we clear the history.
-		//This way we get better scroll velocity calculations
-		//when the users moves up/down very fast (e.g. touch display scratching).
-		if (this.direction !== direction) {
-			this.direction = direction;
-			this.history.length = 0;
+			this.velocity = this._calculateScrollVelocity(now);
+
+			if (this.position !== newPosition) {
+				direction = newPosition > this.position ? 'down' : 'up';
+
+				this.position = newPosition;
+				this.progress = newPosition / this.maxPosition;
+
+				//When the direction changed, we clear the history.
+				//This way we get better scroll velocity calculations
+				//when the users moves up/down very fast (e.g. touch display scratching).
+				if (this.direction !== direction) {
+					this.direction = direction;
+					this.history.length = 0;
+				}
+
+				if (this._pauseTimer) {
+					clearTimeout(this._pauseTimer);
+					delete this._pauseTimer;
+				}
+
+				this.onScroll();
+			} else {
+				if (!this._pauseTimer) {
+					this._pauseTimer = setTimeout(this.onPause, PAUSE_DELAY);
+				}
+			}
 		}
-
-		if (this.pauseTimer) {
-			clearTimeout(this.pauseTimer);
-			this.pauseTimer = null;
+	}, {
+		key: 'destroy',
+		value: function destroy() {
+			clearTimeout(this._pauseTimer);
 		}
+	}, {
+		key: '_calculateScrollVelocity',
+		value: function _calculateScrollVelocity(now) {
+			//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
+			//We do this because using just the past two frames for calculating the veloctiy
+			//gives very jumpy results.
+			var positions = this.history;
+			var positionsIndexEnd = positions.length - 1;
+			var positionsIndexStart = positionsIndexEnd;
+			var positionsIndex = positionsIndexEnd;
+			var timeOffset = void 0;
+			var movedOffset = void 0;
 
-		this.onScroll();
-	} else {
-		if (!this.pauseTimer) {
-			this.pauseTimer = setTimeout(this.onPause, PAUSE_DELAY);
+			//Move pointer to position measured MAX_HISTORY_AGE ago
+			//The positions array contains alternating offset/timeStamp pairs.
+			for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
+				//Did we go back far enough and found the position MAX_HISTORY_AGE ago?
+				if (positions[positionsIndex] <= now - MAX_HISTORY_AGE) {
+					break;
+				}
+
+				positionsIndexStart = positionsIndex;
+			}
+
+			//Compute relative movement between these two points.
+			timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
+			movedOffset = positions[positionsIndexEnd - 1] - positions[positionsIndexStart - 1];
+
+			if (timeOffset > 0 && Math.abs(movedOffset) > 0) {
+				return movedOffset / timeOffset;
+			} else {
+				return 0;
+			}
 		}
-	}
-};
+	}]);
 
-ScrollState.prototype.destroy = function () {
-	clearTimeout(this.pauseTimer);
-};
-
-ScrollState.prototype._calculateScrollVelocity = function (now) {
-	//Figure out what the scroll position was about MAX_HISTORY_AGE ago.
-	//We do this because using just the past two frames for calculating the veloctiy
-	//gives very jumpy results.
-	var positions = this.history;
-	var positionsIndexEnd = positions.length - 1;
-	var positionsIndexStart = positionsIndexEnd;
-	var positionsIndex = positionsIndexEnd;
-	var timeOffset;
-	var movedOffset;
-
-	//Move pointer to position measured MAX_HISTORY_AGE ago
-	//The positions array contains alternating offset/timeStamp pairs.
-	for (; positionsIndex > 0; positionsIndex = positionsIndex - 2) {
-		//Did we go back far enough and found the position MAX_HISTORY_AGE ago?
-		if (positions[positionsIndex] <= now - MAX_HISTORY_AGE) {
-			break;
-		}
-
-		positionsIndexStart = positionsIndex;
-	}
-
-	//Compute relative movement between these two points.
-	timeOffset = positions[positionsIndexEnd] - positions[positionsIndexStart];
-	movedOffset = positions[positionsIndexEnd - 1] - positions[positionsIndexStart - 1];
-
-	if (timeOffset > 0 && Math.abs(movedOffset) > 0) {
-		return movedOffset / timeOffset;
-	} else {
-		return 0;
-	}
-};
+	return ScrollState;
+}();
 
 exports.default = ScrollState;
 
@@ -15548,7 +15576,7 @@ exports.default = {
 		return value.trim() === 'true';
 	},
 	stringify: function stringify(value) {
-		return '' + value;
+		return String(value);
 	}
 };
 
@@ -15650,7 +15678,9 @@ function isFlowElement(element) {
 	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
 }
 
-function findPreviousFlowElement(element) {
+function findPreviousFlowElement(context) {
+	var element = context;
+
 	while (element.previousSibling) {
 		element = element.previousSibling;
 
@@ -15666,14 +15696,14 @@ function findPreviousFlowElement(element) {
 	return null;
 }
 
-function findDependencies(value, element) {
+function findDependencies(value, context) {
 	if (value === 'none') {
 		return [];
 	}
 
 	//"inherit" mimics a regular document flow by rendering the element behind the previous one.
 	if (value === 'inherit') {
-		element = findPreviousFlowElement(element);
+		var element = findPreviousFlowElement(context);
 
 		if (element) {
 			return [element.layout];
@@ -15689,12 +15719,14 @@ function findDependencies(value, element) {
 			throw new Error('You\'ve specified a negative number of skips (' + numberOfSkips + ') for the layout dependencies.');
 		}
 
-		do {
-			element = findPreviousFlowElement(element);
-		} while (element && numberOfSkips--);
+		var _element = void 0;
 
-		if (element) {
-			return [element.layout];
+		do {
+			_element = findPreviousFlowElement(context);
+		} while (_element && numberOfSkips--);
+
+		if (_element) {
+			return [_element.layout];
 		} else {
 			return [];
 		}
@@ -15719,10 +15751,10 @@ function findDependencies(value, element) {
 //https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 exports.default = {
-	parse: function parse(value, element) {
+	parse: function parse(value, context) {
 		value = value.trim();
 
-		var dependencies = findDependencies(value, element);
+		var dependencies = findDependencies(value, context);
 
 		return {
 			nodes: dependencies,
@@ -15785,10 +15817,22 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.default = {
-	parse: function parse(value, element) {
+	parse: function parse(value, context) {
 		value = value.trim();
 
-		var script = value === 'auto' ? element.getElementsByTagName('script')[0] : document.getElementById(value);
+		var script = void 0;
+
+		if (value === 'auto') {
+			script = context.getElementsByTagName('script')[0];
+		} else {
+			var element = document.getElementById(value);
+
+			if (element instanceof HTMLScriptElement) {
+				script = element;
+			} else {
+				throw new Error('The shader "' + value + '" is not the ID of a <script> element.');
+			}
+		}
 
 		if (!script) {
 			throw new Error('Could not find shader "' + value + '".');
