@@ -19,7 +19,7 @@ type Props = {
 		width: CSSLength
 	},
 	width: CSSLength,
-	overscroll: 'yes' | 'no'
+	overscroll: boolean
 };
 
 const isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
@@ -50,9 +50,8 @@ export default class GuideLayoutBehavior extends Behavior {
 				default: '1280px'
 			},
 			overscroll: {
-				type: 'string',
-				enum: ['yes', 'no'],
-				default: 'yes'
+				type: 'boolean',
+				default: 'true'
 			}
 		};
 	}
@@ -88,7 +87,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 	update(prevProps: Props) {
 		if (prevProps.overscroll !== this.props.overscroll) {
-			this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
+			this._scrollLogic.options.bouncing = this.props.overscroll;
 		}
 
 		this._scheduleLayout();
@@ -103,7 +102,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 	_setupMobileScrolling() {
 		this._scrollLogic = new ScrollLogic({
-			bouncing: this.props.overscroll === 'yes'
+			bouncing: this.props.overscroll
 		});
 
 		this.listen(document, 'touchstart', e => {
