@@ -34,7 +34,10 @@
           },
           "postcss": {
             "autoprefixer": {
-              "browsers": ["last 2 versions", "ie >= 9"]
+              "browsers": [
+                "last 2 versions",
+                "ie >= 9"
+              ]
             }
           }
         }
@@ -42,7 +45,10 @@
     ]
   },
   "babel": {
-    "presets": ["env", "flow"]
+    "presets": [
+      "env",
+      "flow"
+    ]
   },
   "prettier": {
     "singleQuote": true,
@@ -91,6 +97,7 @@
     "http-server": "^0.11.1",
     "jest": "^22.1.4",
     "postcss": "^6.0.19",
+    "pre-commit": "^1.2.2",
     "prettier": "^1.10.2",
     "scssify": "^3.0.1",
     "tinyify": "^2.4.0",
