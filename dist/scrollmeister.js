@@ -11729,6 +11729,12 @@ var Behavior = function () {
 			this.el.dispatchEvent(event);
 		}
 	}, {
+		key: 'appendChild',
+		value: function appendChild() {
+			//TODO: append to data-scrollmeister-shadow, innerEl or el
+			//Then remove the node in destructor automagically.
+		}
+	}, {
 		key: 'updateProperties',
 		value: function updateProperties(rawProperties) {
 			var prevProps = (0, _ObjectAssign2.default)({}, this.props);
@@ -11761,7 +11767,6 @@ var Behavior = function () {
 			var element = this.el;
 
 			this.style = {
-				//TODO: add transition as well (e.g. fullscreenable will make use of it)
 				set transform(value) {
 					if (value === '') {
 						element.resetBehaviorStyle(behaviorName, 'transform');
@@ -11833,6 +11838,7 @@ var Behavior = function () {
 				rawValue = schema.default;
 			}
 
+			//TODO: does not validate against .enum
 			this.props[property] = _schemaParser2.default.parseProperty(this.el, property, rawValue, propertyType, valueExpander);
 		}
 	}]);
@@ -11842,7 +11848,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":37,"ponies/CustomEvent.js":38,"ponies/Object.assign.js":39}],10:[function(require,module,exports){
+},{"lib/schemaParser.js":39,"ponies/CustomEvent.js":40,"ponies/Object.assign.js":41}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12100,7 +12106,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/fontSizeWidthRatio.js":35}],13:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/fontSizeWidthRatio.js":37}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12168,8 +12174,6 @@ var GLEffectBehavior = function (_Behavior) {
 		value: function _createCanvas() {
 			var canvas = document.createElement('canvas');
 
-			canvas.style.transform = 'translateY(-50%)';
-
 			this._sourceElement.parentNode.appendChild(canvas);
 
 			return canvas;
@@ -12181,6 +12185,7 @@ var GLEffectBehavior = function (_Behavior) {
 
 			this._canvas.width = layout.width;
 			this._canvas.height = layout.height;
+			this._canvas.style.cssText = this._sourceElement.style.cssText;
 		}
 	}, {
 		key: '_initRegl',
@@ -12301,7 +12306,7 @@ var GLEffectBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['layout', 'interpolate'];
+			return ['layout', 'interpolate', 'media'];
 		}
 	}]);
 
@@ -12359,6 +12364,8 @@ var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.
 var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+//TODO: can we extract a ScrollBehavior to make the two separate and not 400 LOC?
+
 var GuideLayoutBehavior = function (_Behavior) {
 	_inherits(GuideLayoutBehavior, _Behavior);
 
@@ -12395,7 +12402,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 		key: 'update',
 		value: function update(prevProps) {
 			if (prevProps.overscroll !== this.props.overscroll) {
-				this._scrollLogic.options.bouncing = this.props.overscroll === 'yes';
+				this._scrollLogic.options.bouncing = this.props.overscroll;
 			}
 
 			this._scheduleLayout();
@@ -12414,7 +12421,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 			var _this2 = this;
 
 			this._scrollLogic = new _scrollLogic2.default({
-				bouncing: this.props.overscroll === 'yes'
+				bouncing: this.props.overscroll
 			});
 
 			this.listen(document, 'touchstart', function (e) {
@@ -12726,9 +12733,8 @@ var GuideLayoutBehavior = function (_Behavior) {
 					default: '1280px'
 				},
 				overscroll: {
-					type: 'string',
-					enum: ['yes', 'no'],
-					default: 'yes'
+					type: 'boolean',
+					default: 'true'
 				}
 			};
 		}
@@ -12749,7 +12755,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":32,"lib/ScrollState.js":33,"lib/fakeClick.js":34,"lib/isTextInput.js":36,"raf":4,"scroll-logic":7}],15:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/GuideLayoutEngine.js":34,"lib/ScrollState.js":35,"lib/fakeClick.js":36,"lib/isTextInput.js":38,"raf":4,"scroll-logic":7}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12968,7 +12974,7 @@ var InterpolateBehavior = function (_Behavior) {
 
 exports.default = InterpolateBehavior;
 
-},{"behaviors/Behavior.js":9,"ponies/Object.assign.js":39}],16:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"ponies/Object.assign.js":41}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13201,6 +13207,7 @@ var LayoutBehavior = function (_Behavior) {
 			var style = this.innerEl.style;
 			var width = this.layout.width;
 
+			style.position = 'relative';
 			style.width = Math.round(width) + 'px';
 
 			if (this.props.height === 'auto') {
@@ -13481,6 +13488,265 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var MediaBehavior = function (_Behavior) {
+	_inherits(MediaBehavior, _Behavior);
+
+	function MediaBehavior() {
+		_classCallCheck(this, MediaBehavior);
+
+		return _possibleConstructorReturn(this, (MediaBehavior.__proto__ || Object.getPrototypeOf(MediaBehavior)).apply(this, arguments));
+	}
+
+	_createClass(MediaBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			var _this2 = this;
+
+			this.listen('layout:render', function () {
+				_this2._render();
+			});
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._render();
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {}
+	}, {
+		key: '_render',
+		value: function _render() {
+			//TODO: need a wrapper for overflow:hidden
+			var layout = this.calculateMediaLayout();
+			var img = this.el.querySelector('img');
+			var style = img.style;
+
+			style.display = 'block';
+			style.position = 'absolute';
+			style.left = style.top = 0;
+			style.maxWidth = style.maxHeight = 'none';
+			style.width = Math.round(layout.width) + 'px';
+			style.height = Math.round(layout.height) + 'px';
+			style.transform = 'translate(' + Math.round(layout.left) + 'px, ' + Math.round(layout.top) + 'px)';
+		}
+	}, {
+		key: '_calculateMediaSize',
+		value: function _calculateMediaSize() {
+			var ratio = this.props.ratio.num;
+			var fit = this.props.fit;
+			var _el$layout$layout = this.el.layout.layout,
+			    width = _el$layout$layout.width,
+			    height = _el$layout$layout.height;
+
+			var containerRatio = width / height;
+
+			if (fit !== 'fill') {
+				if (fit === 'contain' && containerRatio > ratio || fit === 'cover' && containerRatio < ratio) {
+					width = height * ratio;
+				} else {
+					height = width / ratio;
+				}
+			}
+
+			return {
+				width: width,
+				height: height
+			};
+		}
+	}, {
+		key: 'calculateMediaLayout',
+		value: function calculateMediaLayout() {
+			var layoutEngine = this.parentEl.guidelayout.engine;
+			var size = this._calculateMediaSize();
+			var fit = this.props.fit;
+			var _el$layout$layout2 = this.el.layout.layout,
+			    width = _el$layout$layout2.width,
+			    height = _el$layout$layout2.height;
+			var _props$position = this.props.position,
+			    x = _props$position.x,
+			    y = _props$position.y;
+
+			var focalPointX = layoutEngine.lengthToPixel(x, size.width);
+			var focalPointY = layoutEngine.lengthToPixel(y, size.height);
+
+			var left = void 0;
+			var top = void 0;
+
+			if (fit === 'cover') {
+				//Center the focal point inside the container.
+				left = width / 2 - focalPointX;
+				top = height / 2 - focalPointY;
+
+				//Make sure the media is still aligned with the edge of the container.
+				//This means we move the focal point as close to the center as possible
+				//without exposing the container behind it.
+				left = Math.min(0, Math.max(width - size.width, left));
+				top = Math.min(0, Math.max(height - size.height, top));
+			} else {
+				//TODO: position is relevant for contain as well.
+				//For contain/stretch fit we center the media inside its container.
+				left = width / 2 - size.width / 2;
+				top = height / 2 - size.height / 2;
+			}
+
+			return {
+				width: size.width,
+				height: size.height,
+				left: left,
+				top: top
+			};
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				ratio: {
+					type: 'ratio'
+				},
+				fit: {
+					type: 'string',
+					enum: ['fill', 'cover', 'contain'],
+					default: 'cover'
+				},
+				position: {
+					type: [{ x: 'csslength' }, { y: 'csslength' }],
+					expand: function expand(rawProperties) {
+						//Allow a single position and use it for both x and y.
+						if (rawProperties.length === 1) {
+							rawProperties.push(rawProperties[0]);
+							return true;
+						}
+
+						return false;
+					},
+					default: '50% 50%'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'media';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['^guidelayout', 'layout'];
+		}
+	}]);
+
+	return MediaBehavior;
+}(_Behavior3.default);
+
+exports.default = MediaBehavior;
+
+},{"behaviors/Behavior.js":9}],19:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var MousetrapBehavior = function (_Behavior) {
+	_inherits(MousetrapBehavior, _Behavior);
+
+	function MousetrapBehavior() {
+		_classCallCheck(this, MousetrapBehavior);
+
+		return _possibleConstructorReturn(this, (MousetrapBehavior.__proto__ || Object.getPrototypeOf(MousetrapBehavior)).apply(this, arguments));
+	}
+
+	_createClass(MousetrapBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			this._render();
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._render();
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this.el.style.pointerEvents = '';
+		}
+	}, {
+		key: '_render',
+		value: function _render() {
+			//TODO: access scrollmode here?
+			//TODO: instead of pointer events, add an overlay div to the <shadow-meister>.
+			this.el.style.pointerEvents = 'none';
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				native: {
+					type: 'string',
+					enum: ['always', 'fullscreen', 'never'],
+					default: 'fullscreen'
+				},
+				touch: {
+					type: 'string',
+					enum: ['always', 'fullscreen', 'never'],
+					default: 'fullscreen'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'mousetrap';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['^guidelayout'];
+		}
+	}]);
+
+	return MousetrapBehavior;
+}(_Behavior3.default);
+
+exports.default = MousetrapBehavior;
+
+},{"behaviors/Behavior.js":9}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var ScrubBehavior = function (_Behavior) {
 	_inherits(ScrubBehavior, _Behavior);
 
@@ -13586,7 +13852,7 @@ var ScrubBehavior = function (_Behavior) {
 
 exports.default = ScrubBehavior;
 
-},{"behaviors/Behavior.js":9}],19:[function(require,module,exports){
+},{"behaviors/Behavior.js":9}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13662,7 +13928,7 @@ var TransformBehavior = function (_Behavior) {
 
 exports.default = TransformBehavior;
 
-},{"behaviors/Behavior.js":9}],20:[function(require,module,exports){
+},{"behaviors/Behavior.js":9}],22:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -13702,7 +13968,7 @@ _scrollmeister2.default.defineBehavior(_FluidTextBehavior2.default);
 _scrollmeister2.default.defineBehavior(_ScrubBehavior2.default);
 _scrollmeister2.default.defineBehavior(_GLEffectBehavior2.default);
 
-},{"behaviors/FluidTextBehavior.js":12,"behaviors/GLEffectBehavior.js":13,"behaviors/InterpolateBehavior.js":15,"behaviors/LazyLoadBehavior.js":17,"behaviors/ScrubBehavior.js":18,"behaviors/TransformBehavior.js":19,"scrollmeister.js":40}],21:[function(require,module,exports){
+},{"behaviors/FluidTextBehavior.js":12,"behaviors/GLEffectBehavior.js":13,"behaviors/InterpolateBehavior.js":15,"behaviors/LazyLoadBehavior.js":17,"behaviors/ScrubBehavior.js":20,"behaviors/TransformBehavior.js":21,"scrollmeister.js":42}],23:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -13725,15 +13991,28 @@ var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
 
 var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
 
+var _MediaBehavior = require('behaviors/MediaBehavior.js');
+
+var _MediaBehavior2 = _interopRequireDefault(_MediaBehavior);
+
+var _MousetrapBehavior = require('behaviors/MousetrapBehavior.js');
+
+var _MousetrapBehavior2 = _interopRequireDefault(_MousetrapBehavior);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
 _scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
 _scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
+_scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
+//Scrollmeister.defineBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":14,"behaviors/LayoutBehavior.js":16,"scrollmeister.js":40}],22:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/GuideLayoutBehavior.js":14,"behaviors/LayoutBehavior.js":16,"behaviors/MediaBehavior.js":18,"behaviors/MousetrapBehavior.js":19,"scrollmeister.js":42}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13797,7 +14076,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":23,"scrollmeister.js":40}],23:[function(require,module,exports){
+},{"./MeisterComponent.js":25,"scrollmeister.js":42}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13932,7 +14211,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":30,"raf":4,"scrollmeister.js":40}],24:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":32,"raf":4,"scrollmeister.js":42}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13996,7 +14275,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":23,"scrollmeister.js":40}],25:[function(require,module,exports){
+},{"./MeisterComponent.js":25,"scrollmeister.js":42}],27:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -14021,7 +14300,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	customElements.define('el-meister', _ElementMeisterComponent2.default);
 }, { once: true });
 
-},{"components/ElementMeisterComponent.js":22,"components/ScrollMeisterComponent.js":24,"document-register-element":1}],26:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":24,"components/ScrollMeisterComponent.js":26,"document-register-element":1}],28:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -14073,14 +14352,14 @@ _scrollmeister2.default.defineCondition('webgl', function () {
 //TODO: allow composing conditions from existing
 //Scrollmeister.defineCondition('omfg', 's-down and landscape');
 
-},{"scrollmeister.js":40}],27:[function(require,module,exports){
+},{"scrollmeister.js":42}],29:[function(require,module,exports){
 'use strict';
 
 require('./index.js');
 
 require('behaviors/extras.js');
 
-},{"./index.js":28,"behaviors/extras.js":20}],28:[function(require,module,exports){
+},{"./index.js":30,"behaviors/extras.js":22}],30:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -14093,7 +14372,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":21,"./components":25,"./conditions":26,"./scrollmeister.js":40,"./scrollmeister.sass":41}],29:[function(require,module,exports){
+},{"./behaviors":23,"./components":27,"./conditions":28,"./scrollmeister.js":42,"./scrollmeister.sass":43}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14178,7 +14457,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14286,7 +14565,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14341,7 +14620,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14358,12 +14637,24 @@ var GuideLayoutEngine = function () {
 
 		this.guides = [];
 		this.requiredHeight = 0;
+		this.fullscreenLayout = {
+			left: 0,
+			top: 0,
+			width: 0,
+			height: 0
+		};
 	}
 
 	_createClass(GuideLayoutEngine, [{
 		key: 'updateViewport',
 		value: function updateViewport(viewport) {
 			this.viewport = viewport;
+			this.fullscreenLayout = {
+				left: 0,
+				top: 0,
+				width: viewport.outerWidth,
+				height: viewport.outerHeight
+			};
 		}
 	}, {
 		key: 'lengthToPixel',
@@ -14942,7 +15233,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15060,7 +15351,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15103,7 +15394,7 @@ exports.default = {
 	}
 };
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15136,7 +15427,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15155,7 +15446,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15350,7 +15641,7 @@ exports.default = {
 	}
 };
 
-},{"types":49}],38:[function(require,module,exports){
+},{"types":52}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15373,7 +15664,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15411,7 +15702,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15562,10 +15853,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":9,"lib/BehaviorsRegistry.js":29,"lib/ConditionsRegistry.js":31}],41:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"lib/BehaviorsRegistry.js":31,"lib/ConditionsRegistry.js":33}],43:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":8}],42:[function(require,module,exports){
+},{"scssify":8}],44:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15573,14 +15864,16 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = {
 	parse: function parse(value) {
-		return value.trim() === 'true';
+		value = value.trim();
+
+		return value === 'true' || value === 'on' || value === 'yes' || value === '1';
 	},
 	stringify: function stringify(value) {
 		return String(value);
 	}
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15622,7 +15915,7 @@ exports.default = {
 	}
 };
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15668,7 +15961,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":43}],45:[function(require,module,exports){
+},{"types/CSSLengthType.js":45}],47:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15766,7 +16059,7 @@ exports.default = {
 	}
 };
 
-},{}],46:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15795,7 +16088,35 @@ exports.default = {
 	}
 };
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var ratioRegex = /^(\d+)\s*\/\s*(\d+)$/;
+
+exports.default = {
+	parse: function parse(value) {
+		value = value.trim();
+
+		var match = value.match(ratioRegex);
+
+		if (!match) {
+			throw new Error("The value \"" + value + " does not look like a ratio. The syntax is \"width / height\", e.g. \"1920 / 1080\".");
+		}
+
+		return {
+			num: parseInt(match[1], 10) / parseInt(match[2], 10),
+			value: value
+		};
+	},
+	stringify: function stringify(value) {
+		return value.value;
+	}
+};
+
+},{}],50:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15810,7 +16131,7 @@ exports.default = {
 	}
 };
 
-},{}],48:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15848,7 +16169,7 @@ exports.default = {
 	}
 };
 
-},{}],49:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15862,6 +16183,10 @@ var _BooleanType2 = _interopRequireDefault(_BooleanType);
 var _CSSLengthType = require('types/CSSLengthType.js');
 
 var _CSSLengthType2 = _interopRequireDefault(_CSSLengthType);
+
+var _RatioType = require('types/RatioType.js');
+
+var _RatioType2 = _interopRequireDefault(_RatioType);
 
 var _HeightType = require('types/HeightType.js');
 
@@ -15889,10 +16214,11 @@ exports.default = {
 	boolean: _BooleanType2.default,
 	csslength: _CSSLengthType2.default,
 	height: _HeightType2.default,
+	ratio: _RatioType2.default,
 	layoutdependency: _LayoutDependencyType2.default,
 	number: _NumberType2.default,
 	string: _StringType2.default,
 	template: _TemplateType2.default
 };
 
-},{"types/BooleanType.js":42,"types/CSSLengthType.js":43,"types/HeightType.js":44,"types/LayoutDependencyType.js":45,"types/NumberType.js":46,"types/StringType.js":47,"types/TemplateType.js":48}]},{},[27]);
+},{"types/BooleanType.js":44,"types/CSSLengthType.js":45,"types/HeightType.js":46,"types/LayoutDependencyType.js":47,"types/NumberType.js":48,"types/RatioType.js":49,"types/StringType.js":50,"types/TemplateType.js":51}]},{},[29]);

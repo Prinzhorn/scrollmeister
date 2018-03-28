@@ -6,6 +6,8 @@ import Behavior from 'behaviors/Behavior.js';
 import type ScrollState from 'lib/ScrollState.js';
 
 export default class LayoutBehavior extends Behavior {
+	state: State;
+
 	static get schema(): any {
 		return {
 			guides: {
@@ -257,6 +259,7 @@ export default class LayoutBehavior extends Behavior {
 		let style = this.innerEl.style;
 		let width = this.layout.width;
 
+		style.position = 'relative';
 		style.width = Math.round(width) + 'px';
 
 		if (this.props.height === 'auto') {

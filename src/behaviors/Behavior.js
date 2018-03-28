@@ -52,9 +52,9 @@ export default class Behavior {
 		this.props = {};
 		this.state = {};
 
-		this.proxyCSS();
-		this.proxyProps();
-		this.parseProperties(rawProperties);
+		this._proxyCSS();
+		this._proxyProps();
+		this._parseProperties(rawProperties);
 
 		this.attach();
 		this.emit('attach');
@@ -70,7 +70,7 @@ export default class Behavior {
 			}
 		}
 
-		this.unproxyCSS();
+		this._unproxyCSS();
 
 		if (this.detach) {
 			this.detach();
@@ -200,10 +200,15 @@ export default class Behavior {
 		this.el.dispatchEvent(event);
 	}
 
+	appendChild() {
+		//TODO: append to data-scrollmeister-shadow, innerEl or el
+		//Then remove the node in destructor automagically.
+	}
+
 	updateProperties(rawProperties) {
 		const prevProps = assign({}, this.props);
 
-		this.parseProperties(rawProperties);
+		this._parseProperties(rawProperties);
 
 		if (this.update) {
 			this.update(prevProps, this.state);
@@ -215,7 +220,7 @@ export default class Behavior {
 	updateProperty(name, rawValue) {
 		const prevProps = assign({}, this.props);
 
-		this.parseProperty(name, rawValue);
+		this._parseProperty(name, rawValue);
 
 		if (this.update) {
 			this.update(prevProps, this.state);
@@ -224,12 +229,11 @@ export default class Behavior {
 		this.emit('update');
 	}
 
-	proxyCSS() {
+	_proxyCSS() {
 		let behaviorName = this.constructor.behaviorName;
 		let element = this.el;
 
 		this.style = {
-			//TODO: add transition as well (e.g. fullscreenable will make use of it)
 			set transform(value) {
 				if (value === '') {
 					element.resetBehaviorStyle(behaviorName, 'transform');
@@ -247,13 +251,13 @@ export default class Behavior {
 		};
 	}
 
-	unproxyCSS() {
+	_unproxyCSS() {
 		let behaviorName = this.constructor.behaviorName;
 
 		this.el.resetBehaviorStyles(behaviorName);
 	}
 
-	proxyProps() {
+	_proxyProps() {
 		let schema = this.constructor.schema;
 
 		for (let property in schema) {
@@ -270,12 +274,12 @@ export default class Behavior {
 		}
 	}
 
-	parseProperties(rawProperties) {
+	_parseProperties(rawProperties) {
 		const schema = this.constructor.schema;
 		schemaParser.parseProperties(this.el, schema, rawProperties, this.props);
 	}
 
-	parseProperty(property, rawValue) {
+	_parseProperty(property, rawValue) {
 		rawValue = rawValue.trim();
 
 		let schema = this.constructor.schema[property];
@@ -293,6 +297,7 @@ export default class Behavior {
 			rawValue = schema.default;
 		}
 
+		//TODO: does not validate against .enum
 		this.props[property] = schemaParser.parseProperty(this.el, property, rawValue, propertyType, valueExpander);
 	}
 }

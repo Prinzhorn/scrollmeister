@@ -16,7 +16,7 @@ export default class GLEffectBehavior extends Behavior {
 	}
 
 	static get dependencies() {
-		return ['layout', 'interpolate'];
+		return ['layout', 'interpolate', 'media'];
 	}
 
 	attach() {
@@ -47,8 +47,6 @@ export default class GLEffectBehavior extends Behavior {
 	_createCanvas() {
 		const canvas = document.createElement('canvas');
 
-		canvas.style.transform = 'translateY(-50%)';
-
 		this._sourceElement.parentNode.appendChild(canvas);
 
 		return canvas;
@@ -59,6 +57,7 @@ export default class GLEffectBehavior extends Behavior {
 
 		this._canvas.width = layout.width;
 		this._canvas.height = layout.height;
+		this._canvas.style.cssText = this._sourceElement.style.cssText;
 	}
 
 	_initRegl() {

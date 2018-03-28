@@ -26,6 +26,7 @@ const isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigato
 const isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 const isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+//TODO: can we extract a ScrollBehavior to make the two separate and not 400 LOC?
 export default class GuideLayoutBehavior extends Behavior {
 	_scrollLogic: ScrollLogic;
 	_mousemoveCounter: number;

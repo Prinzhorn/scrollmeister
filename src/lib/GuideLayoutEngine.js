@@ -84,15 +84,28 @@ type Node = {
 export default class GuideLayoutEngine {
 	guides: Array<Guide>;
 	requiredHeight: number;
+	fullscreenLayout: { left: number, top: number, width: number, height: number };
 	viewport: Viewport;
 
 	constructor() {
 		this.guides = [];
 		this.requiredHeight = 0;
+		this.fullscreenLayout = {
+			left: 0,
+			top: 0,
+			width: 0,
+			height: 0
+		};
 	}
 
 	updateViewport(viewport: Viewport) {
 		this.viewport = viewport;
+		this.fullscreenLayout = {
+			left: 0,
+			top: 0,
+			width: viewport.outerWidth,
+			height: viewport.outerHeight
+		};
 	}
 
 	lengthToPixel(value: CSSLength, percentageReference: ?number): number {
