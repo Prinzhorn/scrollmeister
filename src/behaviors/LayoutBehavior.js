@@ -6,8 +6,6 @@ import Behavior from 'behaviors/Behavior.js';
 import type ScrollState from 'lib/ScrollState.js';
 
 export default class LayoutBehavior extends Behavior {
-	state: State;
-
 	static get schema(): any {
 		return {
 			guides: {
