@@ -1,3 +1,4 @@
+import camcelCase from 'lib/camelCase.js';
 import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
 import ConditionsRegistry from 'lib/ConditionsRegistry.js';
 import Behavior from 'behaviors/Behavior.js';
@@ -67,6 +68,7 @@ const Scrollmeister = {
 			//Make the behavior available as a property on the DOM node.
 			const Behavior = this.behaviorsRegistry.get(name);
 			element[name] = new Behavior(element, rawProperties);
+			element[camcelCase(name)] = element[name];
 			element.behaviors[name] = element[name];
 		}
 	},
@@ -85,6 +87,7 @@ const Scrollmeister = {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
+			delete element[camcelCase(name)];
 			delete element.behaviors[name];
 		}
 
