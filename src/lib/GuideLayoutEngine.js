@@ -78,7 +78,7 @@ type Props = {
 type Node = {
 	layout: Layout,
 	props: Props,
-	state: { height: number }
+	intrinsicHeight: number
 };
 
 export default class GuideLayoutEngine {
@@ -294,9 +294,7 @@ export default class GuideLayoutEngine {
 
 	//This will attach the layout info directly to each dom node. No need for a lookup map.
 	_doNodeLayout(node: Node, dependencies: Array<Node>) {
-		let layout = node.layout;
-		let props = node.props;
-		let state = node.state;
+		let { layout, props, intrinsicHeight } = node;
 		let layoutMode = props.mode;
 
 		layout.spacingTop = this.lengthToPixel(props.spacing.top);
@@ -357,7 +355,7 @@ export default class GuideLayoutEngine {
 		//
 
 		if (props.height === 'auto') {
-			layout.height = state.height;
+			layout.height = intrinsicHeight;
 		} else {
 			layout.height = this.lengthToPixel(props.height, layout.width);
 		}

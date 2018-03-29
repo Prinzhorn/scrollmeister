@@ -40,6 +40,8 @@ export default class LazyLoadBehavior extends Behavior {
 				el.src = el.getAttribute('data-src');
 				el.removeAttribute('data-src');
 			}
+
+			this.notify();
 		};
 
 		let unlisten = () => {

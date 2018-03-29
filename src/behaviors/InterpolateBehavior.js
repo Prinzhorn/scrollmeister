@@ -5,6 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 
 import type ScrollState from 'lib/ScrollState.js';
 import type { CSSLength } from 'types/CSSLengthType.js';
+import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
 
 type Keyframe = {
 	anchor: 'string',
@@ -83,30 +84,20 @@ export default class InterpolateBehavior extends Behavior {
 
 		this.values = {};
 
-		//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
-		//Maybe ask the element nicely for a cached value of the last time it fired, if any?
-
-		//LAYOUT IS ASYNC, not immediately when attached.
-		this.listen(this.parentEl, 'guidelayout:layout', () => {
-			this._createInterpolators();
-		});
+		this.connectTo('^guidelayout', this._createInterpolators.bind(this));
 
 		this.listen(this.parentEl, 'guidelayout:scroll', e => {
 			this._interpolate(e.detail.scrollState);
 		});
 	}
 
-	update() {
-		this._createInterpolators();
-	}
-
-	_createInterpolators() {
+	_createInterpolators(guidelayoutBehavior: GuideLayoutBehavior) {
 		let schema = this.constructor.schema;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
 				if (this.props[prop].length > 0) {
-					this._interpolators[prop] = this._createInterpolator(this.props[prop]);
+					this._interpolators[prop] = this._createInterpolator(guidelayoutBehavior, this.props[prop]);
 				} else {
 					delete this._interpolators[prop];
 				}
@@ -117,8 +108,8 @@ export default class InterpolateBehavior extends Behavior {
 		this._interpolate(this.parentEl.guidelayout.scrollState);
 	}
 
-	_createInterpolator(keyframes: Array<Keyframe>) {
-		let layoutEngine = this.parentEl.guidelayout.engine;
+	_createInterpolator(guidelayoutBehavior: GuideLayoutBehavior, keyframes: Array<Keyframe>) {
+		let layoutEngine = guidelayoutBehavior.engine;
 
 		//Map the keyframe anchor and offset to scroll positions.
 		let mappedKeyframes = keyframes.map(keyframe => {
@@ -187,7 +178,7 @@ export default class InterpolateBehavior extends Behavior {
 		}
 
 		if (didChange) {
-			this.emit('change');
+			this.notify();
 		}
 	}
 }

@@ -25,12 +25,14 @@ export default class RotatingGradientBehavior extends Behavior {
 	}
 
 	attach() {
-		this.listen('interpolate:change', () => {
-			let angle = this.el.interpolate.values.progress * this.props.speed * 360;
+		this.connectTo('interpolate', interpolateBehavior => {
+			let angle = interpolateBehavior.values.progress * this.props.speed * 360;
 			let color1 = `hsl(${angle}, 100%, 50%)`;
 			let color2 = `hsl(${angle + this.props.offset}, 100%, 50%)`;
 
 			this.el.style.backgroundImage = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+
+			this.notify();
 		});
 	}
 

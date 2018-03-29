@@ -2,6 +2,8 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
+import type InterpolateBehavior from 'behaviors/InterpolateBehavior.js';
+
 export default class ScrubBehavior extends Behavior {
 	static get schema(): any {
 		return {
@@ -25,18 +27,17 @@ export default class ScrubBehavior extends Behavior {
 		this.videoEl = this.el.querySelector('video');
 		this._waitingForSeeked = false;
 
-		//TODO: if scrub is added lazy we won't get the first thing.
-		this.listen('interpolate:change', () => {
-			this._seek();
-		});
+		this.connectTo('interpolate', this._seek.bind(this));
 
+		//TODO: same problem here and the flag won't help.
+		//Even remembering if the event had fired before won't help (it might not be in viewport anymore).
 		this.listen('layout:extendedviewport:enter', () => {
 			this.videoEl.load();
 		});
 	}
 
-	_getProgress() {
-		let value = this.el.interpolate.values[this.props.parameter];
+	_getProgress(interpolateBehavior: InterpolateBehavior) {
+		let value = interpolateBehavior.values[this.props.parameter];
 
 		//Make sure the value is between 0 and 1.
 		//If it is 3.2, this will make it 0.2.
@@ -55,7 +56,7 @@ export default class ScrubBehavior extends Behavior {
 		return value;
 	}
 
-	_seek() {
+	_seek(interpolateBehavior: InterpolateBehavior) {
 		const video = this.videoEl;
 
 		//Video not ready yet.
@@ -72,13 +73,15 @@ export default class ScrubBehavior extends Behavior {
 				this.listenOnce(video, 'seeked', () => {
 					this._waitingForSeeked = false;
 
-					video.currentTime = video.duration * this._getProgress();
+					video.currentTime = video.duration * this._getProgress(interpolateBehavior);
 					video.pause();
+					this.notify();
 				});
 			}
 		} else {
-			video.currentTime = video.duration * this._getProgress();
+			video.currentTime = video.duration * this._getProgress(interpolateBehavior);
 			video.pause();
+			this.notify();
 		}
 	}
 }

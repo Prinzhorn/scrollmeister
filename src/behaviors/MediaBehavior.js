@@ -2,6 +2,8 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
+import type LayoutBehavior from 'behaviors/LayoutBehavior.js';
+
 export default class MediaBehavior extends Behavior {
 	static get schema(): any {
 		return {
@@ -38,20 +40,25 @@ export default class MediaBehavior extends Behavior {
 	}
 
 	attach() {
-		this.listen('layout:render', () => {
-			this._render();
-		});
+		this.connectTo('layout', this._render.bind(this));
 	}
 
-	update() {
-		this._render();
+	detach() {
+		let img = this.el.querySelector('img');
+		let style = img.style;
+
+		style.display = '';
+		style.position = '';
+		style.left = style.top = '';
+		style.maxWidth = style.maxHeight = '';
+		style.width = '';
+		style.height = '';
+		style.transform = '';
 	}
 
-	detach() {}
-
-	_render() {
+	_render(layoutBehavior: LayoutBehavior) {
 		//TODO: need a wrapper for overflow:hidden
-		let layout = this.calculateMediaLayout();
+		let layout = this.calculateMediaLayout(layoutBehavior);
 		let img = this.el.querySelector('img');
 		let style = img.style;
 
@@ -62,12 +69,14 @@ export default class MediaBehavior extends Behavior {
 		style.width = Math.round(layout.width) + 'px';
 		style.height = Math.round(layout.height) + 'px';
 		style.transform = `translate(${Math.round(layout.left)}px, ${Math.round(layout.top)}px)`;
+
+		this.notify();
 	}
 
-	_calculateMediaSize() {
+	_calculateMediaSize(layoutBehavior: LayoutBehavior) {
 		let ratio = this.props.ratio.num;
 		let fit = this.props.fit;
-		let { width, height } = this.el.layout.layout;
+		let { width, height } = layoutBehavior.layout;
 		let containerRatio = width / height;
 
 		if (fit !== 'fill') {
@@ -84,11 +93,11 @@ export default class MediaBehavior extends Behavior {
 		};
 	}
 
-	calculateMediaLayout() {
+	calculateMediaLayout(layoutBehavior: LayoutBehavior) {
 		let layoutEngine = this.parentEl.guidelayout.engine;
-		let size = this._calculateMediaSize();
+		let size = this._calculateMediaSize(layoutBehavior);
 		let fit = this.props.fit;
-		let { width, height } = this.el.layout.layout;
+		let { width, height } = layoutBehavior.layout;
 		let { x, y } = this.props.position;
 		let focalPointX = layoutEngine.lengthToPixel(x, size.width);
 		let focalPointY = layoutEngine.lengthToPixel(y, size.height);

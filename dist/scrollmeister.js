@@ -11565,10 +11565,10 @@ var Behavior = function () {
 	function Behavior(element, rawProperties) {
 		_classCallCheck(this, Behavior);
 
+		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
 		this.parentEl = element.parentNode;
 		this.props = {};
-		this.state = {};
 
 		this._proxyCSS();
 		this._proxyProps();
@@ -11599,17 +11599,46 @@ var Behavior = function () {
 			this.emit('detach');
 		}
 	}, {
-		key: 'setState',
-		value: function setState(newState) {
-			var prevState = (0, _ObjectAssign2.default)({}, this.state);
-
-			(0, _ObjectAssign2.default)(this.state, newState);
-
-			if (this.update) {
-				this.update(this.props, prevState);
+		key: 'notify',
+		value: function notify() {
+			this.hasNotifiedAtLeastOnce = true;
+			this.emit('change');
+		}
+	}, {
+		key: 'connectTo',
+		value: function connectTo(dependencyName, callback) {
+			if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
+				throw new Error('You are trying to connect the "' + this.constructor.behaviorName + '" behavior to the "' + dependencyName + '" behavior, which is not listed as dependency.');
 			}
 
-			this.emit('update');
+			var element = this.el;
+
+			if (dependencyName.charAt(0) === '^') {
+				dependencyName = dependencyName.slice(1);
+				element = this.parentEl;
+			}
+
+			var behavior = element[dependencyName];
+
+			//For the most part this is what "connecting" is about.
+			//We just listen to the change event of the other behavior.
+			this.listen(element, dependencyName + ':change', function () {
+				callback(behavior);
+			});
+
+			//This is up for debate. Do we need to update the connection every time
+			//this behavior gets new props?
+			this.listen(this.constructor.behaviorName + ':update', function () {
+				if (behavior.hasNotifiedAtLeastOnce) {
+					callback(behavior);
+				}
+			});
+
+			//This catches the edge case where the current behavior is attached lazy
+			//and the dependency already had a change event. We want to update the behavior immediately.
+			if (behavior.hasNotifiedAtLeastOnce) {
+				callback(behavior);
+			}
 		}
 	}, {
 		key: 'listen',
@@ -11634,12 +11663,7 @@ var Behavior = function () {
 				return;
 			}
 
-			//listen works for both DOM elements and event emitters using on/off.
-			if (typeof element.addEventListener === 'function') {
-				element.addEventListener(eventName, callback, thirdEventListenerArgument);
-			} else {
-				element.on(eventName, callback);
-			}
+			element.addEventListener(eventName, callback, thirdEventListenerArgument);
 
 			if (!this.listeners) {
 				this.listeners = [];
@@ -11705,12 +11729,7 @@ var Behavior = function () {
 				delete callback._once;
 			}
 
-			//listen works for both DOM elements and event emitters using on/off.
-			if (typeof element.removeEventListener === 'function') {
-				element.removeEventListener(eventName, callback, thirdEventListenerArgument);
-			} else {
-				element.off(eventName, callback);
-			}
+			element.removeEventListener(eventName, callback, thirdEventListenerArgument);
 		}
 	}, {
 		key: 'emit',
@@ -11731,7 +11750,7 @@ var Behavior = function () {
 	}, {
 		key: 'appendChild',
 		value: function appendChild() {
-			//TODO: append to data-scrollmeister-shadow, innerEl or el
+			//TODO: append to data-scrollmeister-shadow (<shadow-meister>), innerEl or el
 			//Then remove the node in destructor automagically.
 		}
 	}, {
@@ -11742,20 +11761,20 @@ var Behavior = function () {
 			this._parseProperties(rawProperties);
 
 			if (this.update) {
-				this.update(prevProps, this.state);
+				this.update(prevProps);
 			}
 
 			this.emit('update');
 		}
 	}, {
-		key: 'updateProperty',
-		value: function updateProperty(name, rawValue) {
+		key: '_updateProperty',
+		value: function _updateProperty(name, rawValue) {
 			var prevProps = (0, _ObjectAssign2.default)({}, this.props);
 
 			this._parseProperty(name, rawValue);
 
 			if (this.update) {
-				this.update(prevProps, this.state);
+				this.update(prevProps);
 			}
 
 			this.emit('update');
@@ -11804,7 +11823,7 @@ var Behavior = function () {
 							return _schemaParser2.default.stringifyProperty(this.el, this.props[property], schema[property].type);
 						},
 						set: function set(value) {
-							this.updateProperty(property, value);
+							this._updateProperty(property, value);
 						}
 					});
 				}
@@ -11881,14 +11900,9 @@ var DebugGuidesBehavior = function (_Behavior) {
 	_createClass(DebugGuidesBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
 			this._createElement();
 
-			//Whenever the guide layout updates, render the guides.
-			this.listenAndInvoke(this.el, 'guidelayout:layout', function () {
-				_this2._render();
-			});
+			this.connectTo('guidelayout', this._render.bind(this));
 		}
 	}, {
 		key: 'detach',
@@ -11914,10 +11928,10 @@ var DebugGuidesBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_render',
-		value: function _render() {
-			var _this3 = this;
+		value: function _render(guidelayoutBehavior) {
+			var _this2 = this;
 
-			var guides = this.el.guidelayout.engine.guides;
+			var guides = guidelayoutBehavior.engine.guides;
 
 			var html = guides.map(function (guide) {
 				var width = guide.width;
@@ -11928,10 +11942,12 @@ var DebugGuidesBehavior = function (_Behavior) {
 					opacity = 1;
 				}
 
-				return '\n\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background:' + _this3.props.color + '; left: ' + guide.rightPosition + 'px; opacity: ' + opacity + '; px; width: ' + width + 'px;"></div>\n\t\t\t';
+				return '\n\t\t\t\t<div title="' + guide.name + '" style="position: absolute; top: 0; bottom: 0; background:' + _this2.props.color + '; left: ' + guide.rightPosition + 'px; opacity: ' + opacity + '; px; width: ' + width + 'px;"></div>\n\t\t\t';
 			});
 
 			this._guidesWrapper.innerHTML = html.join('');
+
+			this.notify();
 		}
 	}], [{
 		key: 'schema',
@@ -12069,13 +12085,14 @@ var FadeInBehavior = function (_Behavior) {
 
 			this.el.layout.innerEl.style.whiteSpace = 'nowrap';
 
-			//TODO: same problem as interpolate:change. If the fluidtext behavior is added lazy, we won't catch the first render.
-			this.listen('layout:render', function () {
+			this.connectTo('layout', function (layoutBehavior) {
 				if (!_this2._fontSizeWidthRatio) {
 					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.el.layout.innerEl);
 				}
 
-				_this2.el.layout.innerEl.style.fontSize = _this2._fontSizeWidthRatio * _this2.el.layout.layout.width + 'px';
+				_this2.el.layout.innerEl.style.fontSize = _this2._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
+
+				_this2.notify();
 			});
 		}
 	}, {
@@ -12143,24 +12160,22 @@ var GLEffectBehavior = function (_Behavior) {
 	_createClass(GLEffectBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
 			this._sourceElement = this.el.querySelector('img, video');
 			this._canvas = this._createCanvas();
 
 			this._initRegl();
 
-			this.listenAndInvoke('layout:render', function () {
-				_this2._resize();
-			});
-
-			this.listen('interpolate:change', function () {
-				_this2._render();
-			});
+			this.connectTo('layout', this._resize.bind(this));
+			this.connectTo('interpolate', this._render.bind(this));
 
 			//This updates the texture in addition to the render loop.
 			//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
 			this._pollTimer = setInterval(this._pollSource.bind(this, true), 1000 / 30);
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._initRegl();
 		}
 	}, {
 		key: 'detach',
@@ -12180,8 +12195,8 @@ var GLEffectBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_resize',
-		value: function _resize() {
-			var layout = this.el.layout.layout;
+		value: function _resize(_ref) {
+			var layout = _ref.layout;
 
 			this._canvas.width = layout.width;
 			this._canvas.height = layout.height;
@@ -12190,6 +12205,10 @@ var GLEffectBehavior = function (_Behavior) {
 	}, {
 		key: '_initRegl',
 		value: function _initRegl() {
+			if (this._regl) {
+				this._regl.destroy();
+			}
+
 			var regl = (0, _regl2.default)(this._canvas);
 
 			this._draw = regl({
@@ -12248,7 +12267,7 @@ var GLEffectBehavior = function (_Behavior) {
 				this._updateTexture(render);
 
 				if (render) {
-					this._render();
+					this._render(this.el.interpolate);
 				}
 			}
 		}
@@ -12273,7 +12292,7 @@ var GLEffectBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_render',
-		value: function _render() {
+		value: function _render(interpolateBehavior) {
 			this._pollSource();
 
 			if (!this._texture) {
@@ -12284,9 +12303,11 @@ var GLEffectBehavior = function (_Behavior) {
 
 			this._draw({
 				image: this._texture,
-				progress: this.el.interpolate.values.progress,
+				progress: interpolateBehavior.values.progress,
 				size: [this._canvas.width, this._canvas.height]
 			});
+
+			this.notify();
 		}
 	}], [{
 		key: 'schema',
@@ -12378,9 +12399,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 	_createClass(GuideLayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			this.state = {
-				scrollMode: 'touch'
-			};
+			this.scrollMode = 'touch';
 
 			this._layoutScheduled = false;
 			this._lastRenderTime = -1;
@@ -12478,9 +12497,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 					window.scrollTo(0, scrollPosition + delta);
 
-					_this3.setState({
-						scrollMode: 'native'
-					});
+					_this3.scrollMode = 'native';
 
 					waitForFakeAction();
 				};
@@ -12522,9 +12539,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 					_this3._mousemoveCounter = 0;
 
-					_this3.setState({
-						scrollMode: 'touch'
-					});
+					_this3.scrollMode = 'touch';
 
 					waitForNativeAction();
 				};
@@ -12551,7 +12566,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 		value: function scrollTo(position) {
 			position = Math.round(position);
 
-			if (this.state.scrollMode === 'native') {
+			if (this.scrollMode === 'native') {
 				window.scrollTo(0, position);
 			} else {
 				this._scrollLogic.scrollTo(position);
@@ -12571,7 +12586,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 			});
 
 			//Whenever a new layout behavior is attached or changed, we need to do layout.
-			this.listen(document, 'layout:attach layout:update', this._scheduleLayout.bind(this));
+			this.listen(document, 'layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
 		}
 	}, {
 		key: '_scrollLoop',
@@ -12591,7 +12606,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 		value: function _pollScrollPosition(now) {
 			var currentScrollPosition = void 0;
 
-			if (this.state.scrollMode === 'touch') {
+			if (this.scrollMode === 'touch') {
 				currentScrollPosition = this._scrollLogic.getOffset();
 			} else {
 				currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
@@ -12677,7 +12692,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 			this._updateScrollHeight();
 
-			this.emit('layout', false);
+			this.notify();
 		}
 	}, {
 		key: '_updateScrollHeight',
@@ -12827,32 +12842,21 @@ var InterpolateBehavior = function (_Behavior) {
 
 			this.values = {};
 
-			//TODO: what if interpolate behaviopr is added lazy? We don't get an initial event then.
-			//Maybe ask the element nicely for a cached value of the last time it fired, if any?
-
-			//LAYOUT IS ASYNC, not immediately when attached.
-			this.listen(this.parentEl, 'guidelayout:layout', function () {
-				_this2._createInterpolators();
-			});
+			this.connectTo('^guidelayout', this._createInterpolators.bind(this));
 
 			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
 				_this2._interpolate(e.detail.scrollState);
 			});
 		}
 	}, {
-		key: 'update',
-		value: function update() {
-			this._createInterpolators();
-		}
-	}, {
 		key: '_createInterpolators',
-		value: function _createInterpolators() {
+		value: function _createInterpolators(guidelayoutBehavior) {
 			var schema = this.constructor.schema;
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
 					if (this.props[prop].length > 0) {
-						this._interpolators[prop] = this._createInterpolator(this.props[prop]);
+						this._interpolators[prop] = this._createInterpolator(guidelayoutBehavior, this.props[prop]);
 					} else {
 						delete this._interpolators[prop];
 					}
@@ -12864,10 +12868,10 @@ var InterpolateBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_createInterpolator',
-		value: function _createInterpolator(keyframes) {
+		value: function _createInterpolator(guidelayoutBehavior, keyframes) {
 			var _this3 = this;
 
-			var layoutEngine = this.parentEl.guidelayout.engine;
+			var layoutEngine = guidelayoutBehavior.engine;
 
 			//Map the keyframe anchor and offset to scroll positions.
 			var mappedKeyframes = keyframes.map(function (keyframe) {
@@ -12939,7 +12943,7 @@ var InterpolateBehavior = function (_Behavior) {
 			}
 
 			if (didChange) {
-				this.emit('change');
+				this.notify();
 			}
 		}
 	}], [{
@@ -13013,15 +13017,7 @@ var LayoutBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
-			/*
-   TODO: we haven't quite figured out state/rendering yet. Quoting react docs
-   "If you don’t use it in render(), it shouldn’t be in the state. For example, you can put timer IDs directly on the instance."
-   This behavior itself does not need the state.height at all. It just provides it to the GuideLayoutBehavior.
-   Maybe an `intrinsicHeight` property on the instance itself?
-   */
-			this.state = {
-				height: 0
-			};
+			this.intrinsicHeight = 0;
 
 			this.scrollUpdate = {};
 			this.layout = {};
@@ -13030,10 +13026,9 @@ var LayoutBehavior = function (_Behavior) {
 			//But still always define innerEl, even if it is === el
 			this._wrapContents();
 
-			this.listen(this.parentEl, 'guidelayout:layout', function () {
-				_this2._render();
-			});
+			this.connectTo('^guidelayout', this._render.bind(this));
 
+			//TODO: Once we unify stuff and separate guidelayout and scrolling, this will be scroll:change.
 			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
 				_this2._scroll(e.detail.scrollState);
 			});
@@ -13060,7 +13055,10 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'detach',
 		value: function detach() {
-			this._unobserveHeight();
+			if (this.props.height === 'auto') {
+				this._unobserveHeight();
+			}
+
 			this._unwrapContents();
 			//TODO: remove styles
 		}
@@ -13148,9 +13146,8 @@ var LayoutBehavior = function (_Behavior) {
 			var _this3 = this;
 
 			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
-				_this3.setState({
-					height: entries[0].contentRect.height
-				});
+				_this3.intrinsicHeight = entries[0].contentRect.height;
+				_this3.emit('heightchange');
 			});
 
 			this._resizeObserver.observe(this.innerEl);
@@ -13158,21 +13155,19 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_unobserveHeight',
 		value: function _unobserveHeight() {
-			if (this._resizeObserver) {
-				this._resizeObserver.disconnect();
-				this._resizeObserver = null;
-			}
+			this._resizeObserver.disconnect();
+			this._resizeObserver = null;
 		}
 	}, {
 		key: '_render',
-		value: function _render() {
+		value: function _render(guidelayoutBehavior) {
 			this._renderWrapper();
 			this._renderInner();
 
 			//Force a scroll update.
-			this._scroll(this.parentEl.guidelayout.scrollState, true);
+			this._scroll(guidelayoutBehavior.scrollState, true);
 
-			this.emit('render');
+			this.notify();
 		}
 	}, {
 		key: '_canSafelyBeUnloadedFromGPU',
@@ -13233,8 +13228,8 @@ var LayoutBehavior = function (_Behavior) {
 			this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
 
 			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
-				var _left = Math.round(this.layout.left);
-				var _top = scrollUpdate.wrapperTop;
+				var left = Math.round(this.layout.left);
+				var top = scrollUpdate.wrapperTop;
 
 				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
 				//But we do not do the opposite here. This is just the last resort.
@@ -13244,7 +13239,7 @@ var LayoutBehavior = function (_Behavior) {
 					style.willChange = 'transform';
 				}
 
-				this.style.transform = 'translate(' + _left + 'px, ' + _top + 'px)';
+				this.style.transform = 'translate(' + left + 'px, ' + top + 'px)';
 
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
@@ -13435,6 +13430,8 @@ var LazyLoadBehavior = function (_Behavior) {
 					el.src = el.getAttribute('data-src');
 					el.removeAttribute('data-src');
 				}
+
+				_this2.notify();
 			};
 
 			var unlisten = function unlisten() {
@@ -13500,25 +13497,27 @@ var MediaBehavior = function (_Behavior) {
 	_createClass(MediaBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
-			this.listen('layout:render', function () {
-				_this2._render();
-			});
-		}
-	}, {
-		key: 'update',
-		value: function update() {
-			this._render();
+			this.connectTo('layout', this._render.bind(this));
 		}
 	}, {
 		key: 'detach',
-		value: function detach() {}
+		value: function detach() {
+			var img = this.el.querySelector('img');
+			var style = img.style;
+
+			style.display = '';
+			style.position = '';
+			style.left = style.top = '';
+			style.maxWidth = style.maxHeight = '';
+			style.width = '';
+			style.height = '';
+			style.transform = '';
+		}
 	}, {
 		key: '_render',
-		value: function _render() {
+		value: function _render(layoutBehavior) {
 			//TODO: need a wrapper for overflow:hidden
-			var layout = this.calculateMediaLayout();
+			var layout = this.calculateMediaLayout(layoutBehavior);
 			var img = this.el.querySelector('img');
 			var style = img.style;
 
@@ -13529,15 +13528,17 @@ var MediaBehavior = function (_Behavior) {
 			style.width = Math.round(layout.width) + 'px';
 			style.height = Math.round(layout.height) + 'px';
 			style.transform = 'translate(' + Math.round(layout.left) + 'px, ' + Math.round(layout.top) + 'px)';
+
+			this.notify();
 		}
 	}, {
 		key: '_calculateMediaSize',
-		value: function _calculateMediaSize() {
+		value: function _calculateMediaSize(layoutBehavior) {
 			var ratio = this.props.ratio.num;
 			var fit = this.props.fit;
-			var _el$layout$layout = this.el.layout.layout,
-			    width = _el$layout$layout.width,
-			    height = _el$layout$layout.height;
+			var _layoutBehavior$layou = layoutBehavior.layout,
+			    width = _layoutBehavior$layou.width,
+			    height = _layoutBehavior$layou.height;
 
 			var containerRatio = width / height;
 
@@ -13556,13 +13557,13 @@ var MediaBehavior = function (_Behavior) {
 		}
 	}, {
 		key: 'calculateMediaLayout',
-		value: function calculateMediaLayout() {
+		value: function calculateMediaLayout(layoutBehavior) {
 			var layoutEngine = this.parentEl.guidelayout.engine;
-			var size = this._calculateMediaSize();
+			var size = this._calculateMediaSize(layoutBehavior);
 			var fit = this.props.fit;
-			var _el$layout$layout2 = this.el.layout.layout,
-			    width = _el$layout$layout2.width,
-			    height = _el$layout$layout2.height;
+			var _layoutBehavior$layou2 = layoutBehavior.layout,
+			    width = _layoutBehavior$layou2.width,
+			    height = _layoutBehavior$layou2.height;
 			var _props$position = this.props.position,
 			    x = _props$position.x,
 			    y = _props$position.y;
@@ -13761,12 +13762,14 @@ var RotatingGradientBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
-			this.listen('interpolate:change', function () {
-				var angle = _this2.el.interpolate.values.progress * _this2.props.speed * 360;
+			this.connectTo('interpolate', function (interpolateBehavior) {
+				var angle = interpolateBehavior.values.progress * _this2.props.speed * 360;
 				var color1 = 'hsl(' + angle + ', 100%, 50%)';
 				var color2 = 'hsl(' + (angle + _this2.props.offset) + ', 100%, 50%)';
 
 				_this2.el.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
+
+				_this2.notify();
 			});
 		}
 	}, {
@@ -13843,19 +13846,18 @@ var ScrubBehavior = function (_Behavior) {
 			this.videoEl = this.el.querySelector('video');
 			this._waitingForSeeked = false;
 
-			//TODO: if scrub is added lazy we won't get the first thing.
-			this.listen('interpolate:change', function () {
-				_this2._seek();
-			});
+			this.connectTo('interpolate', this._seek.bind(this));
 
+			//TODO: same problem here and the flag won't help.
+			//Even remembering if the event had fired before won't help (it might not be in viewport anymore).
 			this.listen('layout:extendedviewport:enter', function () {
 				_this2.videoEl.load();
 			});
 		}
 	}, {
 		key: '_getProgress',
-		value: function _getProgress() {
-			var value = this.el.interpolate.values[this.props.parameter];
+		value: function _getProgress(interpolateBehavior) {
+			var value = interpolateBehavior.values[this.props.parameter];
 
 			//Make sure the value is between 0 and 1.
 			//If it is 3.2, this will make it 0.2.
@@ -13875,7 +13877,7 @@ var ScrubBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_seek',
-		value: function _seek() {
+		value: function _seek(interpolateBehavior) {
 			var _this3 = this;
 
 			var video = this.videoEl;
@@ -13894,13 +13896,15 @@ var ScrubBehavior = function (_Behavior) {
 					this.listenOnce(video, 'seeked', function () {
 						_this3._waitingForSeeked = false;
 
-						video.currentTime = video.duration * _this3._getProgress();
+						video.currentTime = video.duration * _this3._getProgress(interpolateBehavior);
 						video.pause();
+						_this3.notify();
 					});
 				}
 			} else {
-				video.currentTime = video.duration * this._getProgress();
+				video.currentTime = video.duration * this._getProgress(interpolateBehavior);
 				video.pause();
+				this.notify();
 			}
 		}
 	}], [{
@@ -13944,6 +13948,10 @@ var _Behavior2 = require('behaviors/Behavior.js');
 
 var _Behavior3 = _interopRequireDefault(_Behavior2);
 
+var _InterpolateBehavior = require('behaviors/InterpolateBehavior.js');
+
+var _InterpolateBehavior2 = _interopRequireDefault(_InterpolateBehavior);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -13964,26 +13972,21 @@ var TransformBehavior = function (_Behavior) {
 	_createClass(TransformBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
-			this.listen('interpolate:change', function () {
-				//TODO: What if the transition behavior is added lazy? We interpolate behavior won't trigger any events until we scroll again.
-				//The same applies to the layout behavior. If we add it later (not in the same frame as guidelayout) then it won't receive
-				//the most rect guidelayout:layout event. So this is something we need to solve in the grand schema.
-				//TODO: in which order will we apply translate, rotate, scale and skew?
-				//I guess translate should always be the first. And scaling the last one.
-				//So... translate, skew, rotate, scale?
-				//This feels natural. Skewing after rotating is nothing people can imagine in their head.
-				//Or just add an order property with a default.
-
-				_this2._render();
-			});
+			this.connectTo('interpolate', this._render.bind(this));
 		}
 	}, {
 		key: '_render',
-		value: function _render() {
-			this.style.opacity = this.el.interpolate.values.opacity;
-			this.style.transform = 'rotate(' + this.el.interpolate.values.rotate + 'deg) scale(' + this.el.interpolate.values.scale + ')';
+		value: function _render(interpolateBehavior) {
+			this.style.opacity = interpolateBehavior.values.opacity;
+
+			//TODO: in which order will we apply translate, rotate, scale and skew?
+			//I guess translate should always be the first. And scaling the last one.
+			//So... translate, skew, rotate, scale?
+			//This feels natural. Skewing after rotating is nothing people can imagine in their head.
+			//Or just add an order property with a default.
+			this.style.transform = 'rotate(' + interpolateBehavior.values.rotate + 'deg) scale(' + interpolateBehavior.values.scale + ')';
+
+			this.notify();
 		}
 	}], [{
 		key: 'schema',
@@ -14007,7 +14010,7 @@ var TransformBehavior = function (_Behavior) {
 
 exports.default = TransformBehavior;
 
-},{"behaviors/Behavior.js":9}],23:[function(require,module,exports){
+},{"behaviors/Behavior.js":9,"behaviors/InterpolateBehavior.js":15}],23:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -14937,9 +14940,10 @@ var GuideLayoutEngine = function () {
 	}, {
 		key: '_doNodeLayout',
 		value: function _doNodeLayout(node, dependencies) {
-			var layout = node.layout;
-			var props = node.props;
-			var state = node.state;
+			var layout = node.layout,
+			    props = node.props,
+			    intrinsicHeight = node.intrinsicHeight;
+
 			var layoutMode = props.mode;
 
 			layout.spacingTop = this.lengthToPixel(props.spacing.top);
@@ -15000,7 +15004,7 @@ var GuideLayoutEngine = function () {
 			//
 
 			if (props.height === 'auto') {
-				layout.height = state.height;
+				layout.height = intrinsicHeight;
 			} else {
 				layout.height = this.lengthToPixel(props.height, layout.width);
 			}

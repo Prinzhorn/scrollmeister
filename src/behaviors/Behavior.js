@@ -47,10 +47,10 @@ export default class Behavior {
 	}
 
 	constructor(element, rawProperties) {
+		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
 		this.parentEl = element.parentNode;
 		this.props = {};
-		this.state = {};
 
 		this._proxyCSS();
 		this._proxyProps();
@@ -79,16 +79,48 @@ export default class Behavior {
 		this.emit('detach');
 	}
 
-	setState(newState) {
-		const prevState = assign({}, this.state);
+	notify() {
+		this.hasNotifiedAtLeastOnce = true;
+		this.emit('change');
+	}
 
-		assign(this.state, newState);
-
-		if (this.update) {
-			this.update(this.props, prevState);
+	connectTo(dependencyName, callback) {
+		if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
+			throw new Error(
+				`You are trying to connect the "${
+					this.constructor.behaviorName
+				}" behavior to the "${dependencyName}" behavior, which is not listed as dependency.`
+			);
 		}
 
-		this.emit('update');
+		let element = this.el;
+
+		if (dependencyName.charAt(0) === '^') {
+			dependencyName = dependencyName.slice(1);
+			element = this.parentEl;
+		}
+
+		let behavior = element[dependencyName];
+
+		//For the most part this is what "connecting" is about.
+		//We just listen to the change event of the other behavior.
+		this.listen(element, dependencyName + ':change', () => {
+			callback(behavior);
+		});
+
+		//This is up for debate. Do we need to update the connection every time
+		//this behavior gets new props?
+		this.listen(this.constructor.behaviorName + ':update', () => {
+			if (behavior.hasNotifiedAtLeastOnce) {
+				callback(behavior);
+			}
+		});
+
+		//This catches the edge case where the current behavior is attached lazy
+		//and the dependency already had a change event. We want to update the behavior immediately.
+		if (behavior.hasNotifiedAtLeastOnce) {
+			callback(behavior);
+		}
 	}
 
 	listen(element, eventName, callback) {
@@ -111,12 +143,7 @@ export default class Behavior {
 			return;
 		}
 
-		//listen works for both DOM elements and event emitters using on/off.
-		if (typeof element.addEventListener === 'function') {
-			element.addEventListener(eventName, callback, thirdEventListenerArgument);
-		} else {
-			element.on(eventName, callback);
-		}
+		element.addEventListener(eventName, callback, thirdEventListenerArgument);
 
 		if (!this.listeners) {
 			this.listeners = [];
@@ -179,12 +206,7 @@ export default class Behavior {
 			delete callback._once;
 		}
 
-		//listen works for both DOM elements and event emitters using on/off.
-		if (typeof element.removeEventListener === 'function') {
-			element.removeEventListener(eventName, callback, thirdEventListenerArgument);
-		} else {
-			element.off(eventName, callback);
-		}
+		element.removeEventListener(eventName, callback, thirdEventListenerArgument);
 	}
 
 	emit(name, bubbles = true) {
@@ -201,7 +223,7 @@ export default class Behavior {
 	}
 
 	appendChild() {
-		//TODO: append to data-scrollmeister-shadow, innerEl or el
+		//TODO: append to data-scrollmeister-shadow (<shadow-meister>), innerEl or el
 		//Then remove the node in destructor automagically.
 	}
 
@@ -211,19 +233,19 @@ export default class Behavior {
 		this._parseProperties(rawProperties);
 
 		if (this.update) {
-			this.update(prevProps, this.state);
+			this.update(prevProps);
 		}
 
 		this.emit('update');
 	}
 
-	updateProperty(name, rawValue) {
+	_updateProperty(name, rawValue) {
 		const prevProps = assign({}, this.props);
 
 		this._parseProperty(name, rawValue);
 
 		if (this.update) {
-			this.update(prevProps, this.state);
+			this.update(prevProps);
 		}
 
 		this.emit('update');
@@ -267,7 +289,7 @@ export default class Behavior {
 						return schemaParser.stringifyProperty(this.el, this.props[property], schema[property].type);
 					},
 					set(value) {
-						this.updateProperty(property, value);
+						this._updateProperty(property, value);
 					}
 				});
 			}

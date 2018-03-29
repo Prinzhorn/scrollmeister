@@ -3,7 +3,9 @@
 import ResizeObserver from 'resize-observer-polyfill';
 
 import Behavior from 'behaviors/Behavior.js';
+
 import type ScrollState from 'lib/ScrollState.js';
+import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
 
 export default class LayoutBehavior extends Behavior {
 	static get schema(): any {
@@ -68,15 +70,7 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	attach() {
-		/*
-		TODO: we haven't quite figured out state/rendering yet. Quoting react docs
-		"If you don’t use it in render(), it shouldn’t be in the state. For example, you can put timer IDs directly on the instance."
-		This behavior itself does not need the state.height at all. It just provides it to the GuideLayoutBehavior.
-		Maybe an `intrinsicHeight` property on the instance itself?
-		*/
-		this.state = {
-			height: 0
-		};
+		this.intrinsicHeight = 0;
 
 		this.scrollUpdate = {};
 		this.layout = {};
@@ -85,10 +79,9 @@ export default class LayoutBehavior extends Behavior {
 		//But still always define innerEl, even if it is === el
 		this._wrapContents();
 
-		this.listen(this.parentEl, 'guidelayout:layout', () => {
-			this._render();
-		});
+		this.connectTo('^guidelayout', this._render.bind(this));
 
+		//TODO: Once we unify stuff and separate guidelayout and scrolling, this will be scroll:change.
 		this.listen(this.parentEl, 'guidelayout:scroll', e => {
 			this._scroll(e.detail.scrollState);
 		});
@@ -102,16 +95,7 @@ export default class LayoutBehavior extends Behavior {
 		}
 	}
 
-	update(prevProps: {
-		guides: Array<{ left: string, right: string }>,
-		height: 'auto' | { length: number, unit: string },
-		mode: 'flow' | 'follow',
-		dependencies: string,
-		followerMode: 'parallax' | 'pin',
-		pinAnchor: 'top' | 'center' | 'bottom',
-		pinOffset: { length: number, unit: string },
-		spacing: { top: { length: number, unit: string }, bottom: { length: number, unit: string } }
-	}) {
+	update(prevProps: { height: 'auto' | { length: number, unit: string } }) {
 		if (this.props.height !== prevProps.height) {
 			if (this.props.height === 'auto') {
 				this._observeHeight();
@@ -122,7 +106,10 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	detach() {
-		this._unobserveHeight();
+		if (this.props.height === 'auto') {
+			this._unobserveHeight();
+		}
+
 		this._unwrapContents();
 		//TODO: remove styles
 	}
@@ -203,29 +190,26 @@ export default class LayoutBehavior extends Behavior {
 
 	_observeHeight() {
 		this._resizeObserver = new ResizeObserver(entries => {
-			this.setState({
-				height: entries[0].contentRect.height
-			});
+			this.intrinsicHeight = entries[0].contentRect.height;
+			this.emit('heightchange');
 		});
 
 		this._resizeObserver.observe(this.innerEl);
 	}
 
 	_unobserveHeight() {
-		if (this._resizeObserver) {
-			this._resizeObserver.disconnect();
-			this._resizeObserver = null;
-		}
+		this._resizeObserver.disconnect();
+		this._resizeObserver = null;
 	}
 
-	_render() {
+	_render(guidelayoutBehavior: GuideLayoutBehavior) {
 		this._renderWrapper();
 		this._renderInner();
 
 		//Force a scroll update.
-		this._scroll(this.parentEl.guidelayout.scrollState, true);
+		this._scroll(guidelayoutBehavior.scrollState, true);
 
-		this.emit('render');
+		this.notify();
 	}
 
 	_canSafelyBeUnloadedFromGPU() {

@@ -66,9 +66,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	}
 
 	attach() {
-		this.state = {
-			scrollMode: 'touch'
-		};
+		this.scrollMode = 'touch';
 
 		this._layoutScheduled = false;
 		this._lastRenderTime = -1;
@@ -155,9 +153,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 				window.scrollTo(0, scrollPosition + delta);
 
-				this.setState({
-					scrollMode: 'native'
-				});
+				this.scrollMode = 'native';
 
 				waitForFakeAction();
 			};
@@ -199,9 +195,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 				this._mousemoveCounter = 0;
 
-				this.setState({
-					scrollMode: 'touch'
-				});
+				this.scrollMode = 'touch';
 
 				waitForNativeAction();
 			};
@@ -226,7 +220,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	scrollTo(position: number) {
 		position = Math.round(position);
 
-		if (this.state.scrollMode === 'native') {
+		if (this.scrollMode === 'native') {
 			window.scrollTo(0, position);
 		} else {
 			this._scrollLogic.scrollTo(position);
@@ -243,7 +237,7 @@ export default class GuideLayoutBehavior extends Behavior {
 		});
 
 		//Whenever a new layout behavior is attached or changed, we need to do layout.
-		this.listen(document, 'layout:attach layout:update', this._scheduleLayout.bind(this));
+		this.listen(document, 'layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
 	}
 
 	_scrollLoop(now: number) {
@@ -261,7 +255,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	_pollScrollPosition(now: number) {
 		let currentScrollPosition;
 
-		if (this.state.scrollMode === 'touch') {
+		if (this.scrollMode === 'touch') {
 			currentScrollPosition = this._scrollLogic.getOffset();
 		} else {
 			currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
@@ -341,7 +335,7 @@ export default class GuideLayoutBehavior extends Behavior {
 
 		this._updateScrollHeight();
 
-		this.emit('layout', false);
+		this.notify();
 	}
 
 	_updateScrollHeight() {

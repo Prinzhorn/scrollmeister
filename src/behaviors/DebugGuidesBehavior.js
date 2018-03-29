@@ -2,6 +2,8 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
+import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+
 export default class DebugGuidesBehavior extends Behavior {
 	static get schema(): any {
 		return {
@@ -23,10 +25,7 @@ export default class DebugGuidesBehavior extends Behavior {
 	attach() {
 		this._createElement();
 
-		//Whenever the guide layout updates, render the guides.
-		this.listenAndInvoke(this.el, 'guidelayout:layout', () => {
-			this._render();
-		});
+		this.connectTo('guidelayout', this._render.bind(this));
 	}
 
 	detach() {
@@ -55,8 +54,8 @@ export default class DebugGuidesBehavior extends Behavior {
 		}
 	}
 
-	_render() {
-		let guides = this.el.guidelayout.engine.guides;
+	_render(guidelayoutBehavior: GuideLayoutBehavior) {
+		let guides = guidelayoutBehavior.engine.guides;
 
 		let html = guides.map(guide => {
 			let width = guide.width;
@@ -75,5 +74,7 @@ export default class DebugGuidesBehavior extends Behavior {
 		});
 
 		this._guidesWrapper.innerHTML = html.join('');
+
+		this.notify();
 	}
 }

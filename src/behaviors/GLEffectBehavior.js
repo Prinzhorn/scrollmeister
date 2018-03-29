@@ -25,17 +25,16 @@ export default class GLEffectBehavior extends Behavior {
 
 		this._initRegl();
 
-		this.listenAndInvoke('layout:render', () => {
-			this._resize();
-		});
-
-		this.listen('interpolate:change', () => {
-			this._render();
-		});
+		this.connectTo('layout', this._resize.bind(this));
+		this.connectTo('interpolate', this._render.bind(this));
 
 		//This updates the texture in addition to the render loop.
 		//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
 		this._pollTimer = setInterval(this._pollSource.bind(this, true), 1000 / 30);
+	}
+
+	update() {
+		this._initRegl();
 	}
 
 	detach() {
@@ -52,15 +51,17 @@ export default class GLEffectBehavior extends Behavior {
 		return canvas;
 	}
 
-	_resize() {
-		const layout = this.el.layout.layout;
-
+	_resize({ layout }) {
 		this._canvas.width = layout.width;
 		this._canvas.height = layout.height;
 		this._canvas.style.cssText = this._sourceElement.style.cssText;
 	}
 
 	_initRegl() {
+		if (this._regl) {
+			this._regl.destroy();
+		}
+
 		const regl = createRegl(this._canvas);
 
 		this._draw = regl({
@@ -125,7 +126,7 @@ export default class GLEffectBehavior extends Behavior {
 			this._updateTexture(render);
 
 			if (render) {
-				this._render();
+				this._render(this.el.interpolate);
 			}
 		}
 	}
@@ -148,7 +149,7 @@ export default class GLEffectBehavior extends Behavior {
 		}
 	}
 
-	_render() {
+	_render(interpolateBehavior) {
 		this._pollSource();
 
 		if (!this._texture) {
@@ -159,8 +160,10 @@ export default class GLEffectBehavior extends Behavior {
 
 		this._draw({
 			image: this._texture,
-			progress: this.el.interpolate.values.progress,
+			progress: interpolateBehavior.values.progress,
 			size: [this._canvas.width, this._canvas.height]
 		});
+
+		this.notify();
 	}
 }
