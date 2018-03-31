@@ -7,6 +7,7 @@ import FluidTextBehavior from 'behaviors/FluidTextBehavior.js';
 import ScrubBehavior from 'behaviors/ScrubBehavior.js';
 import GLEffectBehavior from 'behaviors/GLEffectBehavior.js';
 import RotatingGradientBehavior from 'behaviors/RotatingGradientBehavior.js';
+import GalleryBehavior from 'behaviors/GalleryBehavior.js';
 
 Scrollmeister.defineBehavior(InterpolateBehavior);
 Scrollmeister.defineBehavior(TransformBehavior);
@@ -15,3 +16,4 @@ Scrollmeister.defineBehavior(FluidTextBehavior);
 Scrollmeister.defineBehavior(ScrubBehavior);
 Scrollmeister.defineBehavior(GLEffectBehavior);
 Scrollmeister.defineBehavior(RotatingGradientBehavior);
+Scrollmeister.defineBehavior(GalleryBehavior);
