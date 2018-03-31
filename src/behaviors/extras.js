@@ -8,6 +8,7 @@ import ScrubBehavior from 'behaviors/ScrubBehavior.js';
 import GLEffectBehavior from 'behaviors/GLEffectBehavior.js';
 import RotatingGradientBehavior from 'behaviors/RotatingGradientBehavior.js';
 import GalleryBehavior from 'behaviors/GalleryBehavior.js';
+import YouTubeBehavior from 'behaviors/YouTubeBehavior.js';
 
 Scrollmeister.defineBehavior(InterpolateBehavior);
 Scrollmeister.defineBehavior(TransformBehavior);
@@ -17,3 +18,4 @@ Scrollmeister.defineBehavior(ScrubBehavior);
 Scrollmeister.defineBehavior(GLEffectBehavior);
 Scrollmeister.defineBehavior(RotatingGradientBehavior);
 Scrollmeister.defineBehavior(GalleryBehavior);
+Scrollmeister.defineBehavior(YouTubeBehavior);
