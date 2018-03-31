@@ -25,11 +25,17 @@ export default class FadeInBehavior extends Behavior {
 		let iframe = this.el.querySelector('iframe');
 
 		if (!iframe) {
-			throw new Error('The youtube behavior expects a YouTube <iframe> as child of the element.');
+			this.error(new Error('The youtube behavior expects a YouTube <iframe> as child of the element.'));
 		}
 
 		if (iframe.src.indexOf('enablejsapi=1') === -1) {
-			throw new Error('To use the youtube behavior the YouTube <iframe> src needs the "enablejsapi=1" parameter.');
+			this.error(
+				new Error(
+					`To use the youtube behavior the YouTube <iframe> src needs the "enablejsapi=1" parameter. The source is "${
+						iframe.src
+					}".`
+				)
+			);
 		}
 
 		YouTubeIframeLoader.load(YT => {

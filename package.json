@@ -10,11 +10,14 @@
     "flow": "flow check",
     "server": "http-server",
     "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/index.html, dist/scrollmeister.js'",
-    "watch": "NODE_PATH='./src' watchify ./src/index-extras.js -o ./dist/scrollmeister.js -v",
+    "watch":
+      "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js -t envify -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
     "build": "npm run build-scrollmeister && npm run build-extras",
-    "build-scrollmeister": "NODE_PATH='./src' browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js",
-    "build-extras": "NODE_PATH='./src' browserify ./src/index-extras.js -p tinyify > ./dist/scrollmeister-extras.js"
+    "build-scrollmeister":
+      "NODE_PATH='./src' NODE_ENV=production browserify ./src/index.js -p tinyify > ./dist/scrollmeister.js",
+    "build-extras":
+      "NODE_PATH='./src' NODE_ENV=production browserify ./src/index-extras.js -p tinyify > ./dist/scrollmeister-extras.js"
   },
   "repository": {
     "type": "git",
@@ -34,10 +37,7 @@
           },
           "postcss": {
             "autoprefixer": {
-              "browsers": [
-                "last 2 versions",
-                "ie >= 9"
-              ]
+              "browsers": ["last 2 versions", "ie >= 9"]
             }
           }
         }
@@ -45,10 +45,7 @@
     ]
   },
   "babel": {
-    "presets": [
-      "env",
-      "flow"
-    ]
+    "presets": ["env", "flow"]
   },
   "prettier": {
     "singleQuote": true,
@@ -93,6 +90,7 @@
     "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
     "browser-sync": "^2.23.6",
+    "envify": "^4.1.0",
     "eslint": "^4.18.2",
     "eslint-plugin-flowtype": "^2.46.1",
     "flow-bin": "^0.66.0",

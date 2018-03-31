@@ -11732,6 +11732,26 @@ var Behavior = function () {
 			this.emit('detach');
 		}
 	}, {
+		key: 'error',
+		value: function error(_error) {
+			if ("development" === 'development') {
+				var el = this.el;
+				var outerHTML = el.outerHTML;
+
+				el.style.height = 'auto';
+
+				//TODO: other behaviors might prevent the message from be seen, we need to completely halt Scrollmeister.
+				//Maybe block all events (using process.env.NODE_ENV of course).
+				el.innerHTML = '\n\t\t\t\t<div style="color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; margin: 10px; padding: 20px; border-radius: 5px;">\n\t\t\t\t\t<h1 style="font-size: 30px; padding: 0 0 20px 0; margin: 0;"></h1>\n\t\t\t\t\t<p style="font-size: 20px; padding: 0 0 20px 0; margin: 0;">\n\t\t\t\t\t\t<strong></strong>\n\t\t\t\t\t</p>\n\t\t\t\t\t<pre style="background: #eee; padding: 20px;"></pre>\n\t\t\t\t</div>\n\t\t\t';
+
+				el.querySelector('h1').textContent = this.constructor.behaviorName;
+				el.querySelector('strong').textContent = _error.message;
+				el.querySelector('pre').textContent = outerHTML;
+			}
+
+			throw _error;
+		}
+	}, {
 		key: 'notify',
 		value: function notify() {
 			this.hasNotifiedAtLeastOnce = true;
@@ -12211,7 +12231,7 @@ var FadeInBehavior = function (_Behavior) {
 			var _this2 = this;
 
 			if (this.el.layout.contentEl.children.length !== 1) {
-				throw new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.');
+				this.error(new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.'));
 			}
 
 			//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
@@ -14357,11 +14377,11 @@ var FadeInBehavior = function (_Behavior) {
 			var iframe = this.el.querySelector('iframe');
 
 			if (!iframe) {
-				throw new Error('The youtube behavior expects a YouTube <iframe> as child of the element.');
+				this.error(new Error('The youtube behavior expects a YouTube <iframe> as child of the element.'));
 			}
 
 			if (iframe.src.indexOf('enablejsapi=1') === -1) {
-				throw new Error('To use the youtube behavior the YouTube <iframe> src needs the "enablejsapi=1" parameter.');
+				this.error(new Error('To use the youtube behavior the YouTube <iframe> src needs the "enablejsapi=1" parameter. The source is "' + iframe.src + '".'));
 			}
 
 			_youtubeIframe2.default.load(function (YT) {
