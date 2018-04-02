@@ -12,7 +12,7 @@ export default class LazyLoadBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guidelayout', 'layout'];
+		return ['^scroll', 'layout'];
 	}
 
 	attach() {
@@ -45,11 +45,11 @@ export default class LazyLoadBehavior extends Behavior {
 		};
 
 		let unlisten = () => {
-			this.unlisten(this.el, 'layout:viewport:enter', handleViewportEnter);
-			this.unlisten(this.parentEl, 'guidelayout:pause', handleScrollPause);
+			this.unlisten('layout:viewport:enter', handleViewportEnter);
+			this.unlisten('^scroll:pause', handleScrollPause);
 		};
 
 		this.listen('layout:viewport:enter', handleViewportEnter);
-		this.listen(this.parentEl, 'guidelayout:pause', handleScrollPause);
+		this.listen('^scroll:pause', handleScrollPause);
 	}
 }

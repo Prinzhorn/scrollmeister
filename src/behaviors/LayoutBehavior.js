@@ -4,8 +4,7 @@ import ResizeObserver from 'resize-observer-polyfill';
 
 import Behavior from 'behaviors/Behavior.js';
 
-import type ScrollState from 'lib/ScrollState.js';
-import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+import type ScrollBehavior from 'behaviors/ScrollBehavior.js';
 
 export default class LayoutBehavior extends Behavior {
 	static get schema(): any {
@@ -62,7 +61,7 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guidelayout'];
+		return ['^guidelayout', '^scroll'];
 	}
 
 	static get behaviorName(): string {
@@ -80,15 +79,9 @@ export default class LayoutBehavior extends Behavior {
 		this._wrapContents();
 
 		this.connectTo('^guidelayout', this._render.bind(this));
+		this.connectTo('^scroll', this._scroll.bind(this));
 
-		//TODO: Once we unify stuff and separate guidelayout and scrolling, this will be scroll:change.
-		this.listen(this.parentEl, 'guidelayout:scroll', e => {
-			this._scroll(e.detail.scrollState);
-		});
-
-		this.listen(this.parentEl, 'guidelayout:pause', () => {
-			this._scrollPause();
-		});
+		this.listen('^scroll:pause', this._scrollPause.bind(this));
 
 		if (this.props.height === 'auto') {
 			this._observeHeight();
@@ -202,12 +195,12 @@ export default class LayoutBehavior extends Behavior {
 		this._resizeObserver = null;
 	}
 
-	_render(guidelayoutBehavior: GuideLayoutBehavior) {
+	_render() {
 		this._renderWrapper();
 		this._renderInner();
 
 		//Force a scroll update.
-		this._scroll(guidelayoutBehavior.scrollState, true);
+		this._scroll(this.parentEl.scroll, true);
 
 		this.notify();
 	}
@@ -255,13 +248,13 @@ export default class LayoutBehavior extends Behavior {
 		}
 	}
 
-	_scroll(scrollState: ScrollState, forceUpdate: boolean = false) {
+	_scroll(scrollBehavior: ScrollBehavior, forceUpdate: boolean = false) {
 		let scrollUpdate = this.scrollUpdate;
 
 		let style = this.el.style;
 		let innerStyle = this.innerEl.style;
 
-		this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+		this.parentEl.guidelayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
 		if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 			let left = Math.round(this.layout.left);

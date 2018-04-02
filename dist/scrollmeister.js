@@ -11672,6 +11672,27 @@ var supportsPassiveEvents = function () {
 //Chrome makes touchmove passive by default. We don't want none of that.
 var thirdEventListenerArgument = supportsPassiveEvents ? { passive: false } : false;
 
+function normalizeEventsArguments(element, eventName, callback) {
+	//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+	if (arguments.length === 2) {
+		callback = eventName;
+		eventName = element;
+
+		if (eventName.charAt(0) === '^') {
+			eventName = eventName.slice(1);
+			element = this.parentEl;
+		} else {
+			element = this.el;
+		}
+	}
+
+	return {
+		element: element,
+		eventName: eventName,
+		callback: callback
+	};
+}
+
 var Behavior = function () {
 	_createClass(Behavior, [{
 		key: 'attach',
@@ -11759,7 +11780,7 @@ var Behavior = function () {
 		}
 	}, {
 		key: 'connectTo',
-		value: function connectTo(dependencyName, callback) {
+		value: function connectTo(dependencyName, notifyCallback, connectedCallback) {
 			if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
 				throw new Error('You are trying to connect the "' + this.constructor.behaviorName + '" behavior to the "' + dependencyName + '" behavior, which is not listed as dependency.');
 			}
@@ -11772,25 +11793,36 @@ var Behavior = function () {
 			}
 
 			var behavior = element[dependencyName];
+			var _callback = function callback() {
+				//Overwrite the callback so it only ever gets called a single time.
+				//After the first time we call the notifyCallback directly.
+				_callback = notifyCallback;
+
+				if (connectedCallback) {
+					connectedCallback(behavior);
+				}
+
+				notifyCallback(behavior);
+			};
 
 			//For the most part this is what "connecting" is about.
 			//We just listen to the change event of the other behavior.
 			this.listen(element, dependencyName + ':change', function () {
-				callback(behavior);
+				_callback(behavior);
 			});
 
 			//This is up for debate. Do we need to update the connection every time
 			//this behavior gets new props?
 			this.listen(this.constructor.behaviorName + ':update', function () {
 				if (behavior.hasNotifiedAtLeastOnce) {
-					callback(behavior);
+					_callback(behavior);
 				}
 			});
 
 			//This catches the edge case where the current behavior is attached lazy
 			//and the dependency already had a change event. We want to update the behavior immediately.
 			if (behavior.hasNotifiedAtLeastOnce) {
-				callback(behavior);
+				_callback(behavior);
 			}
 		}
 	}, {
@@ -11798,14 +11830,12 @@ var Behavior = function () {
 		value: function listen(element, eventName, callback) {
 			var _this = this;
 
-			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-			if (arguments.length === 2) {
-				callback = eventName;
-				eventName = element;
-				element = this.el;
-			}
-
 			//Space separated list of event names for the same element and callback.
+			var _normalizeEventsArgum = normalizeEventsArguments.apply(this, arguments);
+
+			element = _normalizeEventsArgum.element;
+			eventName = _normalizeEventsArgum.eventName;
+			callback = _normalizeEventsArgum.callback;
 			if (eventName.indexOf(' ') !== -1) {
 				eventName.split(' ').map(function (s) {
 					return s.trim();
@@ -11827,12 +11857,12 @@ var Behavior = function () {
 	}, {
 		key: 'listenOnce',
 		value: function listenOnce(element, eventName, callback) {
-			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-			if (arguments.length === 2) {
-				callback = eventName;
-				eventName = element;
-				element = this.el;
-			}
+			var _normalizeEventsArgum2 = normalizeEventsArguments.apply(this, arguments);
+
+			element = _normalizeEventsArgum2.element;
+			eventName = _normalizeEventsArgum2.eventName;
+			callback = _normalizeEventsArgum2.callback;
+
 
 			var self = this;
 
@@ -11855,12 +11885,12 @@ var Behavior = function () {
 	}, {
 		key: 'listenAndInvoke',
 		value: function listenAndInvoke(element, eventName, callback) {
-			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-			if (arguments.length === 2) {
-				callback = eventName;
-				eventName = element;
-				element = this.el;
-			}
+			var _normalizeEventsArgum3 = normalizeEventsArguments.apply(this, arguments);
+
+			element = _normalizeEventsArgum3.element;
+			eventName = _normalizeEventsArgum3.eventName;
+			callback = _normalizeEventsArgum3.callback;
+
 
 			this.listen(element, eventName, callback);
 			callback();
@@ -11868,15 +11898,14 @@ var Behavior = function () {
 	}, {
 		key: 'unlisten',
 		value: function unlisten(element, eventName, callback) {
-			//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-			if (arguments.length === 2) {
-				callback = eventName;
-				eventName = element;
-				element = this.el;
-			}
 
 			//This is a hack to make listenOnce work.
 			//We store a reference to the original listener as _once property.
+			var _normalizeEventsArgum4 = normalizeEventsArguments.apply(this, arguments);
+
+			element = _normalizeEventsArgum4.element;
+			eventName = _normalizeEventsArgum4.eventName;
+			callback = _normalizeEventsArgum4.callback;
 			if (typeof callback._once === 'function') {
 				callback = callback._once;
 				delete callback._once;
@@ -12020,7 +12049,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":45,"ponies/CustomEvent.js":46,"ponies/Object.assign.js":47}],12:[function(require,module,exports){
+},{"lib/schemaParser.js":46,"ponies/CustomEvent.js":47,"ponies/Object.assign.js":48}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12276,7 +12305,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":11,"lib/fontSizeWidthRatio.js":43}],15:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/fontSizeWidthRatio.js":44}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12313,17 +12342,19 @@ var GLEffectBehavior = function (_Behavior) {
 	_createClass(GLEffectBehavior, [{
 		key: 'attach',
 		value: function attach() {
+			var _this2 = this;
+
 			this._sourceElement = this.el.querySelector('img, video');
 			this._canvas = this._createCanvas();
 
 			this._initRegl();
 
 			this.connectTo('layout', this._resize.bind(this));
-			this.connectTo('interpolate', this._render.bind(this));
-
-			//This updates the texture in addition to the render loop.
-			//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
-			this._pollTimer = setInterval(this._pollSource.bind(this, true), 1000 / 30);
+			this.connectTo('interpolate', this._render.bind(this), function () {
+				//This updates the texture in addition to the render loop.
+				//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
+				_this2._pollTimer = setInterval(_this2._pollSource.bind(_this2, true), 1000 / 30);
+			});
 		}
 	}, {
 		key: 'update',
@@ -12568,7 +12599,7 @@ var GalleryBehavior = function (_Behavior) {
 				style.position = 'absolute';
 				style.left = style.top = '0px';
 				//TODO: BehaviorStyleMerger
-				style.transition = 'all 0.3s ease-in-out';
+				style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out, transform 0.3s ease-in-out';
 				style.width = imageLayout.width + 'px';
 				style.height = imageLayout.height + 'px';
 				// $FlowFixMe: WebkitTransform and msTransform are missing in CSSStyleDeclaration
@@ -12672,22 +12703,6 @@ var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _scrollLogic = require('scroll-logic');
-
-var _scrollLogic2 = _interopRequireDefault(_scrollLogic);
-
-var _ScrollState = require('lib/ScrollState.js');
-
-var _ScrollState2 = _interopRequireDefault(_ScrollState);
-
-var _fakeClick = require('lib/fakeClick.js');
-
-var _fakeClick2 = _interopRequireDefault(_fakeClick);
-
-var _isTextInput = require('lib/isTextInput.js');
-
-var _isTextInput2 = _interopRequireDefault(_isTextInput);
-
 var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
 
 var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
@@ -12704,12 +12719,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
-var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
-var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-//TODO: can we extract a ScrollBehavior to make the two separate and not 400 LOC?
-
 var GuideLayoutBehavior = function (_Behavior) {
 	_inherits(GuideLayoutBehavior, _Behavior);
 
@@ -12722,220 +12731,30 @@ var GuideLayoutBehavior = function (_Behavior) {
 	_createClass(GuideLayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			this.scrollMode = 'touch';
-
 			this._layoutScheduled = false;
-			this._lastRenderTime = -1;
 
-			this._setupScrolling();
 			this._initLayoutEngine();
-
-			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
-			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
-			//TODO: write a test which checks the correct order of events (also viewport:enter etc.).
-			(0, _raf2.default)(this._scrollLoop.bind(this));
-		}
-	}, {
-		key: 'detach',
-		value: function detach() {
-			this.scrollState.destroy();
 		}
 	}, {
 		key: 'update',
-		value: function update(prevProps) {
-			if (prevProps.overscroll !== this.props.overscroll) {
-				this._scrollLogic.options.bouncing = this.props.overscroll;
-			}
-
+		value: function update() {
 			this._scheduleLayout();
-		}
-	}, {
-		key: '_setupScrolling',
-		value: function _setupScrolling() {
-			this.scrollState = new _ScrollState2.default(this.emit.bind(this, 'scroll', false), this.emit.bind(this, 'pause', false));
-
-			this._setupMobileScrolling();
-			this._handleScrollModes();
-		}
-	}, {
-		key: '_setupMobileScrolling',
-		value: function _setupMobileScrolling() {
-			var _this2 = this;
-
-			this._scrollLogic = new _scrollLogic2.default({
-				bouncing: this.props.overscroll
-			});
-
-			this.listen(document, 'touchstart', function (e) {
-				//For caret positioning on mobile.
-				//On "bad" Android (stock browser) preventing touchstart will cause touchmove to not fire.
-				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
-					e.preventDefault();
-					_fakeClick2.default.start(e);
-				}
-
-				_this2._mousemoveCounter = 0;
-				_this2._scrollLogic.beginInteraction(e.changedTouches[0].pageY, e.timeStamp);
-			});
-
-			this.listen(document, 'touchmove', function (e) {
-				e.preventDefault();
-
-				_this2._mousemoveCounter = 0;
-				_this2._scrollLogic.interact(e.changedTouches[0].pageY, e.timeStamp);
-			});
-
-			this.listen(document, 'touchend touchcancel', function (e) {
-				//For caret positioning on mobile.
-				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
-					e.preventDefault();
-					_fakeClick2.default.end(e);
-				}
-
-				_this2._mousemoveCounter = 0;
-				_this2._scrollLogic.endInteraction(e.timeStamp);
-			});
-		}
-
-		//This thing intelligently switches between fake and native scrolling.
-		//It does not do any sniffing and instead relies on scroll, mousemove and touchstart events.
-		//It also preserves scroll position when switching.
-
-	}, {
-		key: '_handleScrollModes',
-		value: function _handleScrollModes() {
-			var _this3 = this;
-
-			var waitForNativeAction = function waitForNativeAction() {
-				var oneNative = function oneNative() {
-					window.removeEventListener('mousemove', threeMousemove, false);
-					window.removeEventListener('scroll', oneNative, false);
-
-					//Move the scroll offset over from fake to native scrolling.
-					var scrollPosition = _this3._scrollLogic.getOffset();
-
-					//This compensates the amount scrolling that JUST happened.
-					//Imagine using pageup/down keys, we would lose the first jump otherwise.
-					var delta = _this3._getNativeScrollPosition() - _this3._lastNativeScrollPosition;
-
-					window.scrollTo(0, scrollPosition + delta);
-
-					_this3.scrollMode = 'native';
-
-					waitForFakeAction();
-				};
-
-				var threeMousemove = function threeMousemove() {
-					//Cheez. Some mobile browsers (*cough* Android *cough*) trigger mousemove before ANYTHING else.
-					//Even before touchstart. But they will only trigger a single mousemove for any touch sequence.
-					//To make sure we only get real mousemoves, we wait for three consecutive events.
-					//We reset this counter every time we receive a touch event.
-					//Note: it was 2 before, now 3. Because Android Firefox does weird things inside a textarea.
-					_this3._mousemoveCounter++;
-
-					if (_this3._mousemoveCounter !== 3) {
-						return;
-					}
-
-					_this3._mousemoveCounter = 0;
-
-					oneNative();
-				};
-
-				//A "mousemove" event is a strong indicator that we're on a desktop device.
-				//"mousemove" makes sure that we switch to native scrolling even if we haven't scrolled yet.
-				//In reality this means stuff like iframes are immediately accessible on desktop.
-				window.addEventListener('mousemove', threeMousemove, false);
-
-				//We should never get a scroll event on mobile because we prevent it.
-				//So that's the strongest desktop indicator you can get.
-				window.addEventListener('scroll', oneNative, false);
-			};
-
-			var waitForFakeAction = function waitForFakeAction() {
-				var oneTouchStart = function oneTouchStart() {
-					document.removeEventListener('touchstart', oneTouchStart, false);
-
-					//Move the scroll offset over from native to fake scrolling.
-					var scrollPosition = Math.round(_this3._getNativeScrollPosition());
-					_this3._scrollLogic.scrollTo(scrollPosition);
-
-					_this3._mousemoveCounter = 0;
-
-					_this3.scrollMode = 'touch';
-
-					waitForNativeAction();
-				};
-
-				document.addEventListener('touchstart', oneTouchStart, false);
-			};
-
-			//By default we assume we're in fake scrolling mode.
-			//This makes sure the user can scroll on iframes if this happens to be the first thing she touches.
-			this._mousemoveCounter = 0;
-			waitForNativeAction();
-		}
-	}, {
-		key: '_getNativeScrollPosition',
-		value: function _getNativeScrollPosition() {
-			if (!document.documentElement || !document.body) {
-				throw new Error('There is no documentElement or body to get the scroll position from.');
-			}
-
-			return document.documentElement.scrollTop || document.body.scrollTop;
-		}
-	}, {
-		key: 'scrollTo',
-		value: function scrollTo(position) {
-			position = Math.round(position);
-
-			if (this.scrollMode === 'native') {
-				window.scrollTo(0, position);
-			} else {
-				this._scrollLogic.scrollTo(position);
-			}
 		}
 	}, {
 		key: '_initLayoutEngine',
 		value: function _initLayoutEngine() {
-			var _this4 = this;
+			var _this2 = this;
 
 			this.engine = new _GuideLayoutEngine2.default();
 
 			this.listenAndInvoke(window, 'resize', function () {
-				var viewport = _this4._getViewport();
-				_this4.engine.updateViewport(viewport);
-				_this4._scheduleLayout();
+				var viewport = _this2._getViewport();
+				_this2.engine.updateViewport(viewport);
+				_this2._scheduleLayout();
 			});
 
 			//Whenever a new layout behavior is attached or changed, we need to do layout.
-			this.listen(document, 'layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
-		}
-	}, {
-		key: '_scrollLoop',
-		value: function _scrollLoop(now) {
-			//The very first frame doesn't have a previous one.
-			if (this._lastRenderTime === -1) {
-				this._lastRenderTime = now;
-			}
-
-			this._pollScrollPosition(now);
-
-			this._lastRenderTime = now;
-			(0, _raf2.default)(this._scrollLoop.bind(this));
-		}
-	}, {
-		key: '_pollScrollPosition',
-		value: function _pollScrollPosition(now) {
-			var currentScrollPosition = void 0;
-
-			if (this.scrollMode === 'touch') {
-				currentScrollPosition = this._scrollLogic.getOffset();
-			} else {
-				currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
-			}
-
-			this.scrollState.tick(now, currentScrollPosition);
+			this.listen('layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
 		}
 	}, {
 		key: '_getScrollbarWidth',
@@ -13013,41 +12832,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 			this.engine.doLayout(nodes, this.props.guides, this.props.width);
 
-			this._updateScrollHeight();
-
 			this.notify();
-		}
-	}, {
-		key: '_updateScrollHeight',
-		value: function _updateScrollHeight() {
-			var requiredHeight = this.engine.requiredHeight;
-
-			//Firefox on Android will scroll natively to remove the addressbar.
-			//This can not be prevented, even with preventDefault on the touch events.
-			//Since moving the addressbar causes doLayout calls, it performs bad.
-			//http://stackoverflow.com/questions/28129663/firefox-on-android-prevent-adressbar-from-disappearing
-			//It's also causing trouble on Android stock browser with scrollMode detection.
-			//We also recently added this for iOS because it was the only thing breaking iframe embeds.
-			//On iOS the iframe will scale to the height of its content, but we query the window height.
-			//So basically it was growing ENDLESSLY (100vh kept getting larger)!
-			if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
-				if (!document.documentElement) {
-					throw new Error('There is no documentElement to style.');
-				}
-
-				document.documentElement.style.overflow = 'visible';
-				this.el.style.height = 0;
-			} else {
-				this.el.style.height = Math.round(requiredHeight) + 'px';
-			}
-
-			this._scrollLogic.setContainerLength(this.engine.viewport.height);
-			this._scrollLogic.setContentLength(requiredHeight);
-
-			this.scrollState.maxPosition = requiredHeight - this.engine.viewport.height;
-
-			//Make sure we don't lose our relative scroll position.
-			this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
 		}
 	}], [{
 		key: 'schema',
@@ -13069,10 +12854,6 @@ var GuideLayoutBehavior = function (_Behavior) {
 				width: {
 					type: 'csslength',
 					default: '1280px'
-				},
-				overscroll: {
-					type: 'boolean',
-					default: 'true'
 				}
 			};
 		}
@@ -13093,7 +12874,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":11,"lib/GuideLayoutEngine.js":39,"lib/ScrollState.js":40,"lib/fakeClick.js":42,"lib/isTextInput.js":44,"raf":5,"scroll-logic":8}],18:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/GuideLayoutEngine.js":40,"raf":5}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13153,8 +12934,6 @@ var InterpolateBehavior = function (_Behavior) {
 	_createClass(InterpolateBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
 			this._interpolators = {};
 
 			//Non-zero defaults.
@@ -13166,10 +12945,7 @@ var InterpolateBehavior = function (_Behavior) {
 			this.values = {};
 
 			this.connectTo('^guidelayout', this._createInterpolators.bind(this));
-
-			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
-				_this2._interpolate(e.detail.scrollState);
-			});
+			this.connectTo('^scroll', this._interpolate.bind(this));
 		}
 	}, {
 		key: '_createInterpolators',
@@ -13187,19 +12963,19 @@ var InterpolateBehavior = function (_Behavior) {
 			}
 
 			//Apply the interpolators right away.
-			this._interpolate(this.parentEl.guidelayout.scrollState);
+			this._interpolate(this.parentEl.scroll);
 		}
 	}, {
 		key: '_createInterpolator',
 		value: function _createInterpolator(guidelayoutBehavior, keyframes) {
-			var _this3 = this;
+			var _this2 = this;
 
 			var layoutEngine = guidelayoutBehavior.engine;
 
 			//Map the keyframe anchor and offset to scroll positions.
 			var mappedKeyframes = keyframes.map(function (keyframe) {
-				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, _this3.el.layout.layout.height);
-				var position = layoutEngine.calculateAnchorPosition(_this3.el.layout, keyframe.anchor, pixelOffset);
+				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, _this2.el.layout.layout.height);
+				var position = layoutEngine.calculateAnchorPosition(_this2.el.layout, keyframe.anchor, pixelOffset);
 
 				return {
 					position: position,
@@ -13245,7 +13021,7 @@ var InterpolateBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_interpolate',
-		value: function _interpolate(scrollState) {
+		value: function _interpolate(scrollBehavior) {
 			var schema = this.constructor.schema;
 			var didChange = false;
 
@@ -13254,7 +13030,7 @@ var InterpolateBehavior = function (_Behavior) {
 					var previousValue = this.values[prop];
 
 					if (this._interpolators.hasOwnProperty(prop)) {
-						this.values[prop] = this._interpolators[prop](scrollState.position);
+						this.values[prop] = this._interpolators[prop](scrollBehavior.scrollState.position);
 					} else {
 						this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 					}
@@ -13292,7 +13068,7 @@ var InterpolateBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout', 'layout'];
+			return ['^guidelayout', '^scroll', 'layout'];
 		}
 	}]);
 
@@ -13301,7 +13077,7 @@ var InterpolateBehavior = function (_Behavior) {
 
 exports.default = InterpolateBehavior;
 
-},{"behaviors/Behavior.js":11,"ponies/Object.assign.js":47}],19:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"ponies/Object.assign.js":48}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13338,8 +13114,6 @@ var LayoutBehavior = function (_Behavior) {
 	_createClass(LayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			var _this2 = this;
-
 			this.intrinsicHeight = 0;
 
 			this.scrollUpdate = {};
@@ -13350,15 +13124,9 @@ var LayoutBehavior = function (_Behavior) {
 			this._wrapContents();
 
 			this.connectTo('^guidelayout', this._render.bind(this));
+			this.connectTo('^scroll', this._scroll.bind(this));
 
-			//TODO: Once we unify stuff and separate guidelayout and scrolling, this will be scroll:change.
-			this.listen(this.parentEl, 'guidelayout:scroll', function (e) {
-				_this2._scroll(e.detail.scrollState);
-			});
-
-			this.listen(this.parentEl, 'guidelayout:pause', function () {
-				_this2._scrollPause();
-			});
+			this.listen('^scroll:pause', this._scrollPause.bind(this));
 
 			if (this.props.height === 'auto') {
 				this._observeHeight();
@@ -13466,11 +13234,11 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_observeHeight',
 		value: function _observeHeight() {
-			var _this3 = this;
+			var _this2 = this;
 
 			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
-				_this3.intrinsicHeight = entries[0].contentRect.height;
-				_this3.emit('heightchange');
+				_this2.intrinsicHeight = entries[0].contentRect.height;
+				_this2.emit('heightchange');
 			});
 
 			this._resizeObserver.observe(this.innerEl);
@@ -13483,12 +13251,12 @@ var LayoutBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_render',
-		value: function _render(guidelayoutBehavior) {
+		value: function _render() {
 			this._renderWrapper();
 			this._renderInner();
 
 			//Force a scroll update.
-			this._scroll(guidelayoutBehavior.scrollState, true);
+			this._scroll(this.parentEl.scroll, true);
 
 			this.notify();
 		}
@@ -13540,7 +13308,7 @@ var LayoutBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_scroll',
-		value: function _scroll(scrollState) {
+		value: function _scroll(scrollBehavior) {
 			var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
 			var scrollUpdate = this.scrollUpdate;
@@ -13548,7 +13316,7 @@ var LayoutBehavior = function (_Behavior) {
 			var style = this.el.style;
 			var innerStyle = this.innerEl.style;
 
-			this.parentEl.guidelayout.engine.doScroll(this.layout, scrollState.position, scrollUpdate);
+			this.parentEl.guidelayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
 			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 				var left = Math.round(this.layout.left);
@@ -13680,7 +13448,7 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout'];
+			return ['^guidelayout', '^scroll'];
 		}
 	}, {
 		key: 'behaviorName',
@@ -13758,12 +13526,12 @@ var LazyLoadBehavior = function (_Behavior) {
 			};
 
 			var unlisten = function unlisten() {
-				_this2.unlisten(_this2.el, 'layout:viewport:enter', handleViewportEnter);
-				_this2.unlisten(_this2.parentEl, 'guidelayout:pause', handleScrollPause);
+				_this2.unlisten('layout:viewport:enter', handleViewportEnter);
+				_this2.unlisten('^scroll:pause', handleScrollPause);
 			};
 
 			this.listen('layout:viewport:enter', handleViewportEnter);
-			this.listen(this.parentEl, 'guidelayout:pause', handleScrollPause);
+			this.listen('^scroll:pause', handleScrollPause);
 		}
 	}], [{
 		key: 'schema',
@@ -13778,7 +13546,7 @@ var LazyLoadBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout', 'layout'];
+			return ['^scroll', 'layout'];
 		}
 	}]);
 
@@ -14140,6 +13908,319 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _raf = require('raf');
+
+var _raf2 = _interopRequireDefault(_raf);
+
+var _scrollLogic = require('scroll-logic');
+
+var _scrollLogic2 = _interopRequireDefault(_scrollLogic);
+
+var _ScrollState = require('lib/ScrollState.js');
+
+var _ScrollState2 = _interopRequireDefault(_ScrollState);
+
+var _fakeClick = require('lib/fakeClick.js');
+
+var _fakeClick2 = _interopRequireDefault(_fakeClick);
+
+var _isTextInput = require('lib/isTextInput.js');
+
+var _isTextInput2 = _interopRequireDefault(_isTextInput);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.userAgent);
+var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
+var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+var ScrollBehavior = function (_Behavior) {
+	_inherits(ScrollBehavior, _Behavior);
+
+	function ScrollBehavior() {
+		_classCallCheck(this, ScrollBehavior);
+
+		return _possibleConstructorReturn(this, (ScrollBehavior.__proto__ || Object.getPrototypeOf(ScrollBehavior)).apply(this, arguments));
+	}
+
+	_createClass(ScrollBehavior, [{
+		key: 'attach',
+		value: function attach() {
+			this.scrollMode = 'touch';
+
+			this._lastScrollTime = -1;
+
+			this._setupScrolling();
+
+			this.connectTo('guidelayout', this._updateScrollHeight.bind(this));
+
+			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
+			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
+			(0, _raf2.default)(this._scrollLoop.bind(this));
+		}
+	}, {
+		key: 'detach',
+		value: function detach() {
+			this.scrollState.destroy();
+		}
+	}, {
+		key: 'update',
+		value: function update(prevProps) {
+			if (prevProps.overscroll !== this.props.overscroll) {
+				this._scrollLogic.options.bouncing = this.props.overscroll;
+			}
+		}
+	}, {
+		key: '_setupScrolling',
+		value: function _setupScrolling() {
+			this.scrollState = new _ScrollState2.default(this.notify.bind(this), this.emit.bind(this, 'pause', false));
+
+			this._setupMobileScrolling();
+			this._handleScrollModes();
+		}
+	}, {
+		key: '_setupMobileScrolling',
+		value: function _setupMobileScrolling() {
+			var _this2 = this;
+
+			this._scrollLogic = new _scrollLogic2.default({
+				bouncing: this.props.overscroll
+			});
+
+			this.listen(document, 'touchstart', function (e) {
+				//For caret positioning on mobile.
+				//On "bad" Android (stock browser) preventing touchstart will cause touchmove to not fire.
+				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
+					e.preventDefault();
+					_fakeClick2.default.start(e);
+				}
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.beginInteraction(e.changedTouches[0].pageY, e.timeStamp);
+			});
+
+			this.listen(document, 'touchmove', function (e) {
+				e.preventDefault();
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.interact(e.changedTouches[0].pageY, e.timeStamp);
+			});
+
+			this.listen(document, 'touchend touchcancel', function (e) {
+				//For caret positioning on mobile.
+				if (!(0, _isTextInput2.default)(e.target) && !isBadAndroid) {
+					e.preventDefault();
+					_fakeClick2.default.end(e);
+				}
+
+				_this2._mousemoveCounter = 0;
+				_this2._scrollLogic.endInteraction(e.timeStamp);
+			});
+		}
+
+		//This thing intelligently switches between fake and native scrolling.
+		//It does not do any sniffing and instead relies on scroll, mousemove and touchstart events.
+		//It also preserves scroll position when switching.
+
+	}, {
+		key: '_handleScrollModes',
+		value: function _handleScrollModes() {
+			var _this3 = this;
+
+			var waitForNativeAction = function waitForNativeAction() {
+				var oneNative = function oneNative() {
+					window.removeEventListener('mousemove', threeMousemove, false);
+					window.removeEventListener('scroll', oneNative, false);
+
+					//Move the scroll offset over from fake to native scrolling.
+					var scrollPosition = _this3._scrollLogic.getOffset();
+
+					//This compensates the amount scrolling that JUST happened.
+					//Imagine using pageup/down keys, we would lose the first jump otherwise.
+					var delta = _this3._getNativeScrollPosition() - _this3._lastNativeScrollPosition;
+
+					window.scrollTo(0, scrollPosition + delta);
+
+					_this3.scrollMode = 'native';
+
+					waitForFakeAction();
+				};
+
+				var threeMousemove = function threeMousemove() {
+					//Cheez. Some mobile browsers (*cough* Android *cough*) trigger mousemove before ANYTHING else.
+					//Even before touchstart. But they will only trigger a single mousemove for any touch sequence.
+					//To make sure we only get real mousemoves, we wait for three consecutive events.
+					//We reset this counter every time we receive a touch event.
+					//Note: it was 2 before, now 3. Because Android Firefox does weird things inside a textarea.
+					_this3._mousemoveCounter++;
+
+					if (_this3._mousemoveCounter !== 3) {
+						return;
+					}
+
+					_this3._mousemoveCounter = 0;
+
+					oneNative();
+				};
+
+				//A "mousemove" event is a strong indicator that we're on a desktop device.
+				//"mousemove" makes sure that we switch to native scrolling even if we haven't scrolled yet.
+				//In reality this means stuff like iframes are immediately accessible on desktop.
+				window.addEventListener('mousemove', threeMousemove, false);
+
+				//We should never get a scroll event on mobile because we prevent it.
+				//So that's the strongest desktop indicator you can get.
+				window.addEventListener('scroll', oneNative, false);
+			};
+
+			var waitForFakeAction = function waitForFakeAction() {
+				var oneTouchStart = function oneTouchStart() {
+					document.removeEventListener('touchstart', oneTouchStart, false);
+
+					//Move the scroll offset over from native to fake scrolling.
+					var scrollPosition = Math.round(_this3._getNativeScrollPosition());
+					_this3._scrollLogic.scrollTo(scrollPosition);
+
+					_this3._mousemoveCounter = 0;
+
+					_this3.scrollMode = 'touch';
+
+					waitForNativeAction();
+				};
+
+				document.addEventListener('touchstart', oneTouchStart, false);
+			};
+
+			//By default we assume we're in fake scrolling mode.
+			//This makes sure the user can scroll on iframes if this happens to be the first thing she touches.
+			this._mousemoveCounter = 0;
+			waitForNativeAction();
+		}
+	}, {
+		key: '_getNativeScrollPosition',
+		value: function _getNativeScrollPosition() {
+			if (!document.documentElement || !document.body) {
+				throw new Error('There is no documentElement or body to get the scroll position from.');
+			}
+
+			return document.documentElement.scrollTop || document.body.scrollTop;
+		}
+	}, {
+		key: 'scrollTo',
+		value: function scrollTo(position) {
+			position = Math.round(position);
+
+			if (this.scrollMode === 'native') {
+				window.scrollTo(0, position);
+			} else {
+				this._scrollLogic.scrollTo(position);
+			}
+		}
+	}, {
+		key: '_scrollLoop',
+		value: function _scrollLoop(now) {
+			//The very first frame doesn't have a previous one.
+			if (this._lastScrollTime === -1) {
+				this._lastScrollTime = now;
+			}
+
+			this._pollScrollPosition(now);
+
+			this._lastScrollTime = now;
+			(0, _raf2.default)(this._scrollLoop.bind(this));
+		}
+	}, {
+		key: '_pollScrollPosition',
+		value: function _pollScrollPosition(now) {
+			var currentScrollPosition = void 0;
+
+			if (this.scrollMode === 'touch') {
+				currentScrollPosition = this._scrollLogic.getOffset();
+			} else {
+				currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
+			}
+
+			this.scrollState.tick(now, currentScrollPosition);
+		}
+	}, {
+		key: '_updateScrollHeight',
+		value: function _updateScrollHeight(guidelayoutBehavior) {
+			var layoutEngine = guidelayoutBehavior.engine;
+			var requiredHeight = layoutEngine.requiredHeight;
+
+			//Firefox on Android will scroll natively to remove the addressbar.
+			//This can not be prevented, even with preventDefault on the touch events.
+			//Since moving the addressbar causes doLayout calls, it performs bad.
+			//http://stackoverflow.com/questions/28129663/firefox-on-android-prevent-adressbar-from-disappearing
+			//It's also causing trouble on Android stock browser with scrollMode detection.
+			//We also recently added this for iOS because it was the only thing breaking iframe embeds.
+			//On iOS the iframe will scale to the height of its content, but we query the window height.
+			//So basically it was growing ENDLESSLY (100vh kept getting larger)!
+			if (isAndroidFirefox || isBadAndroid || isAppleiOS) {
+				if (!document.documentElement) {
+					throw new Error('There is no documentElement to style.');
+				}
+
+				document.documentElement.style.overflow = 'visible';
+				this.el.style.height = 0;
+			} else {
+				this.el.style.height = Math.round(requiredHeight) + 'px';
+			}
+
+			this._scrollLogic.setContainerLength(layoutEngine.viewport.height);
+			this._scrollLogic.setContentLength(requiredHeight);
+
+			this.scrollState.maxPosition = requiredHeight - layoutEngine.viewport.height;
+
+			//Make sure we don't lose our relative scroll position.
+			this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
+		}
+	}], [{
+		key: 'schema',
+		get: function get() {
+			return {
+				overscroll: {
+					type: 'boolean',
+					default: 'true'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'scroll';
+		}
+	}, {
+		key: 'dependencies',
+		get: function get() {
+			return ['guidelayout'];
+		}
+	}]);
+
+	return ScrollBehavior;
+}(_Behavior3.default);
+
+exports.default = ScrollBehavior;
+
+},{"behaviors/Behavior.js":11,"lib/ScrollState.js":41,"lib/fakeClick.js":43,"lib/isTextInput.js":45,"raf":5,"scroll-logic":8}],25:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _Behavior2 = require('behaviors/Behavior.js');
 
 var _Behavior3 = _interopRequireDefault(_Behavior2);
@@ -14258,7 +14339,7 @@ var ScrubBehavior = function (_Behavior) {
 
 exports.default = ScrubBehavior;
 
-},{"behaviors/Behavior.js":11}],25:[function(require,module,exports){
+},{"behaviors/Behavior.js":11}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14333,7 +14414,7 @@ var TransformBehavior = function (_Behavior) {
 
 exports.default = TransformBehavior;
 
-},{"behaviors/Behavior.js":11,"behaviors/InterpolateBehavior.js":18}],26:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"behaviors/InterpolateBehavior.js":18}],27:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14432,7 +14513,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":11,"youtube-iframe":10}],27:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"youtube-iframe":10}],28:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -14487,7 +14568,7 @@ _scrollmeister2.default.defineBehavior(_RotatingGradientBehavior2.default);
 _scrollmeister2.default.defineBehavior(_GalleryBehavior2.default);
 _scrollmeister2.default.defineBehavior(_YouTubeBehavior2.default);
 
-},{"behaviors/FluidTextBehavior.js":14,"behaviors/GLEffectBehavior.js":15,"behaviors/GalleryBehavior.js":16,"behaviors/InterpolateBehavior.js":18,"behaviors/LazyLoadBehavior.js":20,"behaviors/RotatingGradientBehavior.js":23,"behaviors/ScrubBehavior.js":24,"behaviors/TransformBehavior.js":25,"behaviors/YouTubeBehavior.js":26,"scrollmeister.js":48}],28:[function(require,module,exports){
+},{"behaviors/FluidTextBehavior.js":14,"behaviors/GLEffectBehavior.js":15,"behaviors/GalleryBehavior.js":16,"behaviors/InterpolateBehavior.js":18,"behaviors/LazyLoadBehavior.js":20,"behaviors/RotatingGradientBehavior.js":23,"behaviors/ScrubBehavior.js":25,"behaviors/TransformBehavior.js":26,"behaviors/YouTubeBehavior.js":27,"scrollmeister.js":49}],29:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -14497,6 +14578,10 @@ var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 var _GuideLayoutBehavior = require('behaviors/GuideLayoutBehavior.js');
 
 var _GuideLayoutBehavior2 = _interopRequireDefault(_GuideLayoutBehavior);
+
+var _ScrollBehavior = require('behaviors/ScrollBehavior.js');
+
+var _ScrollBehavior2 = _interopRequireDefault(_ScrollBehavior);
 
 var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
 
@@ -14523,6 +14608,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
 _scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_ScrollBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
@@ -14531,7 +14617,7 @@ _scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
 _scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
 //Scrollmeister.defineBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":12,"behaviors/FadeInBehavior.js":13,"behaviors/GuideLayoutBehavior.js":17,"behaviors/LayoutBehavior.js":19,"behaviors/MediaBehavior.js":21,"behaviors/MousetrapBehavior.js":22,"scrollmeister.js":48}],29:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":12,"behaviors/FadeInBehavior.js":13,"behaviors/GuideLayoutBehavior.js":17,"behaviors/LayoutBehavior.js":19,"behaviors/MediaBehavior.js":21,"behaviors/MousetrapBehavior.js":22,"behaviors/ScrollBehavior.js":24,"scrollmeister.js":49}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14595,7 +14681,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":30,"scrollmeister.js":48}],30:[function(require,module,exports){
+},{"./MeisterComponent.js":31,"scrollmeister.js":49}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14730,7 +14816,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":37,"raf":5,"scrollmeister.js":48}],31:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":38,"raf":5,"scrollmeister.js":49}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14794,7 +14880,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":30,"scrollmeister.js":48}],32:[function(require,module,exports){
+},{"./MeisterComponent.js":31,"scrollmeister.js":49}],33:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -14819,7 +14905,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	customElements.define('el-meister', _ElementMeisterComponent2.default);
 }, { once: true });
 
-},{"components/ElementMeisterComponent.js":29,"components/ScrollMeisterComponent.js":31,"document-register-element":1}],33:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":30,"components/ScrollMeisterComponent.js":32,"document-register-element":1}],34:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -14871,14 +14957,14 @@ _scrollmeister2.default.defineCondition('webgl', function () {
 //TODO: allow composing conditions from existing
 //Scrollmeister.defineCondition('omfg', 's-down and landscape');
 
-},{"scrollmeister.js":48}],34:[function(require,module,exports){
+},{"scrollmeister.js":49}],35:[function(require,module,exports){
 'use strict';
 
 require('./index.js');
 
 require('behaviors/extras.js');
 
-},{"./index.js":35,"behaviors/extras.js":27}],35:[function(require,module,exports){
+},{"./index.js":36,"behaviors/extras.js":28}],36:[function(require,module,exports){
 'use strict';
 
 require('./scrollmeister.sass');
@@ -14891,7 +14977,7 @@ require('./behaviors');
 
 require('./components');
 
-},{"./behaviors":28,"./components":32,"./conditions":33,"./scrollmeister.js":48,"./scrollmeister.sass":49}],36:[function(require,module,exports){
+},{"./behaviors":29,"./components":33,"./conditions":34,"./scrollmeister.js":49,"./scrollmeister.sass":50}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14976,7 +15062,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15084,7 +15170,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15139,7 +15225,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15753,7 +15839,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15871,7 +15957,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15884,7 +15970,7 @@ exports.default = function (input) {
 	});
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15927,7 +16013,7 @@ exports.default = {
 	}
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15960,7 +16046,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15979,7 +16065,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16174,7 +16260,7 @@ exports.default = {
 	}
 };
 
-},{"types":58}],46:[function(require,module,exports){
+},{"types":59}],47:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16197,7 +16283,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16235,7 +16321,7 @@ if (typeof assign !== 'function') {
 
 exports.default = assign;
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16392,10 +16478,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":36,"lib/ConditionsRegistry.js":38,"lib/camelCase.js":41}],49:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":37,"lib/ConditionsRegistry.js":39,"lib/camelCase.js":42}],50:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":9}],50:[function(require,module,exports){
+},{"scssify":9}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16412,7 +16498,7 @@ exports.default = {
 	}
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16454,7 +16540,7 @@ exports.default = {
 	}
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16500,7 +16586,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":51}],53:[function(require,module,exports){
+},{"types/CSSLengthType.js":52}],54:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16598,7 +16684,7 @@ exports.default = {
 	}
 };
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16627,7 +16713,7 @@ exports.default = {
 	}
 };
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16655,7 +16741,7 @@ exports.default = {
 	}
 };
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16670,7 +16756,7 @@ exports.default = {
 	}
 };
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16708,7 +16794,7 @@ exports.default = {
 	}
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16760,4 +16846,4 @@ exports.default = {
 	template: _TemplateType2.default
 };
 
-},{"types/BooleanType.js":50,"types/CSSLengthType.js":51,"types/HeightType.js":52,"types/LayoutDependencyType.js":53,"types/NumberType.js":54,"types/RatioType.js":55,"types/StringType.js":56,"types/TemplateType.js":57}]},{},[34]);
+},{"types/BooleanType.js":51,"types/CSSLengthType.js":52,"types/HeightType.js":53,"types/LayoutDependencyType.js":54,"types/NumberType.js":55,"types/RatioType.js":56,"types/StringType.js":57,"types/TemplateType.js":58}]},{},[35]);

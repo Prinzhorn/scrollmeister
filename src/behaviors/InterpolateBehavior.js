@@ -3,8 +3,8 @@
 import assign from 'ponies/Object.assign.js';
 import Behavior from 'behaviors/Behavior.js';
 
-import type ScrollState from 'lib/ScrollState.js';
 import type { CSSLength } from 'types/CSSLengthType.js';
+import type ScrollBehavior from 'behaviors/ScrollBehavior.js';
 import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
 
 type Keyframe = {
@@ -70,7 +70,7 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guidelayout', 'layout'];
+		return ['^guidelayout', '^scroll', 'layout'];
 	}
 
 	attach() {
@@ -85,10 +85,7 @@ export default class InterpolateBehavior extends Behavior {
 		this.values = {};
 
 		this.connectTo('^guidelayout', this._createInterpolators.bind(this));
-
-		this.listen(this.parentEl, 'guidelayout:scroll', e => {
-			this._interpolate(e.detail.scrollState);
-		});
+		this.connectTo('^scroll', this._interpolate.bind(this));
 	}
 
 	_createInterpolators(guidelayoutBehavior: GuideLayoutBehavior) {
@@ -105,7 +102,7 @@ export default class InterpolateBehavior extends Behavior {
 		}
 
 		//Apply the interpolators right away.
-		this._interpolate(this.parentEl.guidelayout.scrollState);
+		this._interpolate(this.parentEl.scroll);
 	}
 
 	_createInterpolator(guidelayoutBehavior: GuideLayoutBehavior, keyframes: Array<Keyframe>) {
@@ -157,7 +154,7 @@ export default class InterpolateBehavior extends Behavior {
 		};
 	}
 
-	_interpolate(scrollState: ScrollState) {
+	_interpolate(scrollBehavior: ScrollBehavior) {
 		let schema = this.constructor.schema;
 		let didChange = false;
 
@@ -166,7 +163,7 @@ export default class InterpolateBehavior extends Behavior {
 				let previousValue = this.values[prop];
 
 				if (this._interpolators.hasOwnProperty(prop)) {
-					this.values[prop] = this._interpolators[prop](scrollState.position);
+					this.values[prop] = this._interpolators[prop](scrollBehavior.scrollState.position);
 				} else {
 					this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
 				}

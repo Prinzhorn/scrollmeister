@@ -1,6 +1,7 @@
 import Scrollmeister from 'scrollmeister.js';
 
 import GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+import ScrollBehavior from 'behaviors/ScrollBehavior.js';
 import DebugGuidesBehavior from 'behaviors/DebugGuidesBehavior.js';
 import FadeInBehavior from 'behaviors/FadeInBehavior.js';
 
@@ -10,6 +11,7 @@ import MousetrapBehavior from 'behaviors/MousetrapBehavior.js';
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
 Scrollmeister.defineBehavior(GuideLayoutBehavior);
+Scrollmeister.defineBehavior(ScrollBehavior);
 Scrollmeister.defineBehavior(DebugGuidesBehavior);
 Scrollmeister.defineBehavior(FadeInBehavior);
 

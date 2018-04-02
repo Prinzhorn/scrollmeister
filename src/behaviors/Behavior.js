@@ -25,6 +25,27 @@ const supportsPassiveEvents = (function() {
 //Chrome makes touchmove passive by default. We don't want none of that.
 const thirdEventListenerArgument = supportsPassiveEvents ? { passive: false } : false;
 
+function normalizeEventsArguments(element, eventName, callback) {
+	//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
+	if (arguments.length === 2) {
+		callback = eventName;
+		eventName = element;
+
+		if (eventName.charAt(0) === '^') {
+			eventName = eventName.slice(1);
+			element = this.parentEl;
+		} else {
+			element = this.el;
+		}
+	}
+
+	return {
+		element,
+		eventName,
+		callback
+	};
+}
+
 export default class Behavior {
 	static get schema() {
 		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the static "schema" getter.`);
@@ -111,7 +132,7 @@ export default class Behavior {
 		this.emit('change');
 	}
 
-	connectTo(dependencyName, callback) {
+	connectTo(dependencyName, notifyCallback, connectedCallback) {
 		if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
 			throw new Error(
 				`You are trying to connect the "${
@@ -128,6 +149,17 @@ export default class Behavior {
 		}
 
 		let behavior = element[dependencyName];
+		let callback = () => {
+			//Overwrite the callback so it only ever gets called a single time.
+			//After the first time we call the notifyCallback directly.
+			callback = notifyCallback;
+
+			if (connectedCallback) {
+				connectedCallback(behavior);
+			}
+
+			notifyCallback(behavior);
+		};
 
 		//For the most part this is what "connecting" is about.
 		//We just listen to the change event of the other behavior.
@@ -151,12 +183,7 @@ export default class Behavior {
 	}
 
 	listen(element, eventName, callback) {
-		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-		if (arguments.length === 2) {
-			callback = eventName;
-			eventName = element;
-			element = this.el;
-		}
+		({ element, eventName, callback } = normalizeEventsArguments.apply(this, arguments));
 
 		//Space separated list of event names for the same element and callback.
 		if (eventName.indexOf(' ') !== -1) {
@@ -180,12 +207,7 @@ export default class Behavior {
 	}
 
 	listenOnce(element, eventName, callback) {
-		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-		if (arguments.length === 2) {
-			callback = eventName;
-			eventName = element;
-			element = this.el;
-		}
+		({ element, eventName, callback } = normalizeEventsArguments.apply(this, arguments));
 
 		const self = this;
 
@@ -207,24 +229,14 @@ export default class Behavior {
 	}
 
 	listenAndInvoke(element, eventName, callback) {
-		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-		if (arguments.length === 2) {
-			callback = eventName;
-			eventName = element;
-			element = this.el;
-		}
+		({ element, eventName, callback } = normalizeEventsArguments.apply(this, arguments));
 
 		this.listen(element, eventName, callback);
 		callback();
 	}
 
 	unlisten(element, eventName, callback) {
-		//The first parameter can be ommitted and defaults to the element that the behavior is attached to.
-		if (arguments.length === 2) {
-			callback = eventName;
-			eventName = element;
-			element = this.el;
-		}
+		({ element, eventName, callback } = normalizeEventsArguments.apply(this, arguments));
 
 		//This is a hack to make listenOnce work.
 		//We store a reference to the original listener as _once property.

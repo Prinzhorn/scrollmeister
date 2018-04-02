@@ -26,11 +26,11 @@ export default class GLEffectBehavior extends Behavior {
 		this._initRegl();
 
 		this.connectTo('layout', this._resize.bind(this));
-		this.connectTo('interpolate', this._render.bind(this));
-
-		//This updates the texture in addition to the render loop.
-		//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
-		this._pollTimer = setInterval(this._pollSource.bind(this, true), 1000 / 30);
+		this.connectTo('interpolate', this._render.bind(this), () => {
+			//This updates the texture in addition to the render loop.
+			//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
+			this._pollTimer = setInterval(this._pollSource.bind(this, true), 1000 / 30);
+		});
 	}
 
 	update() {

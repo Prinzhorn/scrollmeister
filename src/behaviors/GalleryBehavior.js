@@ -66,7 +66,7 @@ export default class GalleryBehavior extends Behavior {
 			style.position = 'absolute';
 			style.left = style.top = '0px';
 			//TODO: BehaviorStyleMerger
-			style.transition = 'all 0.3s ease-in-out';
+			style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out, transform 0.3s ease-in-out';
 			style.width = imageLayout.width + 'px';
 			style.height = imageLayout.height + 'px';
 			// $FlowFixMe: WebkitTransform and msTransform are missing in CSSStyleDeclaration
