@@ -6,6 +6,7 @@ import ScrollLogic from 'scroll-logic';
 import ScrollState from 'lib/ScrollState.js';
 import fakeClick from 'lib/fakeClick.js';
 import isTextInput from 'lib/isTextInput.js';
+import Easings from 'lib/Easings.js';
 
 import Behavior from 'behaviors/Behavior.js';
 import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
@@ -41,6 +42,8 @@ export default class ScrollBehavior extends Behavior {
 
 	attach() {
 		this.scrollMode = 'touch';
+
+		this._scrollAnimation = null;
 
 		this._lastScrollTime = -1;
 
@@ -188,13 +191,47 @@ export default class ScrollBehavior extends Behavior {
 		return document.documentElement.scrollTop || document.body.scrollTop;
 	}
 
-	scrollTo(position: number) {
+	_updateScrollAnimation(now: number) {
+		let animation = this._scrollAnimation;
+
+		if (!animation.hasOwnProperty('startTime')) {
+			animation.startTime = now;
+			animation.endTime = now + Math.abs(animation.targetPosition - animation.startPosition) / 3;
+		}
+
+		let currentScrollPosition;
+
+		if (now > animation.endTime) {
+			currentScrollPosition = animation.targetPosition;
+			this._scrollAnimation = null;
+		} else {
+			let progress;
+
+			progress = 1 - (animation.endTime - now) / (animation.endTime - animation.startTime);
+			progress = Easings.outCubic(progress);
+
+			currentScrollPosition = animation.startPosition + (animation.targetPosition - animation.startPosition) * progress;
+		}
+
+		this.scrollTo(currentScrollPosition);
+	}
+
+	scrollTo(position: number, animate: boolean = false) {
 		position = Math.round(position);
 
-		if (this.scrollMode === 'native') {
-			window.scrollTo(0, position);
+		if (animate) {
+			let currentPosition = this.getPosition();
+
+			this._scrollAnimation = {
+				startPosition: currentPosition,
+				targetPosition: position
+			};
 		} else {
-			this._scrollLogic.scrollTo(position);
+			if (this.scrollMode === 'native') {
+				window.scrollTo(0, position);
+			} else {
+				this._scrollLogic.scrollTo(position);
+			}
 		}
 	}
 
@@ -210,7 +247,7 @@ export default class ScrollBehavior extends Behavior {
 		raf(this._scrollLoop.bind(this));
 	}
 
-	_pollScrollPosition(now: number) {
+	getPosition() {
 		let currentScrollPosition;
 
 		if (this.scrollMode === 'touch') {
@@ -219,7 +256,15 @@ export default class ScrollBehavior extends Behavior {
 			currentScrollPosition = this._lastNativeScrollPosition = Math.round(this._getNativeScrollPosition());
 		}
 
-		this.scrollState.tick(now, currentScrollPosition);
+		return currentScrollPosition;
+	}
+
+	_pollScrollPosition(now: number) {
+		if (this._scrollAnimation) {
+			this._updateScrollAnimation(now);
+		}
+
+		this.scrollState.tick(now, this.getPosition());
 	}
 
 	_updateScrollHeight(guidelayoutBehavior: GuideLayoutBehavior) {

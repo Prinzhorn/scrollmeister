@@ -46,7 +46,7 @@
 		</style>
 	</head>
 	<body>
-		<scroll-meister debugguides fadein scroll
+		<scroll-meister debugguides fadein scroll hash-navigation
 			guidelayout="
 				guides:
 					contentleft 0 2vmin,
@@ -61,6 +61,13 @@
 		>
 			<el-meister layout="guides: contentleft contentright;" fluidtext>
 				<h1>Scrollmeister thingy</h1>
+			</el-meister>
+
+			<el-meister layout="guides: contentleft contentright;">
+				<!--TODO: height: auto does not work without the wrapping div tho-->
+				<div>
+					<a href="#gl">gl-effect</a>
+				</div>
 			</el-meister>
 
 			<!-- <el-meister layout="guides: contentleft contentright; height: 560/315" youtube>
@@ -87,7 +94,7 @@
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 			</el-meister>
 
-			<el-meister media="ratio: 1920 / 1080" interpolate gl-effect layout="guides: contentleft contentright; height: 800/600; spacing: 50vh;">
+			<el-meister id="gl" media="ratio: 1920 / 1080" interpolate gl-effect layout="guides: contentleft contentright; height: 800/600; spacing: 50vh;">
 				<img class="cover" src="bogdan-dada-156739-unsplash.jpg" />
 				<!--<video src="./chrome.mp4" type="video/mp4" muted playsInline autoplay loop></video>-->
 				<script type="text/plain">
