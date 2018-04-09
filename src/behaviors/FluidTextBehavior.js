@@ -10,7 +10,7 @@ export default class FadeInBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'fluidtext';
+		return 'fluid-text';
 	}
 
 	static get dependencies(): Array<string> {

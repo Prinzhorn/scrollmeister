@@ -15,17 +15,17 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'debugguides';
+		return 'debug-guides';
 	}
 
 	static get dependencies(): Array<string> {
-		return ['guidelayout'];
+		return ['guide-layout'];
 	}
 
 	attach() {
 		this._createElement();
 
-		this.connectTo('guidelayout', this._render.bind(this));
+		this.connectTo('guide-layout', this._render.bind(this));
 	}
 
 	detach() {
@@ -54,8 +54,8 @@ export default class DebugGuidesBehavior extends Behavior {
 		}
 	}
 
-	_render(guidelayoutBehavior: GuideLayoutBehavior) {
-		let guides = guidelayoutBehavior.engine.guides;
+	_render(guideLayoutBehavior: GuideLayoutBehavior) {
+		let guides = guideLayoutBehavior.engine.guides;
 
 		let html = guides.map(guide => {
 			let width = guide.width;

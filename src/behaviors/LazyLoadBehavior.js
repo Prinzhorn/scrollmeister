@@ -8,7 +8,7 @@ export default class LazyLoadBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'lazyload';
+		return 'lazy-load';
 	}
 
 	static get dependencies(): Array<string> {

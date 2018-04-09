@@ -30,7 +30,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'guidelayout';
+		return 'guide-layout';
 	}
 
 	static get dependencies(): Array<string> {

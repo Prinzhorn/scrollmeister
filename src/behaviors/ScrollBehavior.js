@@ -6,7 +6,7 @@ import ScrollLogic from 'scroll-logic';
 import ScrollState from 'lib/ScrollState.js';
 import fakeClick from 'lib/fakeClick.js';
 import isTextInput from 'lib/isTextInput.js';
-import Easings from 'lib/Easings.js';
+import easings from 'lib/easings.js';
 
 import Behavior from 'behaviors/Behavior.js';
 import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
@@ -37,7 +37,7 @@ export default class ScrollBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['guidelayout'];
+		return ['guide-layout'];
 	}
 
 	attach() {
@@ -49,7 +49,7 @@ export default class ScrollBehavior extends Behavior {
 
 		this._setupScrolling();
 
-		this.connectTo('guidelayout', this._updateScrollHeight.bind(this));
+		this.connectTo('guide-layout', this._updateScrollHeight.bind(this));
 
 		//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
 		//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
@@ -208,7 +208,7 @@ export default class ScrollBehavior extends Behavior {
 			let progress;
 
 			progress = 1 - (animation.endTime - now) / (animation.endTime - animation.startTime);
-			progress = Easings.outCubic(progress);
+			progress = easings.outCubic(progress);
 
 			currentScrollPosition = animation.startPosition + (animation.targetPosition - animation.startPosition) * progress;
 		}
@@ -267,8 +267,8 @@ export default class ScrollBehavior extends Behavior {
 		this.scrollState.tick(now, this.getPosition());
 	}
 
-	_updateScrollHeight(guidelayoutBehavior: GuideLayoutBehavior) {
-		let layoutEngine = guidelayoutBehavior.engine;
+	_updateScrollHeight(guideLayoutBehavior: GuideLayoutBehavior) {
+		let layoutEngine = guideLayoutBehavior.engine;
 		let requiredHeight = layoutEngine.requiredHeight;
 
 		//Firefox on Android will scroll natively to remove the addressbar.

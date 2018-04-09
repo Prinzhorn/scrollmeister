@@ -70,7 +70,7 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guidelayout', '^scroll', 'layout'];
+		return ['^guide-layout', '^scroll', 'layout'];
 	}
 
 	attach() {
@@ -84,17 +84,17 @@ export default class InterpolateBehavior extends Behavior {
 
 		this.values = {};
 
-		this.connectTo('^guidelayout', this._createInterpolators.bind(this));
+		this.connectTo('^guide-layout', this._createInterpolators.bind(this));
 		this.connectTo('^scroll', this._interpolate.bind(this));
 	}
 
-	_createInterpolators(guidelayoutBehavior: GuideLayoutBehavior) {
+	_createInterpolators(guideLayoutBehavior: GuideLayoutBehavior) {
 		let schema = this.constructor.schema;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
 				if (this.props[prop].length > 0) {
-					this._interpolators[prop] = this._createInterpolator(guidelayoutBehavior, this.props[prop]);
+					this._interpolators[prop] = this._createInterpolator(guideLayoutBehavior, this.props[prop]);
 				} else {
 					delete this._interpolators[prop];
 				}
@@ -105,8 +105,8 @@ export default class InterpolateBehavior extends Behavior {
 		this._interpolate(this.parentEl.scroll);
 	}
 
-	_createInterpolator(guidelayoutBehavior: GuideLayoutBehavior, keyframes: Array<Keyframe>) {
-		let layoutEngine = guidelayoutBehavior.engine;
+	_createInterpolator(guideLayoutBehavior: GuideLayoutBehavior, keyframes: Array<Keyframe>) {
+		let layoutEngine = guideLayoutBehavior.engine;
 
 		//Map the keyframe anchor and offset to scroll positions.
 		let mappedKeyframes = keyframes.map(keyframe => {

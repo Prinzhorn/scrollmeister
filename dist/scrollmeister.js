@@ -12084,7 +12084,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 		value: function attach() {
 			this._createElement();
 
-			this.connectTo('guidelayout', this._render.bind(this));
+			this.connectTo('guide-layout', this._render.bind(this));
 		}
 	}, {
 		key: 'detach',
@@ -12110,10 +12110,10 @@ var DebugGuidesBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_render',
-		value: function _render(guidelayoutBehavior) {
+		value: function _render(guideLayoutBehavior) {
 			var _this2 = this;
 
-			var guides = guidelayoutBehavior.engine.guides;
+			var guides = guideLayoutBehavior.engine.guides;
 
 			var html = guides.map(function (guide) {
 				var width = guide.width;
@@ -12144,12 +12144,12 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'debugguides';
+			return 'debug-guides';
 		}
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guidelayout'];
+			return ['guide-layout'];
 		}
 	}]);
 
@@ -12291,7 +12291,7 @@ var FadeInBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'fluidtext';
+			return 'fluid-text';
 		}
 	}, {
 		key: 'dependencies',
@@ -12573,7 +12573,7 @@ var GalleryBehavior = function (_Behavior) {
 	}, {
 		key: '_render',
 		value: function _render(layoutBehavior) {
-			var layoutEngine = this.parentEl.guidelayout.engine;
+			var layoutEngine = this.parentEl.guideLayout.engine;
 			var viewport = layoutEngine.viewport;
 
 			var spacing = layoutEngine.lengthToPixel(this.props.spacing, 0);
@@ -12860,7 +12860,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'guidelayout';
+			return 'guide-layout';
 		}
 	}, {
 		key: 'dependencies',
@@ -12874,7 +12874,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 
 exports.default = GuideLayoutBehavior;
 
-},{"behaviors/Behavior.js":11,"lib/GuideLayoutEngine.js":42,"raf":5}],18:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/GuideLayoutEngine.js":41,"raf":5}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12975,7 +12975,7 @@ var HashNavigationBehavior = function (_Behavior) {
 
 			var layoutBehavior = scrollTarget.layout;
 			var layout = layoutBehavior.layout;
-			var engine = this.el.guidelayout.engine;
+			var engine = this.el.guideLayout.engine;
 			var offset = engine.lengthToPixel(this.props.offset, layout.height);
 			var targetTop = engine.calculateAnchorPosition(layoutBehavior, this.props.anchor, -offset);
 
@@ -13006,7 +13006,7 @@ var HashNavigationBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guidelayout', 'scroll'];
+			return ['guide-layout', 'scroll'];
 		}
 	}]);
 
@@ -13085,18 +13085,18 @@ var InterpolateBehavior = function (_Behavior) {
 
 			this.values = {};
 
-			this.connectTo('^guidelayout', this._createInterpolators.bind(this));
+			this.connectTo('^guide-layout', this._createInterpolators.bind(this));
 			this.connectTo('^scroll', this._interpolate.bind(this));
 		}
 	}, {
 		key: '_createInterpolators',
-		value: function _createInterpolators(guidelayoutBehavior) {
+		value: function _createInterpolators(guideLayoutBehavior) {
 			var schema = this.constructor.schema;
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
 					if (this.props[prop].length > 0) {
-						this._interpolators[prop] = this._createInterpolator(guidelayoutBehavior, this.props[prop]);
+						this._interpolators[prop] = this._createInterpolator(guideLayoutBehavior, this.props[prop]);
 					} else {
 						delete this._interpolators[prop];
 					}
@@ -13108,10 +13108,10 @@ var InterpolateBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_createInterpolator',
-		value: function _createInterpolator(guidelayoutBehavior, keyframes) {
+		value: function _createInterpolator(guideLayoutBehavior, keyframes) {
 			var _this2 = this;
 
-			var layoutEngine = guidelayoutBehavior.engine;
+			var layoutEngine = guideLayoutBehavior.engine;
 
 			//Map the keyframe anchor and offset to scroll positions.
 			var mappedKeyframes = keyframes.map(function (keyframe) {
@@ -13209,7 +13209,7 @@ var InterpolateBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout', '^scroll', 'layout'];
+			return ['^guide-layout', '^scroll', 'layout'];
 		}
 	}]);
 
@@ -13264,7 +13264,7 @@ var LayoutBehavior = function (_Behavior) {
 			//But still always define innerEl, even if it is === el
 			this._wrapContents();
 
-			this.connectTo('^guidelayout', this._render.bind(this));
+			this.connectTo('^guide-layout', this._render.bind(this));
 			this.connectTo('^scroll', this._scroll.bind(this));
 
 			this.listen('^scroll:pause', this._scrollPause.bind(this));
@@ -13457,7 +13457,7 @@ var LayoutBehavior = function (_Behavior) {
 			var style = this.el.style;
 			var innerStyle = this.innerEl.style;
 
-			this.parentEl.guidelayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
+			this.parentEl.guideLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
 			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 				var left = Math.round(this.layout.left);
@@ -13589,7 +13589,7 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout', '^scroll'];
+			return ['^guide-layout', '^scroll'];
 		}
 	}, {
 		key: 'behaviorName',
@@ -13682,7 +13682,7 @@ var LazyLoadBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'lazyload';
+			return 'lazy-load';
 		}
 	}, {
 		key: 'dependencies',
@@ -13790,7 +13790,7 @@ var MediaBehavior = function (_Behavior) {
 	}, {
 		key: 'calculateMediaLayout',
 		value: function calculateMediaLayout(layoutBehavior) {
-			var layoutEngine = this.parentEl.guidelayout.engine;
+			var layoutEngine = this.parentEl.guideLayout.engine;
 			var size = this._calculateMediaSize(layoutBehavior);
 			var fit = this.props.fit;
 			var _layoutBehavior$layou2 = layoutBehavior.layout,
@@ -13865,7 +13865,7 @@ var MediaBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout', 'layout'];
+			return ['^guide-layout', 'layout'];
 		}
 	}]);
 
@@ -13950,7 +13950,7 @@ var MousetrapBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guidelayout'];
+			return ['^guide-layout'];
 		}
 	}]);
 
@@ -14069,9 +14069,9 @@ var _isTextInput = require('lib/isTextInput.js');
 
 var _isTextInput2 = _interopRequireDefault(_isTextInput);
 
-var _Easings = require('lib/Easings.js');
+var _easings = require('lib/easings.js');
 
-var _Easings2 = _interopRequireDefault(_Easings);
+var _easings2 = _interopRequireDefault(_easings);
 
 var _Behavior2 = require('behaviors/Behavior.js');
 
@@ -14109,7 +14109,7 @@ var ScrollBehavior = function (_Behavior) {
 
 			this._setupScrolling();
 
-			this.connectTo('guidelayout', this._updateScrollHeight.bind(this));
+			this.connectTo('guide-layout', this._updateScrollHeight.bind(this));
 
 			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
 			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
@@ -14281,7 +14281,7 @@ var ScrollBehavior = function (_Behavior) {
 				var progress = void 0;
 
 				progress = 1 - (animation.endTime - now) / (animation.endTime - animation.startTime);
-				progress = _Easings2.default.outCubic(progress);
+				progress = _easings2.default.outCubic(progress);
 
 				currentScrollPosition = animation.startPosition + (animation.targetPosition - animation.startPosition) * progress;
 			}
@@ -14347,8 +14347,8 @@ var ScrollBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_updateScrollHeight',
-		value: function _updateScrollHeight(guidelayoutBehavior) {
-			var layoutEngine = guidelayoutBehavior.engine;
+		value: function _updateScrollHeight(guideLayoutBehavior) {
+			var layoutEngine = guideLayoutBehavior.engine;
 			var requiredHeight = layoutEngine.requiredHeight;
 
 			//Firefox on Android will scroll natively to remove the addressbar.
@@ -14396,7 +14396,7 @@ var ScrollBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guidelayout'];
+			return ['guide-layout'];
 		}
 	}]);
 
@@ -14405,7 +14405,7 @@ var ScrollBehavior = function (_Behavior) {
 
 exports.default = ScrollBehavior;
 
-},{"behaviors/Behavior.js":11,"lib/Easings.js":41,"lib/ScrollState.js":43,"lib/fakeClick.js":45,"lib/isTextInput.js":47,"raf":5,"scroll-logic":8}],26:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/ScrollState.js":42,"lib/easings.js":44,"lib/fakeClick.js":45,"lib/isTextInput.js":47,"raf":5,"scroll-logic":8}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15424,58 +15424,6 @@ var ConditionsRegistry = function () {
 exports.default = ConditionsRegistry;
 
 },{}],41:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-exports.default = {
-	linear: function linear(p) {
-		return p;
-	},
-	quad: function quad(p) {
-		return p * p;
-	},
-	cubic: function cubic(p) {
-		return p * p * p;
-	},
-	swing: function swing(p) {
-		return -Math.cos(p * Math.PI) / 2 + 0.5;
-	},
-	sqrt: function sqrt(p) {
-		return Math.sqrt(p);
-	},
-	outCubic: function outCubic(p) {
-		return Math.pow(p - 1, 3) + 1;
-	},
-	natural: function natural(p) {
-		if (p === 0) {
-			return 0;
-		}
-
-		return Math.exp(4 * (p - 1));
-	},
-	//see https://www.desmos.com/calculator/tbr20s8vd2 for how I did this
-	bounce: function bounce(p) {
-		var a;
-
-		if (p <= 0.5083) {
-			a = 3;
-		} else if (p <= 0.8489) {
-			a = 9;
-		} else if (p <= 0.96208) {
-			a = 27;
-		} else if (p <= 0.99981) {
-			a = 91;
-		} else {
-			return 1;
-		}
-
-		return 1 - Math.abs(3 * Math.cos(p * a * 1.028) / a);
-	}
-};
-
-},{}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16089,7 +16037,7 @@ var GuideLayoutEngine = function () {
 
 exports.default = GuideLayoutEngine;
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16207,7 +16155,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16218,6 +16166,58 @@ exports.default = function (input) {
 	return input.replace(/-([a-z])/g, function (match) {
 		return match[1].toUpperCase();
 	});
+};
+
+},{}],44:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = {
+	linear: function linear(p) {
+		return p;
+	},
+	quad: function quad(p) {
+		return p * p;
+	},
+	cubic: function cubic(p) {
+		return p * p * p;
+	},
+	swing: function swing(p) {
+		return -Math.cos(p * Math.PI) / 2 + 0.5;
+	},
+	sqrt: function sqrt(p) {
+		return Math.sqrt(p);
+	},
+	outCubic: function outCubic(p) {
+		return Math.pow(p - 1, 3) + 1;
+	},
+	natural: function natural(p) {
+		if (p === 0) {
+			return 0;
+		}
+
+		return Math.exp(4 * (p - 1));
+	},
+	//see https://www.desmos.com/calculator/tbr20s8vd2 for how I did this
+	bounce: function bounce(p) {
+		var a;
+
+		if (p <= 0.5083) {
+			a = 3;
+		} else if (p <= 0.8489) {
+			a = 9;
+		} else if (p <= 0.96208) {
+			a = 27;
+		} else if (p <= 0.99981) {
+			a = 91;
+		} else {
+			return 1;
+		}
+
+		return 1 - Math.abs(3 * Math.cos(p * a * 1.028) / a);
+	}
 };
 
 },{}],45:[function(require,module,exports){
@@ -16683,7 +16683,7 @@ var Scrollmeister = {
 
 		//Check if all dependencies are still resolved.
 		//TODO: this check missed dependencies of children.
-		//E.g. removing "guidelayout" when there are children with "layout".
+		//E.g. removing "guide-layout" when there are children with "layout".
 		for (var otherName in element.behaviors) {
 			if (!element.behaviors.hasOwnProperty(otherName)) {
 				continue;
@@ -16728,7 +16728,7 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":38,"lib/ConditionsRegistry.js":40,"lib/camelCase.js":44}],52:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":38,"lib/ConditionsRegistry.js":40,"lib/camelCase.js":43}],52:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
 },{"scssify":9}],53:[function(require,module,exports){

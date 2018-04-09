@@ -20,7 +20,7 @@ export default class HashNavigationBehavior extends Behavior {
 	}
 
 	static get dependencies() {
-		return ['guidelayout', 'scroll'];
+		return ['guide-layout', 'scroll'];
 	}
 
 	attach() {
@@ -89,7 +89,7 @@ export default class HashNavigationBehavior extends Behavior {
 
 		let layoutBehavior = scrollTarget.layout;
 		let layout = layoutBehavior.layout;
-		let engine = this.el.guidelayout.engine;
+		let engine = this.el.guideLayout.engine;
 		let offset = engine.lengthToPixel(this.props.offset, layout.height);
 		let targetTop = engine.calculateAnchorPosition(layoutBehavior, this.props.anchor, -offset);
 
