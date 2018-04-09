@@ -1,4 +1,5 @@
 import Scrollmeister from 'scrollmeister.js';
+import './index.js';
 
 import HashNavigationBehavior from 'behaviors/HashNavigationBehavior.js';
 import InterpolateBehavior from 'behaviors/InterpolateBehavior.js';

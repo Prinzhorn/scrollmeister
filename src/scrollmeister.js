@@ -9,6 +9,8 @@ const Scrollmeister = {
 	behaviorsRegistry: new BehaviorsRegistry(),
 	conditionsRegistry: new ConditionsRegistry(),
 
+	version: process.env.npm_package_version,
+
 	getDefinedBehaviorNames: function() {
 		return this.behaviorsRegistry.getNames();
 	},

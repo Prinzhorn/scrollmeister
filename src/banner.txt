@@ -1,0 +1,9 @@
+<%= _.startCase(pkg.name) %> v<%= pkg.version %> (<%= moment().format('MMMM Do YYYY') %>)
+<%= pkg.description %>
+
+<%= pkg.homepage %>
+
+@author  <%= pkg.author.name %> (<%= pkg.author.url %>)
+@license <%= pkg.license %>
+
+This bundle contains the following npm packages: <%- _.join(_.keys(pkg.dependencies), ', ') %>
