@@ -15112,48 +15112,70 @@ var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_scrollmeister2.default.defineCondition('s', function () {
-  return window.innerWidth >= 576;
+//TODO: do we want it that way? Should defineCondition return a function to update the condition?
+//They should be pure and only rely on their parameters.
+//Should it accept parameters?
+//let updateXS = Scrollmeister.defineCondition('s', () => window.innerWidth >= 576);
+//Or how about: Scrollmeister.updateCondition('m', window)
+
+_scrollmeister2.default.defineCondition('m', function (win) {
+	return win.innerWidth >= 768;
+}, function (update) {
+	window.addEventListener('resize', function () {
+		update();
+	}, false);
+
+	update();
 });
-_scrollmeister2.default.defineCondition('m', function () {
-  return window.innerWidth >= 768;
+_scrollmeister2.default.defineCondition('l', function (win) {
+	return win.innerWidth >= 992;
 });
-_scrollmeister2.default.defineCondition('l', function () {
-  return window.innerWidth >= 992;
-});
-_scrollmeister2.default.defineCondition('xl', function () {
-  return window.innerWidth >= 1200;
+_scrollmeister2.default.defineCondition('xl', function (win) {
+	return win.innerWidth >= 1200;
 });
 
-_scrollmeister2.default.defineCondition('s-down', function () {
-  return window.innerWidth < 576;
+_scrollmeister2.default.defineCondition('s-down', function (win) {
+	return win.innerWidth < 576;
 });
-_scrollmeister2.default.defineCondition('m-down', function () {
-  return window.innerWidth < 768;
+_scrollmeister2.default.defineCondition('m-down', function (win) {
+	return win.innerWidth < 768;
 });
-_scrollmeister2.default.defineCondition('l-down', function () {
-  return window.innerWidth < 992;
+_scrollmeister2.default.defineCondition('l-down', function (win) {
+	return win.innerWidth < 992;
 });
-_scrollmeister2.default.defineCondition('xl-down', function () {
-  return window.innerWidth < 1200;
-});
-
-_scrollmeister2.default.defineCondition('portrait', function () {
-  return window.innerWidth < window.innerHeight;
-});
-_scrollmeister2.default.defineCondition('landscape', function () {
-  return window.innerWidth >= window.innerHeight;
+_scrollmeister2.default.defineCondition('xl-down', function (win) {
+	return win.innerWidth < 1200;
 });
 
-//TODO: let's see what Modernizr, feature.js and has.js offer.
+_scrollmeister2.default.defineCondition('portrait', function (win) {
+	return win.innerWidth < win.innerHeight;
+});
+_scrollmeister2.default.defineCondition('landscape', function (win) {
+	return win.innerWidth >= win.innerHeight;
+});
+
+//TODO: let's see what Modernizr, feature.js and has.js offer to get some inspiration.
 _scrollmeister2.default.defineCondition('webgl', function () {
-  return true;
+	return true;
+});
+
+//TODO: function is optional, a condition can also be constant
+_scrollmeister2.default.defineCondition('websockets', function () {
+	return typeof WebSocket === 'function';
 });
 
 //TODO: do we allow element-queries? They can potentially end in infinite loops.
 
-//TODO: allow composing conditions from existing
-//Scrollmeister.defineCondition('omfg', 's-down and landscape');
+//TODO: Allow composing conditions from existing
+//let update = Scrollmeister.defineCondition('wat', ['xl', 'portrait'], (xl, portrait, more, extra) => xl && portrait);
+//update('foo', 'bar') will set "more" and "extra" to these.
+_scrollmeister2.default.defineCondition('wat', ['xl', 'portrait'], function (xl, portrait) {
+	return xl && portrait;
+});
+
+//TODO: Condition changes propagate synchrnously. But Scrollmeister will batch them and schedule an update just like detach/attach
+
+//window.addEventListener('resize', ....)
 
 },{"scrollmeister.js":51}],36:[function(require,module,exports){
 'use strict';
