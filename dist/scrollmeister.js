@@ -12191,7 +12191,12 @@ var FadeInBehavior = function (_Behavior) {
 	_createClass(FadeInBehavior, [{
 		key: 'attach',
 		value: function attach() {
-			this.el.style.opacity = 1;
+			var _this2 = this;
+
+			//Make sure the very first render took place and everything is updated.
+			this.listenOnce('guide-layout:change', function () {
+				_this2.el.style.opacity = 1;
+			});
 		}
 	}, {
 		key: 'detach',
@@ -12211,7 +12216,7 @@ var FadeInBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return [];
+			return ['guide-layout'];
 		}
 	}]);
 
