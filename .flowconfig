@@ -1,5 +1,6 @@
 [ignore]
 dist
+#https://github.com/facebook/flow/issues/6049
 .*/node_modules/module-deps/.*
 
 [include]
