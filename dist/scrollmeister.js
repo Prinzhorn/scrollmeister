@@ -12324,10 +12324,6 @@ var _Behavior2 = require('behaviors/Behavior.js');
 
 var _Behavior3 = _interopRequireDefault(_Behavior2);
 
-var _regl = require('regl');
-
-var _regl2 = _interopRequireDefault(_regl);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -12335,6 +12331,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var createRegl = void 0;
+
+try {
+	createRegl = require('regl');
+} catch (ignore) {
+	createRegl = null;
+}
 
 var GLEffectBehavior = function (_Behavior) {
 	_inherits(GLEffectBehavior, _Behavior);
@@ -12350,10 +12354,17 @@ var GLEffectBehavior = function (_Behavior) {
 		value: function attach() {
 			var _this2 = this;
 
+			if (!createRegl) {
+				return;
+			}
+
 			this._sourceElement = this.el.querySelector('img, video');
 			this._canvas = this._createCanvas();
 
-			this._initRegl();
+			if (!this._initRegl()) {
+				this._removeCanvas();
+				return;
+			}
 
 			this.connectTo('layout', this._resize.bind(this));
 			this.connectTo('interpolate', this._render.bind(this), function () {
@@ -12370,9 +12381,13 @@ var GLEffectBehavior = function (_Behavior) {
 	}, {
 		key: 'detach',
 		value: function detach() {
+			if (!createRegl) {
+				return;
+			}
+
 			clearInterval(this._pollTimer);
 			this._regl.destroy();
-			this._canvas.parentNode.removeChild(this._canvas);
+			this._removeCanvas();
 		}
 	}, {
 		key: '_createCanvas',
@@ -12382,6 +12397,11 @@ var GLEffectBehavior = function (_Behavior) {
 			this._sourceElement.parentNode.appendChild(canvas);
 
 			return canvas;
+		}
+	}, {
+		key: '_removeCanvas',
+		value: function _removeCanvas() {
+			this._canvas.parentNode.removeChild(this._canvas);
 		}
 	}, {
 		key: '_resize',
@@ -12399,7 +12419,14 @@ var GLEffectBehavior = function (_Behavior) {
 				this._regl.destroy();
 			}
 
-			var regl = (0, _regl2.default)(this._canvas);
+			var regl = void 0;
+
+			try {
+				regl = createRegl(this._canvas);
+			} catch (ignore) {
+				createRegl = null;
+				return false;
+			}
 
 			this._draw = regl({
 				frag: this.props.shader.template,
@@ -12419,6 +12446,8 @@ var GLEffectBehavior = function (_Behavior) {
 			});
 
 			this._regl = regl;
+
+			return true;
 		}
 	}, {
 		key: '_sourceIsReady',
@@ -15114,6 +15143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	_scrollmeister2.default.behaviorsRegistry.close();
 	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 	customElements.define('element-meister', _ElementMeisterComponent2.default);
+	//customElements.define('shadow-meister', class extends HTMLElement {});
 }, { once: true });
 
 },{"components/ElementMeisterComponent.js":31,"components/ScrollMeisterComponent.js":33,"document-register-element":1,"scrollmeister.js":50}],35:[function(require,module,exports){

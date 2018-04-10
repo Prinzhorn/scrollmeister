@@ -1,5 +1,12 @@
 import Behavior from 'behaviors/Behavior.js';
-import createRegl from 'regl';
+
+let createRegl;
+
+try {
+	createRegl = require('regl');
+} catch (ignore) {
+	createRegl = null;
+}
 
 export default class GLEffectBehavior extends Behavior {
 	static get schema() {
@@ -20,10 +27,17 @@ export default class GLEffectBehavior extends Behavior {
 	}
 
 	attach() {
+		if (!createRegl) {
+			return;
+		}
+
 		this._sourceElement = this.el.querySelector('img, video');
 		this._canvas = this._createCanvas();
 
-		this._initRegl();
+		if (!this._initRegl()) {
+			this._removeCanvas();
+			return;
+		}
 
 		this.connectTo('layout', this._resize.bind(this));
 		this.connectTo('interpolate', this._render.bind(this), () => {
@@ -38,9 +52,13 @@ export default class GLEffectBehavior extends Behavior {
 	}
 
 	detach() {
+		if (!createRegl) {
+			return;
+		}
+
 		clearInterval(this._pollTimer);
 		this._regl.destroy();
-		this._canvas.parentNode.removeChild(this._canvas);
+		this._removeCanvas();
 	}
 
 	_createCanvas() {
@@ -49,6 +67,10 @@ export default class GLEffectBehavior extends Behavior {
 		this._sourceElement.parentNode.appendChild(canvas);
 
 		return canvas;
+	}
+
+	_removeCanvas() {
+		this._canvas.parentNode.removeChild(this._canvas);
 	}
 
 	_resize({ layout }) {
@@ -62,7 +84,14 @@ export default class GLEffectBehavior extends Behavior {
 			this._regl.destroy();
 		}
 
-		const regl = createRegl(this._canvas);
+		let regl;
+
+		try {
+			regl = createRegl(this._canvas);
+		} catch (ignore) {
+			createRegl = null;
+			return false;
+		}
 
 		this._draw = regl({
 			frag: this.props.shader.template,
@@ -93,6 +122,8 @@ export default class GLEffectBehavior extends Behavior {
 		});
 
 		this._regl = regl;
+
+		return true;
 	}
 
 	_sourceIsReady() {
