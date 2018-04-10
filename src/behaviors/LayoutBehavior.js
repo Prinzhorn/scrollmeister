@@ -61,7 +61,7 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guide-layout', '^scroll'];
+		return ['^guides-layout', '^scroll'];
 	}
 
 	static get behaviorName(): string {
@@ -78,7 +78,7 @@ export default class LayoutBehavior extends Behavior {
 		//But still always define innerEl, even if it is === el
 		this._wrapContents();
 
-		this.connectTo('^guide-layout', this._render.bind(this));
+		this.connectTo('^guides-layout', this._render.bind(this));
 		this.connectTo('^scroll', this._scroll.bind(this));
 
 		this.listen('^scroll:pause', this._scrollPause.bind(this));
@@ -254,7 +254,7 @@ export default class LayoutBehavior extends Behavior {
 		let style = this.el.style;
 		let innerStyle = this.innerEl.style;
 
-		this.parentEl.guideLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
+		this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
 		if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 			let left = Math.round(this.layout.left);

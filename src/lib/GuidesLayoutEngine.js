@@ -81,7 +81,7 @@ type Node = {
 	intrinsicHeight: number
 };
 
-export default class GuideLayoutEngine {
+export default class GuidesLayoutEngine {
 	guides: Array<Guide>;
 	requiredHeight: number;
 	fullscreenLayout: { left: number, top: number, width: number, height: number };

@@ -36,7 +36,7 @@ export default class MediaBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guide-layout', 'layout'];
+		return ['^guides-layout', 'layout'];
 	}
 
 	attach() {
@@ -94,7 +94,7 @@ export default class MediaBehavior extends Behavior {
 	}
 
 	calculateMediaLayout(layoutBehavior: LayoutBehavior) {
-		let layoutEngine = this.parentEl.guideLayout.engine;
+		let layoutEngine = this.parentEl.guidesLayout.engine;
 		let size = this._calculateMediaSize(layoutBehavior);
 		let fit = this.props.fit;
 		let { width, height } = layoutBehavior.layout;

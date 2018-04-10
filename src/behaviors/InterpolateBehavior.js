@@ -5,7 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 
 import type { CSSLength } from 'types/CSSLengthType.js';
 import type ScrollBehavior from 'behaviors/ScrollBehavior.js';
-import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+import type GuidesLayoutBehavior from 'behaviors/GuidesLayoutBehavior.js';
 
 type Keyframe = {
 	anchor: 'string',
@@ -70,7 +70,7 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guide-layout', '^scroll', 'layout'];
+		return ['^guides-layout', '^scroll', 'layout'];
 	}
 
 	attach() {
@@ -84,17 +84,17 @@ export default class InterpolateBehavior extends Behavior {
 
 		this.values = {};
 
-		this.connectTo('^guide-layout', this._createInterpolators.bind(this));
+		this.connectTo('^guides-layout', this._createInterpolators.bind(this));
 		this.connectTo('^scroll', this._interpolate.bind(this));
 	}
 
-	_createInterpolators(guideLayoutBehavior: GuideLayoutBehavior) {
+	_createInterpolators(guidesLayoutBehavior: GuidesLayoutBehavior) {
 		let schema = this.constructor.schema;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
 				if (this.props[prop].length > 0) {
-					this._interpolators[prop] = this._createInterpolator(guideLayoutBehavior, this.props[prop]);
+					this._interpolators[prop] = this._createInterpolator(guidesLayoutBehavior, this.props[prop]);
 				} else {
 					delete this._interpolators[prop];
 				}
@@ -105,8 +105,8 @@ export default class InterpolateBehavior extends Behavior {
 		this._interpolate(this.parentEl.scroll);
 	}
 
-	_createInterpolator(guideLayoutBehavior: GuideLayoutBehavior, keyframes: Array<Keyframe>) {
-		let layoutEngine = guideLayoutBehavior.engine;
+	_createInterpolator(guidesLayoutBehavior: GuidesLayoutBehavior, keyframes: Array<Keyframe>) {
+		let layoutEngine = guidesLayoutBehavior.engine;
 
 		//Map the keyframe anchor and offset to scroll positions.
 		let mappedKeyframes = keyframes.map(keyframe => {

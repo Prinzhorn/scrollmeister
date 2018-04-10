@@ -9,7 +9,7 @@ import isTextInput from 'lib/isTextInput.js';
 import easings from 'lib/easings.js';
 
 import Behavior from 'behaviors/Behavior.js';
-import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+import type GuidesLayoutBehavior from 'behaviors/GuidesLayoutBehavior.js';
 
 type Props = {
 	overscroll: boolean
@@ -37,7 +37,7 @@ export default class ScrollBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['guide-layout'];
+		return ['guides-layout'];
 	}
 
 	attach() {
@@ -49,7 +49,7 @@ export default class ScrollBehavior extends Behavior {
 
 		this._setupScrolling();
 
-		this.connectTo('guide-layout', this._updateScrollHeight.bind(this));
+		this.connectTo('guides-layout', this._updateScrollHeight.bind(this));
 
 		//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
 		//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
@@ -267,8 +267,8 @@ export default class ScrollBehavior extends Behavior {
 		this.scrollState.tick(now, this.getPosition());
 	}
 
-	_updateScrollHeight(guideLayoutBehavior: GuideLayoutBehavior) {
-		let layoutEngine = guideLayoutBehavior.engine;
+	_updateScrollHeight(guidesLayoutBehavior: GuidesLayoutBehavior) {
+		let layoutEngine = guidesLayoutBehavior.engine;
 		let requiredHeight = layoutEngine.requiredHeight;
 
 		//Firefox on Android will scroll natively to remove the addressbar.

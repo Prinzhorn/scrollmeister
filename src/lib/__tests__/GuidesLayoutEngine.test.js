@@ -1,4 +1,4 @@
-import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
+import GuidesLayoutEngine from 'lib/GuidesLayoutEngine.js';
 
 const units = ['px', 'vw', 'vh', 'vmin', 'vmax', '%'];
 const viewport = {
@@ -9,7 +9,7 @@ const viewport = {
 };
 
 describe('lengthToPixel', () => {
-	let engine = new GuideLayoutEngine();
+	let engine = new GuidesLayoutEngine();
 	engine.updateViewport(viewport);
 
 	test('converts pixels', () => {

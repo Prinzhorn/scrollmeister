@@ -12085,7 +12085,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 		value: function attach() {
 			this._createElement();
 
-			this.connectTo('guide-layout', this._render.bind(this));
+			this.connectTo('guides-layout', this._render.bind(this));
 		}
 	}, {
 		key: 'detach',
@@ -12111,10 +12111,10 @@ var DebugGuidesBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_render',
-		value: function _render(guideLayoutBehavior) {
+		value: function _render(guidesLayoutBehavior) {
 			var _this2 = this;
 
-			var guides = guideLayoutBehavior.engine.guides;
+			var guides = guidesLayoutBehavior.engine.guides;
 
 			var html = guides.map(function (guide) {
 				var width = guide.width;
@@ -12150,7 +12150,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guide-layout'];
+			return ['guides-layout'];
 		}
 	}]);
 
@@ -12195,7 +12195,7 @@ var FadeInBehavior = function (_Behavior) {
 			var _this2 = this;
 
 			//Make sure the very first render took place and everything is updated.
-			this.listenOnce('guide-layout:change', function () {
+			this.listenOnce('guides-layout:change', function () {
 				_this2.el.style.opacity = 1;
 			});
 		}
@@ -12217,7 +12217,7 @@ var FadeInBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guide-layout'];
+			return ['guides-layout'];
 		}
 	}]);
 
@@ -12608,7 +12608,7 @@ var GalleryBehavior = function (_Behavior) {
 	}, {
 		key: '_render',
 		value: function _render(layoutBehavior) {
-			var layoutEngine = this.parentEl.guideLayout.engine;
+			var layoutEngine = this.parentEl.guidesLayout.engine;
 			var viewport = layoutEngine.viewport;
 
 			var spacing = layoutEngine.lengthToPixel(this.props.spacing, 0);
@@ -12738,9 +12738,9 @@ var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _GuideLayoutEngine = require('lib/GuideLayoutEngine.js');
+var _GuidesLayoutEngine = require('lib/GuidesLayoutEngine.js');
 
-var _GuideLayoutEngine2 = _interopRequireDefault(_GuideLayoutEngine);
+var _GuidesLayoutEngine2 = _interopRequireDefault(_GuidesLayoutEngine);
 
 var _Behavior2 = require('behaviors/Behavior.js');
 
@@ -12754,16 +12754,16 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var GuideLayoutBehavior = function (_Behavior) {
-	_inherits(GuideLayoutBehavior, _Behavior);
+var GuidesLayoutBehavior = function (_Behavior) {
+	_inherits(GuidesLayoutBehavior, _Behavior);
 
-	function GuideLayoutBehavior() {
-		_classCallCheck(this, GuideLayoutBehavior);
+	function GuidesLayoutBehavior() {
+		_classCallCheck(this, GuidesLayoutBehavior);
 
-		return _possibleConstructorReturn(this, (GuideLayoutBehavior.__proto__ || Object.getPrototypeOf(GuideLayoutBehavior)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (GuidesLayoutBehavior.__proto__ || Object.getPrototypeOf(GuidesLayoutBehavior)).apply(this, arguments));
 	}
 
-	_createClass(GuideLayoutBehavior, [{
+	_createClass(GuidesLayoutBehavior, [{
 		key: 'attach',
 		value: function attach() {
 			this._layoutScheduled = false;
@@ -12780,7 +12780,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 		value: function _initLayoutEngine() {
 			var _this2 = this;
 
-			this.engine = new _GuideLayoutEngine2.default();
+			this.engine = new _GuidesLayoutEngine2.default();
 
 			this.listenAndInvoke(window, 'resize', function () {
 				var viewport = _this2._getViewport();
@@ -12895,7 +12895,7 @@ var GuideLayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'behaviorName',
 		get: function get() {
-			return 'guide-layout';
+			return 'guides-layout';
 		}
 	}, {
 		key: 'dependencies',
@@ -12904,12 +12904,12 @@ var GuideLayoutBehavior = function (_Behavior) {
 		}
 	}]);
 
-	return GuideLayoutBehavior;
+	return GuidesLayoutBehavior;
 }(_Behavior3.default);
 
-exports.default = GuideLayoutBehavior;
+exports.default = GuidesLayoutBehavior;
 
-},{"behaviors/Behavior.js":11,"lib/GuideLayoutEngine.js":40,"raf":5}],18:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/GuidesLayoutEngine.js":40,"raf":5}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13010,7 +13010,7 @@ var HashNavigationBehavior = function (_Behavior) {
 
 			var layoutBehavior = scrollTarget.layout;
 			var layout = layoutBehavior.layout;
-			var engine = this.el.guideLayout.engine;
+			var engine = this.el.guidesLayout.engine;
 			var offset = engine.lengthToPixel(this.props.offset, layout.height);
 			var targetTop = engine.calculateAnchorPosition(layoutBehavior, this.props.anchor, -offset);
 
@@ -13041,7 +13041,7 @@ var HashNavigationBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guide-layout', 'scroll'];
+			return ['guides-layout', 'scroll'];
 		}
 	}]);
 
@@ -13120,18 +13120,18 @@ var InterpolateBehavior = function (_Behavior) {
 
 			this.values = {};
 
-			this.connectTo('^guide-layout', this._createInterpolators.bind(this));
+			this.connectTo('^guides-layout', this._createInterpolators.bind(this));
 			this.connectTo('^scroll', this._interpolate.bind(this));
 		}
 	}, {
 		key: '_createInterpolators',
-		value: function _createInterpolators(guideLayoutBehavior) {
+		value: function _createInterpolators(guidesLayoutBehavior) {
 			var schema = this.constructor.schema;
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
 					if (this.props[prop].length > 0) {
-						this._interpolators[prop] = this._createInterpolator(guideLayoutBehavior, this.props[prop]);
+						this._interpolators[prop] = this._createInterpolator(guidesLayoutBehavior, this.props[prop]);
 					} else {
 						delete this._interpolators[prop];
 					}
@@ -13143,10 +13143,10 @@ var InterpolateBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_createInterpolator',
-		value: function _createInterpolator(guideLayoutBehavior, keyframes) {
+		value: function _createInterpolator(guidesLayoutBehavior, keyframes) {
 			var _this2 = this;
 
-			var layoutEngine = guideLayoutBehavior.engine;
+			var layoutEngine = guidesLayoutBehavior.engine;
 
 			//Map the keyframe anchor and offset to scroll positions.
 			var mappedKeyframes = keyframes.map(function (keyframe) {
@@ -13244,7 +13244,7 @@ var InterpolateBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guide-layout', '^scroll', 'layout'];
+			return ['^guides-layout', '^scroll', 'layout'];
 		}
 	}]);
 
@@ -13299,7 +13299,7 @@ var LayoutBehavior = function (_Behavior) {
 			//But still always define innerEl, even if it is === el
 			this._wrapContents();
 
-			this.connectTo('^guide-layout', this._render.bind(this));
+			this.connectTo('^guides-layout', this._render.bind(this));
 			this.connectTo('^scroll', this._scroll.bind(this));
 
 			this.listen('^scroll:pause', this._scrollPause.bind(this));
@@ -13492,7 +13492,7 @@ var LayoutBehavior = function (_Behavior) {
 			var style = this.el.style;
 			var innerStyle = this.innerEl.style;
 
-			this.parentEl.guideLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
+			this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
 			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
 				var left = Math.round(this.layout.left);
@@ -13624,7 +13624,7 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guide-layout', '^scroll'];
+			return ['^guides-layout', '^scroll'];
 		}
 	}, {
 		key: 'behaviorName',
@@ -13825,7 +13825,7 @@ var MediaBehavior = function (_Behavior) {
 	}, {
 		key: 'calculateMediaLayout',
 		value: function calculateMediaLayout(layoutBehavior) {
-			var layoutEngine = this.parentEl.guideLayout.engine;
+			var layoutEngine = this.parentEl.guidesLayout.engine;
 			var size = this._calculateMediaSize(layoutBehavior);
 			var fit = this.props.fit;
 			var _layoutBehavior$layou2 = layoutBehavior.layout,
@@ -13900,7 +13900,7 @@ var MediaBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guide-layout', 'layout'];
+			return ['^guides-layout', 'layout'];
 		}
 	}]);
 
@@ -13985,7 +13985,7 @@ var MousetrapBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['^guide-layout'];
+			return ['^guides-layout'];
 		}
 	}]);
 
@@ -14144,7 +14144,7 @@ var ScrollBehavior = function (_Behavior) {
 
 			this._setupScrolling();
 
-			this.connectTo('guide-layout', this._updateScrollHeight.bind(this));
+			this.connectTo('guides-layout', this._updateScrollHeight.bind(this));
 
 			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
 			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
@@ -14382,8 +14382,8 @@ var ScrollBehavior = function (_Behavior) {
 		}
 	}, {
 		key: '_updateScrollHeight',
-		value: function _updateScrollHeight(guideLayoutBehavior) {
-			var layoutEngine = guideLayoutBehavior.engine;
+		value: function _updateScrollHeight(guidesLayoutBehavior) {
+			var layoutEngine = guidesLayoutBehavior.engine;
 			var requiredHeight = layoutEngine.requiredHeight;
 
 			//Firefox on Android will scroll natively to remove the addressbar.
@@ -14431,7 +14431,7 @@ var ScrollBehavior = function (_Behavior) {
 	}, {
 		key: 'dependencies',
 		get: function get() {
-			return ['guide-layout'];
+			return ['guides-layout'];
 		}
 	}]);
 
@@ -14810,9 +14810,9 @@ var _scrollmeister = require('scrollmeister.js');
 
 var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
 
-var _GuideLayoutBehavior = require('behaviors/GuideLayoutBehavior.js');
+var _GuidesLayoutBehavior = require('behaviors/GuidesLayoutBehavior.js');
 
-var _GuideLayoutBehavior2 = _interopRequireDefault(_GuideLayoutBehavior);
+var _GuidesLayoutBehavior2 = _interopRequireDefault(_GuidesLayoutBehavior);
 
 var _ScrollBehavior = require('behaviors/ScrollBehavior.js');
 
@@ -14842,7 +14842,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
-_scrollmeister2.default.defineBehavior(_GuideLayoutBehavior2.default);
+_scrollmeister2.default.defineBehavior(_GuidesLayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_ScrollBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
@@ -14852,7 +14852,7 @@ _scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
 _scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
 //Scrollmeister.defineBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":12,"behaviors/FadeInBehavior.js":13,"behaviors/GuideLayoutBehavior.js":17,"behaviors/LayoutBehavior.js":20,"behaviors/MediaBehavior.js":22,"behaviors/MousetrapBehavior.js":23,"behaviors/ScrollBehavior.js":25,"scrollmeister.js":50}],31:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":12,"behaviors/FadeInBehavior.js":13,"behaviors/GuidesLayoutBehavior.js":17,"behaviors/LayoutBehavior.js":20,"behaviors/MediaBehavior.js":22,"behaviors/MousetrapBehavior.js":23,"behaviors/ScrollBehavior.js":25,"scrollmeister.js":50}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15001,6 +15001,8 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 				_scrollmeister2.default.detachBehavior(this, attr, true);
 			}
+
+			//TODO: Notify all behaviors that use types which depend on the DOM.
 		}
 	}, {
 		key: 'attributeChangedCallback',
@@ -15502,9 +15504,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var GuideLayoutEngine = function () {
-	function GuideLayoutEngine() {
-		_classCallCheck(this, GuideLayoutEngine);
+var GuidesLayoutEngine = function () {
+	function GuidesLayoutEngine() {
+		_classCallCheck(this, GuidesLayoutEngine);
 
 		this.guides = [];
 		this.requiredHeight = 0;
@@ -15516,7 +15518,7 @@ var GuideLayoutEngine = function () {
 		};
 	}
 
-	_createClass(GuideLayoutEngine, [{
+	_createClass(GuidesLayoutEngine, [{
 		key: 'updateViewport',
 		value: function updateViewport(viewport) {
 			this.viewport = viewport;
@@ -16100,10 +16102,10 @@ var GuideLayoutEngine = function () {
 		}
 	}]);
 
-	return GuideLayoutEngine;
+	return GuidesLayoutEngine;
 }();
 
-exports.default = GuideLayoutEngine;
+exports.default = GuidesLayoutEngine;
 
 },{}],41:[function(require,module,exports){
 'use strict';
@@ -16759,7 +16761,7 @@ var Scrollmeister = {
 
 		//Check if all dependencies are still resolved.
 		//TODO: this check missed dependencies of children.
-		//E.g. removing "guide-layout" when there are children with "layout".
+		//E.g. removing "guides-layout" when there are children with "layout".
 		for (var otherName in element.behaviors) {
 			if (!element.behaviors.hasOwnProperty(otherName)) {
 				continue;
@@ -17126,6 +17128,7 @@ exports.default = {
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+exports.domtypes = undefined;
 
 var _BooleanType = require('types/BooleanType.js');
 
@@ -17171,5 +17174,6 @@ exports.default = {
 	string: _StringType2.default,
 	template: _TemplateType2.default
 };
+var domtypes = exports.domtypes = ['layoutdependency'];
 
 },{"types/BooleanType.js":52,"types/CSSLengthType.js":53,"types/HeightType.js":54,"types/LayoutDependencyType.js":55,"types/NumberType.js":56,"types/RatioType.js":57,"types/StringType.js":58,"types/TemplateType.js":59}]},{},[36]);

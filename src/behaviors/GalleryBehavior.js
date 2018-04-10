@@ -43,7 +43,7 @@ export default class GalleryBehavior extends Behavior {
 	}
 
 	_render(layoutBehavior: LayoutBehavior) {
-		let layoutEngine = this.parentEl.guideLayout.engine;
+		let layoutEngine = this.parentEl.guidesLayout.engine;
 		let { viewport } = layoutEngine;
 		let spacing = layoutEngine.lengthToPixel(this.props.spacing, 0);
 		let height = layoutEngine.lengthToPixel(this.props.height, viewport.height);

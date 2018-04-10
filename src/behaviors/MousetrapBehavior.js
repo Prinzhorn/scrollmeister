@@ -23,7 +23,7 @@ export default class MousetrapBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guide-layout'];
+		return ['^guides-layout'];
 	}
 
 	attach() {

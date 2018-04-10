@@ -5,8 +5,8 @@ import Behavior from 'behaviors/Behavior.js';
 //TODO: so basically do we need a fullscreen behavior at all?
 //The layout behavior HAS to know about fullscreen anyway, because the fullscreenLayout comes from the layoutengine.
 //It also needs to be _kind of_ transparent for the layout behavior though. It just gets new dimensions and that's it.
-//So maybe the fullscreen behavior tells the GuideLayoutEngine to make the thing fullscreen?
-//We also need to guarantee that only a single element is ever fullscreened. So this needs to be controlled by guide-layout at the top.
+//So maybe the fullscreen behavior tells the GuidesLayoutEngine to make the thing fullscreen?
+//We also need to guarantee that only a single element is ever fullscreened. So this needs to be controlled by guides-layout at the top.
 
 export default class FullscreenBehavior extends Behavior {
 	static get schema(): any {
@@ -18,7 +18,7 @@ export default class FullscreenBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['^guide-layout', 'layout'];
+		return ['^guides-layout', 'layout'];
 	}
 
 	attach() {

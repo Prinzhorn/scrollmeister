@@ -99,7 +99,7 @@ const Scrollmeister = {
 
 		//Check if all dependencies are still resolved.
 		//TODO: this check missed dependencies of children.
-		//E.g. removing "guide-layout" when there are children with "layout".
+		//E.g. removing "guides-layout" when there are children with "layout".
 		for (let otherName in element.behaviors) {
 			if (!element.behaviors.hasOwnProperty(otherName)) {
 				continue;

@@ -2,7 +2,7 @@
 
 import Behavior from 'behaviors/Behavior.js';
 
-import type GuideLayoutBehavior from 'behaviors/GuideLayoutBehavior.js';
+import type GuidesLayoutBehavior from 'behaviors/GuidesLayoutBehavior.js';
 
 export default class DebugGuidesBehavior extends Behavior {
 	static get schema(): any {
@@ -19,13 +19,13 @@ export default class DebugGuidesBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['guide-layout'];
+		return ['guides-layout'];
 	}
 
 	attach() {
 		this._createElement();
 
-		this.connectTo('guide-layout', this._render.bind(this));
+		this.connectTo('guides-layout', this._render.bind(this));
 	}
 
 	detach() {
@@ -54,8 +54,8 @@ export default class DebugGuidesBehavior extends Behavior {
 		}
 	}
 
-	_render(guideLayoutBehavior: GuideLayoutBehavior) {
-		let guides = guideLayoutBehavior.engine.guides;
+	_render(guidesLayoutBehavior: GuidesLayoutBehavior) {
+		let guides = guidesLayoutBehavior.engine.guides;
 
 		let html = guides.map(guide => {
 			let width = guide.width;

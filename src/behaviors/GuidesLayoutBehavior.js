@@ -2,11 +2,11 @@
 
 import raf from 'raf';
 
-import GuideLayoutEngine from 'lib/GuideLayoutEngine.js';
+import GuidesLayoutEngine from 'lib/GuidesLayoutEngine.js';
 
 import Behavior from 'behaviors/Behavior.js';
 
-export default class GuideLayoutBehavior extends Behavior {
+export default class GuidesLayoutBehavior extends Behavior {
 	static get schema(): any {
 		return {
 			guides: {
@@ -30,7 +30,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'guide-layout';
+		return 'guides-layout';
 	}
 
 	static get dependencies(): Array<string> {
@@ -48,7 +48,7 @@ export default class GuideLayoutBehavior extends Behavior {
 	}
 
 	_initLayoutEngine() {
-		this.engine = new GuideLayoutEngine();
+		this.engine = new GuidesLayoutEngine();
 
 		this.listenAndInvoke(window, 'resize', () => {
 			let viewport = this._getViewport();

@@ -66,6 +66,8 @@ export default class ScrollMeisterComponent extends HTMLElement {
 
 			Scrollmeister.detachBehavior(this, attr, true);
 		}
+
+		//TODO: Notify all behaviors that use types which depend on the DOM.
 	}
 
 	attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null) {

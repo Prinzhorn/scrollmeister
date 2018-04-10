@@ -12,12 +12,12 @@ export default class FadeInBehavior extends Behavior {
 	}
 
 	static get dependencies(): Array<string> {
-		return ['guide-layout'];
+		return ['guides-layout'];
 	}
 
 	attach() {
 		//Make sure the very first render took place and everything is updated.
-		this.listenOnce('guide-layout:change', () => {
+		this.listenOnce('guides-layout:change', () => {
 			this.el.style.opacity = 1;
 		});
 	}
