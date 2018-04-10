@@ -64,7 +64,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		for (let i = 0; i < observedAttributes.length; i++) {
 			let attr = observedAttributes[i];
 
-			Scrollmeister.detachBehavior(this, attr);
+			Scrollmeister.detachBehavior(this, attr, true);
 		}
 	}
 

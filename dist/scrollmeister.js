@@ -14999,7 +14999,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			for (var i = 0; i < observedAttributes.length; i++) {
 				var attr = observedAttributes[i];
 
-				_scrollmeister2.default.detachBehavior(this, attr);
+				_scrollmeister2.default.detachBehavior(this, attr, true);
 			}
 		}
 	}, {
@@ -16744,11 +16744,17 @@ var Scrollmeister = {
 	},
 
 	detachBehavior: function detachBehavior(element, name) {
+		var skipDependencies = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
 			delete element[(0, _camelCase2.default)(name)];
 			delete element.behaviors[name];
+		}
+
+		if (skipDependencies) {
+			return;
 		}
 
 		//Check if all dependencies are still resolved.

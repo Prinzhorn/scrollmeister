@@ -85,12 +85,16 @@ const Scrollmeister = {
 		}
 	},
 
-	detachBehavior: function(element, name) {
+	detachBehavior: function(element, name, skipDependencies = false) {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
 			delete element[name];
 			delete element[camcelCase(name)];
 			delete element.behaviors[name];
+		}
+
+		if (skipDependencies) {
+			return;
 		}
 
 		//Check if all dependencies are still resolved.
