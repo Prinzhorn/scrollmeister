@@ -15,7 +15,7 @@ document.addEventListener(
 	() => {
 		Scrollmeister.behaviorsRegistry.close();
 		customElements.define('scroll-meister', ScrollMeisterComponent);
-		customElements.define('el-meister', ElementMeisterComponent);
+		customElements.define('element-meister', ElementMeisterComponent);
 	},
 	{ once: true }
 );

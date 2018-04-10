@@ -128,9 +128,9 @@ export default class LayoutBehavior extends Behavior {
 			//There is a single element as child, but there might also be whitespace (text nodes) around it.
 			//Check if there is nothing but "empty" text nodes, which we can ignore.
 			//This catches cases such as the following, where the whitespace (nl, tab) around the <img> is irrelevant.
-			//<el-meister>
+			//<element-meister>
 			//	<img>
-			//</el-meister>
+			//</element-meister>
 			let onlyEmptyTextNodes = true;
 
 			for (let i = 0; i < childNodes.length; i++) {

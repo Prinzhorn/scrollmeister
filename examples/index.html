@@ -18,7 +18,7 @@
 				padding-bottom: 1em;
 			}
 
-			scroll-meister, el-meister {
+			scroll-meister, element-meister {
 				display: block;
 			}
 
@@ -27,12 +27,12 @@
 				transition: opacity 0.3s ease-in-out;
 			}
 
-			el-meister {
+			element-meister {
 				background: rgba(0, 255, 0, 0.5);
 				outline: 1px solid rgba(255, 0, 0, 0.5);
 			}
 
-			el-meister.follower {
+			element-meister.follower {
 				background: rgba(0, 0, 255, 0.5);
 			}
 
@@ -62,22 +62,22 @@
 					1200px;
 			"
 		>
-			<el-meister layout="guides: contentleft contentright;" fluid-text>
+			<element-meister layout="guides: contentleft contentright;" fluid-text>
 				<h1>Scrollmeister thingy</h1>
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="guides: contentleft contentright;">
+			<element-meister layout="guides: contentleft contentright;">
 				<!--TODO: height: auto does not work without the wrapping div tho-->
 				<div>
 					<a href="#gl">gl-effect</a>
 				</div>
-			</el-meister>
+			</element-meister>
 
-			<!-- <el-meister layout="guides: contentleft contentright; height: 560/315" youtube>
+			<!-- <element-meister layout="guides: contentleft contentright; height: 560/315" youtube>
 				<iframe width="560" height="315" src="https://www.youtube.com/embed/Ev4w3vxZqHU?enablejsapi=1&rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-			</el-meister> -->
+			</element-meister> -->
 
-			<el-meister gallery layout="guides: contentleft contentright; spacing: 20vh;">
+			<element-meister gallery layout="guides: contentleft contentright; spacing: 20vh;">
 				<img src="photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
 				<img src="photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1280" />
 				<img src="bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
@@ -89,15 +89,15 @@
 				<img src="bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
 				<img src="bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
 				<img src="photo-1442422502730-a90f72460717.jpg" width="1440" height="1920" />
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="height: 50vh; spacing: 20vh 0;" interpolate rotating-gradient="speed: 1; offset: 40;"></el-meister>
+			<element-meister layout="height: 50vh; spacing: 20vh 0;" interpolate rotating-gradient="speed: 1; offset: 40;"></element-meister>
 
-			<el-meister media="ratio: 1920 / 1080;" layout="guides: contentleft contentright; height: 1/1; spacing: 50vh 0;">
+			<element-meister media="ratio: 1920 / 1080;" layout="guides: contentleft contentright; height: 1/1; spacing: 50vh 0;">
 				<img src="bogdan-dada-156739-unsplash.jpg" />
-			</el-meister>
+			</element-meister>
 
-			<el-meister id="gl" media="ratio: 1920 / 1080" interpolate gl-effect layout="guides: contentleft contentright; height: 800/600; spacing: 50vh;">
+			<element-meister id="gl" media="ratio: 1920 / 1080" interpolate gl-effect layout="guides: contentleft contentright; height: 800/600; spacing: 50vh;">
 				<img class="cover" src="bogdan-dada-156739-unsplash.jpg" />
 				<!--<video src="./chrome.mp4" type="video/mp4" muted playsInline autoplay loop></video>-->
 				<script type="text/plain">
@@ -162,38 +162,38 @@
 					gl_FragColor = texture2D(image, transformedUV);
 				}
 				</script>
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" interpolate="opacity: center 1, top 0.5; rotate: center 0, top: 360" transform></el-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" interpolate="opacity: center 1, top 0.5; rotate: center 0, top: 360" transform></element-meister>
 
-			<el-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">
+			<element-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">
 				<p>8 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 				<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 				<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="guides: leftthird contentright; height: 640/320; mode: follow; followerMode: parallax;" interpolate="alpha: bottom 0, top 0.9" scrub="parameter: alpha;">
+			<element-meister layout="guides: leftthird contentright; height: 640/320; mode: follow; followerMode: parallax;" interpolate="alpha: bottom 0, top 0.9" scrub="parameter: alpha;">
 				<video src="./chrome.mp4" type="video/mp4" preload="auto" muted playsInline></video>
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;">4</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" interpolate="opacity: bottom 0, bottom 100vh 1; scale: bottom 0, top 1" transform>5</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;">6</el-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;">4</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;" interpolate="opacity: bottom 0, bottom 100vh 1; scale: bottom 0, top 1" transform>5</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0;">6</element-meister>
 
-			<el-meister layout="guides: contentleft leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</el-meister>
+			<element-meister layout="guides: contentleft leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</element-meister>
 
-			<el-meister layout="guides: viewport viewport; mode: follow; clip: true; height: 75vh;" lazy-load class="follower">
+			<element-meister layout="guides: viewport viewport; mode: follow; clip: true; height: 75vh;" lazy-load class="follower">
 				<img class="cover" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="bogdan-dada-156739-unsplash.jpg" />
-			</el-meister>
+			</element-meister>
 
-			<el-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">
+			<element-meister layout="guides: contentleft leftthird; spacing: 20vh 0;">
 				8 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 				<img src="bogdan-dada-156739-unsplash.jpg" />
 				Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-			</el-meister>
+			</element-meister>
 
-			<el-meister
+			<element-meister
 				class="follower"
 				layout="
 					guides: leftthird centercollapsed;
@@ -201,13 +201,13 @@
 					mode: follow;
 					followerMode: pin;
 				"
-			></el-meister>
+			></element-meister>
 
-			<el-meister layout="guides: center contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">9</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">10</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">11</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">12</el-meister>
-			<el-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 25vh; dependencies: inherit;">13</el-meister>
+			<element-meister layout="guides: center contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">9</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">10</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">11</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 0; dependencies: inherit;">12</element-meister>
+			<element-meister layout="guides: contentleft contentright; height: 10vh; spacing: 10vh 25vh; dependencies: inherit;">13</element-meister>
 		</scroll-meister>
 		<script src="../dist/scrollmeister.js"></script>
 	</body>

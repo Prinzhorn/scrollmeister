@@ -7,11 +7,11 @@ import BehaviorsStyleMerger from 'lib/BehaviorsStyleMerger.js';
 import Scrollmeister from 'scrollmeister.js';
 
 const invalidMarkupSelectors = [
-	':not(scroll-meister) > el-meister',
-	'scroll-meister * el-meister',
+	':not(scroll-meister) > element-meister',
+	'scroll-meister * element-meister',
 	'scroll-meister scroll-meister',
-	'el-meister el-meister',
-	'el-meister scroll-meister'
+	'element-meister element-meister',
+	'element-meister scroll-meister'
 ];
 
 export default class ScrollMeisterComponent extends HTMLElement {
@@ -48,7 +48,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 		raf(() => {
 			if (document.querySelector(invalidMarkupSelectors.join(','))) {
 				throw new Error(
-					'You have nested <scroll-meister> and <el-meister> elements in an unsupported way. <el-meister> elements need to always be direct children of <scroll-meister>.'
+					'You have nested <scroll-meister> and <element-meister> elements in an unsupported way. <element-meister> elements need to always be direct children of <scroll-meister>.'
 				);
 			}
 		});

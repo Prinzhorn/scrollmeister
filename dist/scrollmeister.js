@@ -13325,9 +13325,9 @@ var LayoutBehavior = function (_Behavior) {
 				//There is a single element as child, but there might also be whitespace (text nodes) around it.
 				//Check if there is nothing but "empty" text nodes, which we can ignore.
 				//This catches cases such as the following, where the whitespace (nl, tab) around the <img> is irrelevant.
-				//<el-meister>
+				//<element-meister>
 				//	<img>
-				//</el-meister>
+				//</element-meister>
 				var onlyEmptyTextNodes = true;
 
 				for (var i = 0; i < childNodes.length; i++) {
@@ -14916,7 +14916,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var invalidMarkupSelectors = [':not(scroll-meister) > el-meister', 'scroll-meister * el-meister', 'scroll-meister scroll-meister', 'el-meister el-meister', 'el-meister scroll-meister'];
+var invalidMarkupSelectors = [':not(scroll-meister) > element-meister', 'scroll-meister * element-meister', 'scroll-meister scroll-meister', 'element-meister element-meister', 'element-meister scroll-meister'];
 
 var ScrollMeisterComponent = function (_HTMLElement) {
 	_inherits(ScrollMeisterComponent, _HTMLElement);
@@ -14954,7 +14954,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 			//Make some sanity checks on the markup for UX.
 			(0, _raf2.default)(function () {
 				if (document.querySelector(invalidMarkupSelectors.join(','))) {
-					throw new Error('You have nested <scroll-meister> and <el-meister> elements in an unsupported way. <el-meister> elements need to always be direct children of <scroll-meister>.');
+					throw new Error('You have nested <scroll-meister> and <element-meister> elements in an unsupported way. <element-meister> elements need to always be direct children of <scroll-meister>.');
 				}
 			});
 		}
@@ -15113,7 +15113,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 document.addEventListener('DOMContentLoaded', function () {
 	_scrollmeister2.default.behaviorsRegistry.close();
 	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
-	customElements.define('el-meister', _ElementMeisterComponent2.default);
+	customElements.define('element-meister', _ElementMeisterComponent2.default);
 }, { once: true });
 
 },{"components/ElementMeisterComponent.js":31,"components/ScrollMeisterComponent.js":33,"document-register-element":1,"scrollmeister.js":50}],35:[function(require,module,exports){
@@ -16769,7 +16769,7 @@ var Scrollmeister = {
 exports.default = Scrollmeister;
 
 },{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":37,"lib/ConditionsRegistry.js":39,"lib/camelCase.js":42}],51:[function(require,module,exports){
-var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}el-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
+var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
 },{"scssify":9}],52:[function(require,module,exports){
 'use strict';
