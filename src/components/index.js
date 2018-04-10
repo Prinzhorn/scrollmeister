@@ -1,5 +1,7 @@
 import 'document-register-element';
 
+import Scrollmeister from 'scrollmeister.js';
+
 import ScrollMeisterComponent from 'components/ScrollMeisterComponent.js';
 import ElementMeisterComponent from 'components/ElementMeisterComponent.js';
 
@@ -11,6 +13,7 @@ import ElementMeisterComponent from 'components/ElementMeisterComponent.js';
 document.addEventListener(
 	'DOMContentLoaded',
 	() => {
+		Scrollmeister.behaviorsRegistry.close();
 		customElements.define('scroll-meister', ScrollMeisterComponent);
 		customElements.define('el-meister', ElementMeisterComponent);
 	},

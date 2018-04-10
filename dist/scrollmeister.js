@@ -15091,6 +15091,10 @@ exports.default = ScrollMeisterComponent;
 
 require('document-register-element');
 
+var _scrollmeister = require('scrollmeister.js');
+
+var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
 var _ScrollMeisterComponent = require('components/ScrollMeisterComponent.js');
 
 var _ScrollMeisterComponent2 = _interopRequireDefault(_ScrollMeisterComponent);
@@ -15107,11 +15111,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //However, we need to know about all defined behaviors to observe the correct attributes.
 //If we would define() synchronously, then behavior authors would need to define their behavior _before_ that.
 document.addEventListener('DOMContentLoaded', function () {
+	_scrollmeister2.default.behaviorsRegistry.close();
 	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 	customElements.define('el-meister', _ElementMeisterComponent2.default);
 }, { once: true });
 
-},{"components/ElementMeisterComponent.js":31,"components/ScrollMeisterComponent.js":33,"document-register-element":1}],35:[function(require,module,exports){
+},{"components/ElementMeisterComponent.js":31,"components/ScrollMeisterComponent.js":33,"document-register-element":1,"scrollmeister.js":50}],35:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15215,6 +15220,7 @@ var BehaviorsRegistry = function () {
 	function BehaviorsRegistry() {
 		_classCallCheck(this, BehaviorsRegistry);
 
+		this._closed = false;
 		this._behaviors = {};
 		this._order = [];
 	}
@@ -15230,6 +15236,10 @@ var BehaviorsRegistry = function () {
 
 			if (!lowerCaseAndDashRegex.test(name)) {
 				throw new Error('The behavior "' + name + '" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.');
+			}
+
+			if (this._closed) {
+				throw new Error('You are trying to define the "' + name + '" behavior too late. You need to define behaviors before DOMContentLoaded."');
 			}
 
 			var dependencies = classDefinition.dependencies;
@@ -15275,6 +15285,11 @@ var BehaviorsRegistry = function () {
 		key: 'getOrder',
 		value: function getOrder() {
 			return this._order.slice();
+		}
+	}, {
+		key: 'close',
+		value: function close() {
+			this._closed = true;
 		}
 	}]);
 

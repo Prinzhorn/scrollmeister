@@ -2,6 +2,7 @@ const lowerCaseAndDashRegex = /^[a-z-]+$/;
 
 export default class BehaviorsRegistry {
 	constructor() {
+		this._closed = false;
 		this._behaviors = {};
 		this._order = [];
 	}
@@ -16,6 +17,12 @@ export default class BehaviorsRegistry {
 		if (!lowerCaseAndDashRegex.test(name)) {
 			throw new Error(
 				`The behavior "${name}" you are trying to define uses invalid characters. Behaviors can only use lower case characters and dashes.`
+			);
+		}
+
+		if (this._closed) {
+			throw new Error(
+				`You are trying to define the "${name}" behavior too late. You need to define behaviors before DOMContentLoaded."`
 			);
 		}
 
@@ -60,5 +67,9 @@ export default class BehaviorsRegistry {
 
 	getOrder() {
 		return this._order.slice();
+	}
+
+	close() {
+		this._closed = true;
 	}
 }
