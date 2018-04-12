@@ -10,8 +10,7 @@
     "flow": "flow check",
     "server": "http-server",
     "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/*.html, dist/scrollmeister.js'",
-    "watch":
-      "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js -t envify -o ./dist/scrollmeister.js -v",
+    "watch": "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
     "build": "npm run build-scrollmeister && npm run build-extras",
     "build-scrollmeister":
@@ -26,6 +25,7 @@
   "browserify": {
     "transform": [
       "babelify",
+      "envify",
       [
         "scssify",
         {
