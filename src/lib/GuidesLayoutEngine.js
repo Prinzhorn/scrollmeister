@@ -45,6 +45,7 @@ type Layout = {
 	dirty: boolean,
 	spacingTop: number,
 	spacingBottom: number,
+	leaderTop: number,
 	leaderHeight: number,
 	left: number,
 	right: number,
@@ -134,17 +135,18 @@ export default class GuidesLayoutEngine {
 	//E.g. calculate the scroll position when the element's anchor is at the anchor of the viewport.
 	calculateAnchorPosition(node: Node, anchor: 'top' | 'center' | 'bottom', offset: number) {
 		const { layout, props } = node;
+		let position;
 		let height;
 
 		//TODO: for pin/parallax we basically need the reverse operation of transformTop()
 		//Basically a function which, given a top position returns the scroll position when it is achieved.
 		if (props.mode === 'follow') {
+			position = layout.leaderTop;
 			height = layout.leaderHeight;
 		} else {
+			position = layout.top;
 			height = layout.height;
 		}
-
-		let position = layout.top;
 
 		if (anchor === 'bottom') {
 			position = position - this.viewport.height + height;
@@ -305,7 +307,7 @@ export default class GuidesLayoutEngine {
 			//Here we normalize it to always have two, the top and bottom most.
 			//These are the only two that are relevant for the follower.
 			let topDependency = dependencies[0];
-			let bottomDependency = dependencies[0];
+			let bottomDependency = topDependency;
 
 			//We could use Array.reduce and create something like a minBy/maxBy.
 			//But this gives us the min and max element with a simple single loop.
@@ -325,6 +327,7 @@ export default class GuidesLayoutEngine {
 
 			dependencies = [topDependency, bottomDependency];
 
+			layout.leaderTop = topDependency.layout.top;
 			layout.leaderHeight = bottomDependency.layout.bottom - topDependency.layout.top;
 		}
 
@@ -335,6 +338,7 @@ export default class GuidesLayoutEngine {
 		if (props.guides.left === 'viewport') {
 			layout.left = 0;
 		} else {
+			//TODO: sort the guides. E.g. it shouldn't matter if you're using "left right" or "right left"
 			layout.left = this._getGuideByName(props.guides.left).leftPosition;
 		}
 
