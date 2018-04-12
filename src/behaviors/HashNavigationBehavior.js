@@ -66,12 +66,12 @@ export default class HashNavigationBehavior extends Behavior {
 		}
 
 		//The link points to something completely different.
-		if (link.hostname !== location.hostname) {
+		if (link.hostname !== window.location.hostname) {
 			return false;
 		}
 
 		//The link does not link to the same page/path.
-		if (link.pathname !== location.pathname) {
+		if (link.pathname !== window.location.pathname) {
 			return false;
 		}
 

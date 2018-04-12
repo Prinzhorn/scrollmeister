@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run flow && npm run eslint && npm run jest",
     "jest": "NODE_PATH='./src' jest",
-    "eslint": "eslint src/**/*.js",
+    "eslint": "eslint src/*.js src/**/*.js",
     "flow": "flow check",
     "server": "http-server",
     "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/*.html, dist/scrollmeister.js'",
