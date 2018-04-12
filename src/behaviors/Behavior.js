@@ -103,29 +103,7 @@ export default class Behavior {
 	}
 
 	error(error) {
-		if (process.env.NODE_ENV === 'development') {
-			let el = this.el;
-			let outerHTML = el.outerHTML;
-
-			el.style.height = 'auto';
-			el.style.position = 'static';
-
-			//TODO: other behaviors might prevent the message from be seen, we need to completely halt Scrollmeister.
-			//Maybe block all events (using process.env.NODE_ENV of course).
-			el.innerHTML = `
-				<div style="color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; margin: 10px; padding: 20px; border-radius: 5px;">
-					<h1 style="color: inherit; font-size: 30px; padding: 0 0 20px 0; margin: 0;"></h1>
-					<p style="color: inherit; font-size: 20px; padding: 0 0 20px 0; margin: 0;">
-						<strong></strong>
-					</p>
-					<pre style="background: #eee; padding: 20px;"></pre>
-				</div>
-			`;
-
-			el.querySelector('h1').textContent = this.constructor.behaviorName;
-			el.querySelector('strong').textContent = error.message;
-			el.querySelector('pre').textContent = outerHTML;
-		}
+		this.el.renderError(error);
 
 		throw error;
 	}
