@@ -1,6 +1,9 @@
+import CustomEvent from 'ponies/CustomEvent.js';
+
 import camcelCase from 'lib/camelCase.js';
 import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
 import ConditionsRegistry from 'lib/ConditionsRegistry.js';
+
 import Behavior from 'behaviors/Behavior.js';
 
 const Scrollmeister = {
@@ -28,6 +31,7 @@ const Scrollmeister = {
 		let hasKeys;
 
 		//We loop over all behaviors in unspecified order until we eventually resolve all dependencies (or not).
+		//TODO: use getBehaviorOrder
 		do {
 			hasKeys = false;
 			attachedABehavior = false;
@@ -75,13 +79,18 @@ const Scrollmeister = {
 		}
 	},
 
-	detachBehaviors: function(element, behaviorPropertiesMap) {
-		for (let name in behaviorPropertiesMap) {
-			if (!behaviorPropertiesMap.hasOwnProperty(name)) {
-				continue;
-			}
+	detachBehaviors: function(element, behaviorPropertiesMap, skipDependencies = false) {
+		//Remove the behaviors in reverse order to make sure their dependencies still exist for cleanup.
+		let reverseBehaviorOrder = this.getBehaviorOrder()
+			.slice()
+			.reverse();
 
-			this.detachBehavior(element, name);
+		for (let i = 0; i < reverseBehaviorOrder.length; i++) {
+			let behaviorName = reverseBehaviorOrder[i];
+
+			if (behaviorPropertiesMap.hasOwnProperty(behaviorName)) {
+				this.detachBehavior(element, behaviorName, skipDependencies);
+			}
 		}
 	},
 
@@ -120,7 +129,7 @@ const Scrollmeister = {
 			if (dependency.charAt(0) === '^') {
 				dependency = dependency.slice(1);
 
-				if (!element.parentNode.hasOwnProperty(dependency)) {
+				if (!element.parentElement.hasOwnProperty(dependency)) {
 					return false;
 				}
 			} else {
@@ -139,6 +148,26 @@ const Scrollmeister = {
 
 	getDefinedConditionNames: function() {
 		return this.conditionsRegistry.getNames();
+	},
+
+	componentConnected: function(element) {
+		let event = new CustomEvent('scrollmeister:connected', {
+			bubbles: false,
+			cancelable: false,
+			detail: element
+		});
+
+		document.dispatchEvent(event);
+	},
+
+	componentDisconnected: function(element) {
+		let event = new CustomEvent('scrollmeister:disconnected', {
+			bubbles: false,
+			cancelable: false,
+			detail: element
+		});
+
+		document.dispatchEvent(event);
 	}
 };
 

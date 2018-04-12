@@ -25,9 +25,9 @@ export default function(node) {
 	line.style.fontSize = '100px';
 	line.style.width = 'auto';
 
-	node.parentNode.appendChild(container);
+	node.parentElement.appendChild(container);
 	let ratio = 100 / line.clientWidth;
-	node.parentNode.removeChild(container);
+	node.parentElement.removeChild(container);
 	container.removeChild(line);
 
 	return ratio;

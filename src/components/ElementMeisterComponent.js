@@ -2,6 +2,8 @@ import Scrollmeister from 'scrollmeister.js';
 import MeisterComponent from './MeisterComponent.js';
 
 export default class ElementMeisterComponent extends MeisterComponent {
+	// Note: if you feel clever and think you can just define
+	// the static `observedAttributes` getter on the super class: IE 9/10.
 	static get observedAttributes() {
 		let behaviorNames = Scrollmeister.getDefinedBehaviorNames();
 		let conditionNames = Scrollmeister.getDefinedConditionNames();

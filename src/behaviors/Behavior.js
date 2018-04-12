@@ -2,6 +2,7 @@ import assign from 'ponies/Object.assign.js';
 import CustomEvent from 'ponies/CustomEvent.js';
 
 import schemaParser from 'lib/schemaParser.js';
+import { domtypes } from 'types';
 
 const supportsPassiveEvents = (function() {
 	let passiveSupported;
@@ -70,9 +71,10 @@ export default class Behavior {
 	constructor(element, rawProperties) {
 		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
-		this.parentEl = element.parentNode;
+		this.parentEl = element.parentElement;
 		this.props = {};
 
+		this._observeDOMTypes();
 		this._proxyCSS();
 		this._proxyProps();
 		this._parseProperties(rawProperties);
@@ -267,10 +269,18 @@ export default class Behavior {
 		//Then remove the node in destructor automagically.
 	}
 
-	updateProperties(rawProperties) {
+	updateProperties(properties) {
 		const prevProps = assign({}, this.props);
 
-		this._parseProperties(rawProperties);
+		if (typeof properties === 'string') {
+			this._parseProperties(properties);
+		} else {
+			for (let name in properties) {
+				if (properties.hasOwnProperty(name)) {
+					this._parseProperty(name, properties[name]);
+				}
+			}
+		}
 
 		if (this.update) {
 			this.update(prevProps);
@@ -289,6 +299,37 @@ export default class Behavior {
 		}
 
 		this.emit('update');
+	}
+
+	_observeDOMTypes() {
+		let propertiesWithDOMTypes = [];
+		let schema = this.constructor.schema;
+
+		for (let property in schema) {
+			if (!schema.hasOwnProperty(property)) {
+				continue;
+			}
+
+			if (domtypes.indexOf(schema[property].type) !== -1) {
+				propertiesWithDOMTypes.push(property);
+			}
+		}
+
+		if (propertiesWithDOMTypes.length > 0) {
+			//If this behavior has DOM types, we need to update it every time the DOM changes.
+			//E.g. if a new component is inserted between existing ones, layout needs to be updated.
+			this.listen(document, 'scrollmeister:connected scrollmeister:disconnected', () => {
+				let properties = {};
+
+				for (let i = 0; i < propertiesWithDOMTypes.length; i++) {
+					let name = propertiesWithDOMTypes[i];
+					properties[name] = this[name];
+				}
+
+				//Force update/parsing with the same properties.
+				this.updateProperties(properties);
+			});
+		}
 	}
 
 	_proxyCSS() {

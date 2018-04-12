@@ -11647,6 +11647,8 @@ var _schemaParser = require('lib/schemaParser.js');
 
 var _schemaParser2 = _interopRequireDefault(_schemaParser);
 
+var _types = require('types');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -11722,9 +11724,10 @@ var Behavior = function () {
 
 		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
-		this.parentEl = element.parentNode;
+		this.parentEl = element.parentElement;
 		this.props = {};
 
+		this._observeDOMTypes();
 		this._proxyCSS();
 		this._proxyProps();
 		this._parseProperties(rawProperties);
@@ -11939,10 +11942,18 @@ var Behavior = function () {
 		}
 	}, {
 		key: 'updateProperties',
-		value: function updateProperties(rawProperties) {
+		value: function updateProperties(properties) {
 			var prevProps = (0, _ObjectAssign2.default)({}, this.props);
 
-			this._parseProperties(rawProperties);
+			if (typeof properties === 'string') {
+				this._parseProperties(properties);
+			} else {
+				for (var name in properties) {
+					if (properties.hasOwnProperty(name)) {
+						this._parseProperty(name, properties[name]);
+					}
+				}
+			}
 
 			if (this.update) {
 				this.update(prevProps);
@@ -11962,6 +11973,40 @@ var Behavior = function () {
 			}
 
 			this.emit('update');
+		}
+	}, {
+		key: '_observeDOMTypes',
+		value: function _observeDOMTypes() {
+			var _this2 = this;
+
+			var propertiesWithDOMTypes = [];
+			var schema = this.constructor.schema;
+
+			for (var property in schema) {
+				if (!schema.hasOwnProperty(property)) {
+					continue;
+				}
+
+				if (_types.domtypes.indexOf(schema[property].type) !== -1) {
+					propertiesWithDOMTypes.push(property);
+				}
+			}
+
+			if (propertiesWithDOMTypes.length > 0) {
+				//If this behavior has DOM types, we need to update it every time the DOM changes.
+				//E.g. if a new component is inserted between existing ones, layout needs to be updated.
+				this.listen(document, 'scrollmeister:connected scrollmeister:disconnected', function () {
+					var properties = {};
+
+					for (var i = 0; i < propertiesWithDOMTypes.length; i++) {
+						var name = propertiesWithDOMTypes[i];
+						properties[name] = _this2[name];
+					}
+
+					//Force update/parsing with the same properties.
+					_this2.updateProperties(properties);
+				});
+			}
 		}
 	}, {
 		key: '_proxyCSS',
@@ -11996,13 +12041,13 @@ var Behavior = function () {
 	}, {
 		key: '_proxyProps',
 		value: function _proxyProps() {
-			var _this2 = this;
+			var _this3 = this;
 
 			var schema = this.constructor.schema;
 
 			var _loop = function _loop(property) {
 				if (schema.hasOwnProperty(property)) {
-					Object.defineProperty(_this2, property, {
+					Object.defineProperty(_this3, property, {
 						get: function get() {
 							return _schemaParser2.default.stringifyProperty(this.el, this.props[property], schema[property].type);
 						},
@@ -12056,7 +12101,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":47,"ponies/CustomEvent.js":48,"ponies/Object.assign.js":49}],12:[function(require,module,exports){
+},{"lib/schemaParser.js":47,"ponies/CustomEvent.js":48,"ponies/Object.assign.js":49,"types":60}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12400,14 +12445,14 @@ var GLEffectBehavior = function (_Behavior) {
 		value: function _createCanvas() {
 			var canvas = document.createElement('canvas');
 
-			this._sourceElement.parentNode.appendChild(canvas);
+			this._sourceElement.parentElement.appendChild(canvas);
 
 			return canvas;
 		}
 	}, {
 		key: '_removeCanvas',
 		value: function _removeCanvas() {
-			this._canvas.parentNode.removeChild(this._canvas);
+			this._canvas.parentElement.removeChild(this._canvas);
 		}
 	}, {
 		key: '_resize',
@@ -14903,6 +14948,9 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 	_createClass(ElementMeisterComponent, null, [{
 		key: 'observedAttributes',
+
+		// Note: if you feel clever and think you can just define
+		// the static `observedAttributes` getter on the super class: IE 9/10.
 		get: function get() {
 			var behaviorNames = _scrollmeister2.default.getDefinedBehaviorNames();
 			var conditionNames = _scrollmeister2.default.getDefinedConditionNames();
@@ -14965,11 +15013,27 @@ var invalidMarkupSelectors = [':not(scroll-meister) > element-meister', 'scroll-
 var ScrollMeisterComponent = function (_HTMLElement) {
 	_inherits(ScrollMeisterComponent, _HTMLElement);
 
-	// Note: if you feel clever and think you can just define
-	// the static `observedAttributes` getter on the super class: IE 9/10.
+	_createClass(ScrollMeisterComponent, [{
+		key: 'isConnected',
 
-	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
-	// $FlowFixMe: Won't be fixed ;)
+
+		//Polyfill (modern browsers have this).
+		get: function get() {
+			if (!document.body) {
+				return false;
+			}
+
+			return document.body.contains(this);
+		}
+
+		// Note: if you feel clever and think you can just define
+		// the static `observedAttributes` getter on the super class: IE 9/10.
+
+		// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
+		// $FlowFixMe: Won't be fixed ;)
+
+	}]);
+
 	function ScrollMeisterComponent(_) {
 		var _this, _ret;
 
@@ -14995,6 +15059,14 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'connectedCallback',
 		value: function connectedCallback() {
+			//This happens when a disconnected element (e.g. document.createElement) gets attributes before being inserted.
+			//We will then update the behaviors as soon as it is connected.
+			if (this._scheduledBatchUpdate) {
+				this._batchUpdateBehaviors();
+			}
+
+			_scrollmeister2.default.componentConnected(this);
+
 			//Make some sanity checks on the markup for UX.
 			(0, _raf2.default)(function () {
 				if (document.querySelector(invalidMarkupSelectors.join(','))) {
@@ -15005,19 +15077,21 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'disconnectedCallback',
 		value: function disconnectedCallback() {
-			_raf2.default.cancel(this._batchHandle);
-
-			// $FlowFixMe: We expect this static property on the subclass. Nobody will ever create an instance of just MeisterComponent.
-			var observedAttributes = this.constructor.observedAttributes;
-
-			//Remove all attached behaviors so they can be garbage collected.
-			for (var i = 0; i < observedAttributes.length; i++) {
-				var attr = observedAttributes[i];
-
-				_scrollmeister2.default.detachBehavior(this, attr, true);
+			//This happens when the element is moved inside the DOM using sth. like insertBefore.
+			//In this case we will just ignore the disconnectedCallback, because the Node is not actually disconnected.
+			//It is safe to leave the behaviors attached, because stuff like nextSibling and parentElement are defined.
+			//A connectedCallback will follow right away.
+			//https://twitter.com/WebReflection/status/984400317801476097
+			if (this.isConnected) {
+				return;
 			}
 
-			//TODO: Notify all behaviors that use types which depend on the DOM.
+			_raf2.default.cancel(this._batchHandle);
+
+			//Remove all attached behaviors so they can be garbage collected.
+			_scrollmeister2.default.detachBehaviors(this, this.behaviors, true);
+
+			_scrollmeister2.default.componentDisconnected(this);
 		}
 	}, {
 		key: 'attributeChangedCallback',
@@ -15032,7 +15106,12 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 			if (!this._scheduledBatchUpdate) {
 				this._scheduledBatchUpdate = true;
-				this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
+
+				//Only update the behaviors if the element is actually connected.
+				//Otherwise we'll do it in connectedCallback.
+				if (this.isConnected) {
+					this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
+				}
 			}
 		}
 	}, {
@@ -15104,6 +15183,9 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 	_createClass(ScrollMeisterComponent, null, [{
 		key: 'observedAttributes',
+
+		// Note: if you feel clever and think you can just define
+		// the static `observedAttributes` getter on the super class: IE 9/10.
 		get: function get() {
 			var behaviorNames = _scrollmeister2.default.getDefinedBehaviorNames();
 			var conditionNames = _scrollmeister2.default.getDefinedConditionNames();
@@ -16371,9 +16453,9 @@ exports.default = function (node) {
 	line.style.fontSize = '100px';
 	line.style.width = 'auto';
 
-	node.parentNode.appendChild(container);
+	node.parentElement.appendChild(container);
 	var ratio = 100 / line.clientWidth;
-	node.parentNode.removeChild(container);
+	node.parentElement.removeChild(container);
 	container.removeChild(line);
 
 	return ratio;
@@ -16666,6 +16748,10 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _CustomEvent = require('ponies/CustomEvent.js');
+
+var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
+
 var _camelCase = require('lib/camelCase.js');
 
 var _camelCase2 = _interopRequireDefault(_camelCase);
@@ -16709,6 +16795,7 @@ var Scrollmeister = {
 		var hasKeys = void 0;
 
 		//We loop over all behaviors in unspecified order until we eventually resolve all dependencies (or not).
+		//TODO: use getBehaviorOrder
 		do {
 			hasKeys = false;
 			attachedABehavior = false;
@@ -16754,12 +16841,17 @@ var Scrollmeister = {
 	},
 
 	detachBehaviors: function detachBehaviors(element, behaviorPropertiesMap) {
-		for (var name in behaviorPropertiesMap) {
-			if (!behaviorPropertiesMap.hasOwnProperty(name)) {
-				continue;
-			}
+		var skipDependencies = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-			this.detachBehavior(element, name);
+		//Remove the behaviors in reverse order to make sure their dependencies still exist for cleanup.
+		var reverseBehaviorOrder = this.getBehaviorOrder().slice().reverse();
+
+		for (var i = 0; i < reverseBehaviorOrder.length; i++) {
+			var behaviorName = reverseBehaviorOrder[i];
+
+			if (behaviorPropertiesMap.hasOwnProperty(behaviorName)) {
+				this.detachBehavior(element, behaviorName, skipDependencies);
+			}
 		}
 	},
 
@@ -16800,7 +16892,7 @@ var Scrollmeister = {
 			if (dependency.charAt(0) === '^') {
 				dependency = dependency.slice(1);
 
-				if (!element.parentNode.hasOwnProperty(dependency)) {
+				if (!element.parentElement.hasOwnProperty(dependency)) {
 					return false;
 				}
 			} else {
@@ -16819,12 +16911,32 @@ var Scrollmeister = {
 
 	getDefinedConditionNames: function getDefinedConditionNames() {
 		return this.conditionsRegistry.getNames();
+	},
+
+	componentConnected: function componentConnected(element) {
+		var event = new _CustomEvent2.default('scrollmeister:connected', {
+			bubbles: false,
+			cancelable: false,
+			detail: element
+		});
+
+		document.dispatchEvent(event);
+	},
+
+	componentDisconnected: function componentDisconnected(element) {
+		var event = new _CustomEvent2.default('scrollmeister:disconnected', {
+			bubbles: false,
+			cancelable: false,
+			detail: element
+		});
+
+		document.dispatchEvent(event);
 	}
 };
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":37,"lib/ConditionsRegistry.js":39,"lib/camelCase.js":42}],51:[function(require,module,exports){
+},{"behaviors/Behavior.js":11,"lib/BehaviorsRegistry.js":37,"lib/ConditionsRegistry.js":39,"lib/camelCase.js":42,"ponies/CustomEvent.js":48}],51:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
 },{"scssify":9}],52:[function(require,module,exports){

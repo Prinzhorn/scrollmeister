@@ -64,13 +64,13 @@ export default class GLEffectBehavior extends Behavior {
 	_createCanvas() {
 		const canvas = document.createElement('canvas');
 
-		this._sourceElement.parentNode.appendChild(canvas);
+		this._sourceElement.parentElement.appendChild(canvas);
 
 		return canvas;
 	}
 
 	_removeCanvas() {
-		this._canvas.parentNode.removeChild(this._canvas);
+		this._canvas.parentElement.removeChild(this._canvas);
 	}
 
 	_resize({ layout }) {
