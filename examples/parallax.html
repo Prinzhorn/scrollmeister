@@ -3,11 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Scrollmeister</title>
+    <title>Scrollmeister parallax background image</title>
   </head>
   <body>
-    <scroll-meister scroll guides-layout>
-      <element-meister layout="height: 50vh;" style="background: green;"></element-meister>
+    <scroll-meister scroll guides-layout="guides: center 50% 10px;">
+      <element-meister layout="height: 50vh; spacing: 75vh;" style="background: green;"></element-meister>
+      <element-meister layout="height: 100vh; mode: follow; clip: true; followerMode: pin;">
+        <img src="./niilo-isotalo-379496-unsplash.jpg">
+      </element-meister>
+
+      <element-meister layout="height: 50vh; spacing: 75vh; guides: viewport center;" style="background: green;"></element-meister>
+      <element-meister layout="height: 75vh; mode: follow; guides: center viewport;">
+        <img src="./niilo-isotalo-379496-unsplash.jpg">
+      </element-meister>
     </scroll-meister>
     <script src="../dist/scrollmeister.js"></script>
   </body>

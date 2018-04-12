@@ -52,15 +52,15 @@ Just some random sketches of how Guides Layout could look in CSS. Clean af that 
 }
 
 .a {
-	guides-snap: left center;
+	guides-snap: viewport;
 }
 
 .b {
-	guides-snap: left right;
+	guides-snap: left center;
 }
 
 .c {
-	guides-snap: viewport;
+	guides-snap: center right;
 	guides-dependencies: skip 1;
 }
 ```

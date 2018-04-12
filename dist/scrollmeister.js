@@ -11761,10 +11761,11 @@ var Behavior = function () {
 				var outerHTML = el.outerHTML;
 
 				el.style.height = 'auto';
+				el.style.position = 'static';
 
 				//TODO: other behaviors might prevent the message from be seen, we need to completely halt Scrollmeister.
 				//Maybe block all events (using process.env.NODE_ENV of course).
-				el.innerHTML = '\n\t\t\t\t<div style="color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; margin: 10px; padding: 20px; border-radius: 5px;">\n\t\t\t\t\t<h1 style="font-size: 30px; padding: 0 0 20px 0; margin: 0;"></h1>\n\t\t\t\t\t<p style="font-size: 20px; padding: 0 0 20px 0; margin: 0;">\n\t\t\t\t\t\t<strong></strong>\n\t\t\t\t\t</p>\n\t\t\t\t\t<pre style="background: #eee; padding: 20px;"></pre>\n\t\t\t\t</div>\n\t\t\t';
+				el.innerHTML = '\n\t\t\t\t<div style="color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; margin: 10px; padding: 20px; border-radius: 5px;">\n\t\t\t\t\t<h1 style="color: inherit; font-size: 30px; padding: 0 0 20px 0; margin: 0;"></h1>\n\t\t\t\t\t<p style="color: inherit; font-size: 20px; padding: 0 0 20px 0; margin: 0;">\n\t\t\t\t\t\t<strong></strong>\n\t\t\t\t\t</p>\n\t\t\t\t\t<pre style="background: #eee; padding: 20px;"></pre>\n\t\t\t\t</div>\n\t\t\t';
 
 				el.querySelector('h1').textContent = this.constructor.behaviorName;
 				el.querySelector('strong').textContent = _error.message;
@@ -12020,7 +12021,12 @@ var Behavior = function () {
 		key: '_parseProperties',
 		value: function _parseProperties(rawProperties) {
 			var schema = this.constructor.schema;
-			_schemaParser2.default.parseProperties(this.el, schema, rawProperties, this.props);
+
+			try {
+				_schemaParser2.default.parseProperties(this.el, schema, rawProperties, this.props);
+			} catch (err) {
+				this.error(err);
+			}
 		}
 	}, {
 		key: '_parseProperty',
@@ -13573,7 +13579,16 @@ var LayoutBehavior = function (_Behavior) {
 			return {
 				guides: {
 					type: [{ left: 'string' }, { right: 'string' }],
-					default: 'viewport viewport'
+					default: 'viewport',
+					expand: function expand(rawProperties) {
+						//We only expand a single "viewport".
+						if (rawProperties.length === 1 && rawProperties[0] === 'viewport') {
+							rawProperties.push('viewport');
+							return true;
+						}
+
+						return false;
+					}
 				},
 				height: {
 					type: 'height',
@@ -15562,17 +15577,18 @@ var GuidesLayoutEngine = function () {
 			var layout = node.layout,
 			    props = node.props;
 
+			var position = void 0;
 			var height = void 0;
 
 			//TODO: for pin/parallax we basically need the reverse operation of transformTop()
 			//Basically a function which, given a top position returns the scroll position when it is achieved.
 			if (props.mode === 'follow') {
+				position = layout.leaderTop;
 				height = layout.leaderHeight;
 			} else {
+				position = layout.top;
 				height = layout.height;
 			}
-
-			var position = layout.top;
 
 			if (anchor === 'bottom') {
 				position = position - this.viewport.height + height;
@@ -15740,7 +15756,7 @@ var GuidesLayoutEngine = function () {
 				//Here we normalize it to always have two, the top and bottom most.
 				//These are the only two that are relevant for the follower.
 				var topDependency = dependencies[0];
-				var bottomDependency = dependencies[0];
+				var bottomDependency = topDependency;
 
 				//We could use Array.reduce and create something like a minBy/maxBy.
 				//But this gives us the min and max element with a simple single loop.
@@ -15760,6 +15776,7 @@ var GuidesLayoutEngine = function () {
 
 				dependencies = [topDependency, bottomDependency];
 
+				layout.leaderTop = topDependency.layout.top;
 				layout.leaderHeight = bottomDependency.layout.bottom - topDependency.layout.top;
 			}
 
@@ -15770,6 +15787,7 @@ var GuidesLayoutEngine = function () {
 			if (props.guides.left === 'viewport') {
 				layout.left = 0;
 			} else {
+				//TODO: sort the guides. E.g. it shouldn't matter if you're using "left right" or "right left"
 				layout.left = this._getGuideByName(props.guides.left).leftPosition;
 			}
 
