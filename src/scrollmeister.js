@@ -36,10 +36,14 @@ const Scrollmeister = {
 				continue;
 			}
 
-			if (!this._checkBehaviorDependencies(element, behaviorName)) {
+			let missingDependencies = this._checkBehaviorDependencies(element, behaviorName);
+
+			if (missingDependencies.length > 0) {
 				throw new Error(
 					//TODO: render this error inline as well (behaviors have this.error, maybe MeisterComponent.error() method?)
-					`The "${behaviorName}" behavior requires the "" behavior for. Make sure you add the attribute to the element.`
+					`The "${behaviorName}" behavior requires the "${missingDependencies.join(
+						'", "'
+					)}" behavior(s) for. Make sure you add the attribute to the element.`
 				);
 			}
 
@@ -101,7 +105,7 @@ const Scrollmeister = {
 				continue;
 			}
 
-			if (!this._checkBehaviorDependencies(element, otherName)) {
+			if (this._checkBehaviorDependencies(element, otherName).length > 0) {
 				throw new Error(`You just removed the "${name}" behavior, which "${otherName}" requires.`);
 			}
 		}
@@ -109,24 +113,25 @@ const Scrollmeister = {
 
 	_checkBehaviorDependencies: function(element, name) {
 		const Behavior = this.behaviorsRegistry.get(name);
+		let missingDependencies = [];
 
 		for (let dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
 			let dependency = Behavior.dependencies[dependencyIndex];
 
 			if (dependency.charAt(0) === '^') {
-				dependency = dependency.slice(1);
+				let parentDependency = dependency.slice(1);
 
-				if (!element.parentElement.hasOwnProperty(dependency)) {
-					return false;
+				if (!element.parentElement.hasOwnProperty(parentDependency)) {
+					missingDependencies.push(dependency);
 				}
 			} else {
 				if (!element.hasOwnProperty(dependency)) {
-					return false;
+					missingDependencies.push(dependency);
 				}
 			}
 		}
 
-		return true;
+		return missingDependencies;
 	},
 
 	defineCondition: function(name, valueFn) {
