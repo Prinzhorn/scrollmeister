@@ -27,37 +27,24 @@ const Scrollmeister = {
 	},
 
 	attachBehaviors: function(element, behaviorPropertiesMap) {
-		let attachedABehavior;
-		let hasKeys;
+		let behaviorOrder = this.getBehaviorOrder();
 
-		//We loop over all behaviors in unspecified order until we eventually resolve all dependencies (or not).
-		//TODO: use getBehaviorOrder
-		do {
-			hasKeys = false;
-			attachedABehavior = false;
+		for (let i = 0; i < behaviorOrder.length; i++) {
+			let behaviorName = behaviorOrder[i];
 
-			for (let name in behaviorPropertiesMap) {
-				if (!behaviorPropertiesMap.hasOwnProperty(name)) {
-					continue;
-				}
-
-				hasKeys = true;
-
-				if (this._checkBehaviorDependencies(element, name)) {
-					this.attachBehavior(element, name, behaviorPropertiesMap[name]);
-					attachedABehavior = true;
-
-					delete behaviorPropertiesMap[name];
-				}
+			if (!behaviorPropertiesMap.hasOwnProperty(behaviorName)) {
+				continue;
 			}
 
-			if (hasKeys && !attachedABehavior) {
+			if (!this._checkBehaviorDependencies(element, behaviorName)) {
 				throw new Error(
-					//TODO: better error message with the exact thing that is missing.
-					`Could not resolve dependencies for behaviors "${Object.keys(behaviorPropertiesMap).join('", "')}".`
+					//TODO: render this error inline as well (behaviors have this.error, maybe MeisterComponent.error() method?)
+					`The "${behaviorName}" behavior requires the "" behavior for. Make sure you add the attribute to the element.`
 				);
 			}
-		} while (hasKeys);
+
+			this.attachBehavior(element, behaviorName, behaviorPropertiesMap[behaviorName]);
+		}
 	},
 
 	attachBehavior: function(element, name, rawProperties) {
