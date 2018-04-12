@@ -11,7 +11,16 @@ export default class LayoutBehavior extends Behavior {
 		return {
 			guides: {
 				type: [{ left: 'string' }, { right: 'string' }],
-				default: 'viewport viewport'
+				default: 'viewport',
+				expand: function(rawProperties) {
+					//We only expand a single "viewport".
+					if (rawProperties.length === 1 && rawProperties[0] === 'viewport') {
+						rawProperties.push('viewport');
+						return true;
+					}
+
+					return false;
+				}
 			},
 			height: {
 				type: 'height',
