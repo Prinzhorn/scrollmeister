@@ -58,19 +58,18 @@ export default class GLEffectBehavior extends Behavior {
 
 		clearInterval(this._pollTimer);
 		this._regl.destroy();
-		this._removeCanvas();
 	}
 
 	_createCanvas() {
 		const canvas = document.createElement('canvas');
 
-		this._sourceElement.parentElement.appendChild(canvas);
+		this.appendChild(canvas);
 
 		return canvas;
 	}
 
 	_removeCanvas() {
-		this._canvas.parentElement.removeChild(this._canvas);
+		this.removeChild(this._canvas);
 	}
 
 	_resize({ layout }) {

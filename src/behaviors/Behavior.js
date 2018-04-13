@@ -74,6 +74,8 @@ export default class Behavior {
 		this.parentEl = element.parentElement;
 		this.props = {};
 
+		this._shadowChildren = [];
+
 		this._observeDOMTypes();
 		this._proxyCSS();
 		this._proxyProps();
@@ -91,6 +93,17 @@ export default class Behavior {
 
 				this.unlisten(listener.element, listener.eventName, listener.callback);
 			}
+		}
+
+		//Clean up all element appended to shadow-meister.
+		let shadowEl = this._findShadowMeister();
+
+		if (shadowEl) {
+			for (let i = 0; i < this._shadowChildren.length; i++) {
+				shadowEl.removeChild(this._shadowChildren[i]);
+			}
+
+			this._shadowChildren.length = 0;
 		}
 
 		this._unproxyCSS();
@@ -242,9 +255,44 @@ export default class Behavior {
 		this.el.dispatchEvent(event);
 	}
 
-	appendChild() {
-		//TODO: append to data-scrollmeister-shadow (<shadow-meister>), innerEl or el
-		//Then remove the node in destructor automagically.
+	_findShadowMeister() {
+		for (let i = this.el.children.length - 1; i > 0; i--) {
+			let child = this.el.children[i];
+			if (child.tagName.toUpperCase() === 'SHADOW-MEISTER') {
+				return child;
+			}
+		}
+
+		return null;
+	}
+
+	appendChild(element) {
+		let shadowEl = this._findShadowMeister();
+
+		if (!shadowEl) {
+			shadowEl = document.createElement('shadow-meister');
+			this.el.appendChild(shadowEl);
+		}
+
+		shadowEl.appendChild(element);
+		this._shadowChildren.push(element);
+	}
+
+	removeChild(element) {
+		let shadowEl = this._findShadowMeister();
+
+		if (!shadowEl) {
+			throw new Error(
+				'You have called removeChild, but there is no shadow-meister. Did you append the element using Behavior.appendChild?'
+			);
+		}
+
+		let index = this._shadowChildren.indexOf(element);
+
+		if (index !== -1) {
+			shadowEl.removeChild(element);
+			this._shadowChildren.splice(index, 1);
+		}
 	}
 
 	updateProperties(properties) {

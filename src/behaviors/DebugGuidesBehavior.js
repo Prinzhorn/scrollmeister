@@ -28,10 +28,6 @@ export default class DebugGuidesBehavior extends Behavior {
 		this.connectTo('guides-layout', this._render.bind(this));
 	}
 
-	detach() {
-		this._removeElement();
-	}
-
 	_createElement() {
 		this._guidesWrapper = document.createElement('div');
 		this._guidesWrapper.style.cssText = `
@@ -43,15 +39,7 @@ export default class DebugGuidesBehavior extends Behavior {
 			pointer-events: none;
 		`;
 
-		if (document.body) {
-			document.body.appendChild(this._guidesWrapper);
-		}
-	}
-
-	_removeElement() {
-		if (document.body) {
-			document.body.removeChild(this._guidesWrapper);
-		}
+		this.appendChild(this._guidesWrapper);
 	}
 
 	_render(guidesLayoutBehavior: GuidesLayoutBehavior) {
