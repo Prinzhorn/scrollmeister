@@ -7,7 +7,7 @@ import GuidesLayoutEngine from 'lib/GuidesLayoutEngine.js';
 import Behavior from 'behaviors/Behavior.js';
 
 export default class GuidesLayoutBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			guides: {
 				type: [[{ name: 'string' }, { position: 'csslength' }, { width: 'csslength' }]],
@@ -33,11 +33,11 @@ export default class GuidesLayoutBehavior extends Behavior {
 		return 'guides-layout';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return [];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._layoutScheduled = false;
 
 		this._initLayoutEngine();

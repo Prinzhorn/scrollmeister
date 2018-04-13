@@ -11698,14 +11698,14 @@ function normalizeEventsArguments(element, eventName, callback) {
 
 var Behavior = function () {
 	_createClass(Behavior, [{
-		key: 'attach',
-		value: function attach() {
-			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the attach() method.');
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the behaviorDidAttach() method.');
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
-			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "schema" getter.');
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "behaviorSchema" getter.');
 		}
 	}, {
 		key: 'behaviorName',
@@ -11713,9 +11713,9 @@ var Behavior = function () {
 			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "behaviorName" getter.');
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
-			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "dependencies" getter.');
+			throw new Error('Your behavior class "' + this.constructor.name + '" needs to implement the static "behaviorDependencies" getter.');
 		}
 	}]);
 
@@ -11734,13 +11734,17 @@ var Behavior = function () {
 		this._proxyProps();
 		this._parseProperties(rawProperties);
 
-		this.attach();
+		this.behaviorDidAttach();
 		this.emit('attach');
 	}
 
 	_createClass(Behavior, [{
 		key: 'destructor',
 		value: function destructor() {
+			if (this.behaviorWillDetach) {
+				this.behaviorWillDetach();
+			}
+
 			//Clean up all event listeners added using listen/listenAndInvoke.
 			if (this.listeners) {
 				for (var i = 0; i < this.listeners.length; i++) {
@@ -11763,10 +11767,6 @@ var Behavior = function () {
 
 			this._unproxyCSS();
 
-			if (this.detach) {
-				this.detach();
-			}
-
 			this.emit('detach');
 		}
 	}, {
@@ -11785,7 +11785,7 @@ var Behavior = function () {
 	}, {
 		key: 'connectTo',
 		value: function connectTo(dependencyName, notifyCallback, connectedCallback) {
-			if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
+			if (this.constructor.behaviorDependencies.indexOf(dependencyName) === -1) {
 				throw new Error('You are trying to connect the "' + this.constructor.behaviorName + '" behavior to the "' + dependencyName + '" behavior, which is not listed as dependency.');
 			}
 
@@ -12014,7 +12014,7 @@ var Behavior = function () {
 			var _this2 = this;
 
 			var propertiesWithDOMTypes = [];
-			var schema = this.constructor.schema;
+			var schema = this.constructor.behaviorSchema;
 
 			for (var property in schema) {
 				if (!schema.hasOwnProperty(property)) {
@@ -12077,7 +12077,7 @@ var Behavior = function () {
 		value: function _proxyProps() {
 			var _this3 = this;
 
-			var schema = this.constructor.schema;
+			var schema = this.constructor.behaviorSchema;
 
 			var _loop = function _loop(property) {
 				if (schema.hasOwnProperty(property)) {
@@ -12099,7 +12099,7 @@ var Behavior = function () {
 	}, {
 		key: '_parseProperties',
 		value: function _parseProperties(rawProperties) {
-			var schema = this.constructor.schema;
+			var schema = this.constructor.behaviorSchema;
 
 			try {
 				_schemaParser2.default.parseProperties(this.el, schema, rawProperties, this.props);
@@ -12112,7 +12112,7 @@ var Behavior = function () {
 		value: function _parseProperty(property, rawValue) {
 			rawValue = rawValue.trim();
 
-			var schema = this.constructor.schema[property];
+			var schema = this.constructor.behaviorSchema[property];
 			var propertyType = schema.type;
 			var valueExpander = schema.expand;
 
@@ -12166,8 +12166,8 @@ var DebugGuidesBehavior = function (_Behavior) {
 	}
 
 	_createClass(DebugGuidesBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this._createElement();
 
 			this.connectTo('guides-layout', this._render.bind(this));
@@ -12204,7 +12204,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 			this.notify();
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				color: {
@@ -12219,7 +12219,7 @@ var DebugGuidesBehavior = function (_Behavior) {
 			return 'debug-guides';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['guides-layout'];
 		}
@@ -12261,8 +12261,8 @@ var FadeInBehavior = function (_Behavior) {
 	}
 
 	_createClass(FadeInBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			//Make sure the very first render took place and everything is updated.
@@ -12271,12 +12271,12 @@ var FadeInBehavior = function (_Behavior) {
 			});
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			this.el.style.opacity = '';
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {};
 		}
@@ -12286,7 +12286,7 @@ var FadeInBehavior = function (_Behavior) {
 			return 'fadein';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['guides-layout'];
 		}
@@ -12332,8 +12332,8 @@ var FadeInBehavior = function (_Behavior) {
 	}
 
 	_createClass(FadeInBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			if (this.el.layout.contentEl.children.length !== 1) {
@@ -12355,13 +12355,13 @@ var FadeInBehavior = function (_Behavior) {
 			});
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			this.el.layout.innerEl.style.whiteSpace = '';
 			this.el.layout.innerEl.style.fontSize = '';
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {};
 		}
@@ -12371,7 +12371,7 @@ var FadeInBehavior = function (_Behavior) {
 			return 'fluid-text';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['layout'];
 		}
@@ -12421,8 +12421,8 @@ var GLEffectBehavior = function (_Behavior) {
 	}
 
 	_createClass(GLEffectBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			if (!createRegl) {
@@ -12450,8 +12450,8 @@ var GLEffectBehavior = function (_Behavior) {
 			this._initRegl();
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			if (!createRegl) {
 				return;
 			}
@@ -12599,7 +12599,7 @@ var GLEffectBehavior = function (_Behavior) {
 			this.notify();
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				shader: {
@@ -12614,7 +12614,7 @@ var GLEffectBehavior = function (_Behavior) {
 			return 'gl-effect';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['layout', 'interpolate', 'media'];
 		}
@@ -12664,8 +12664,8 @@ var GalleryBehavior = function (_Behavior) {
 	}
 
 	_createClass(GalleryBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this._items = Array.prototype.slice.call(this.el.querySelectorAll('img[width][height]')).map(function (image) {
 				return {
 					image: image,
@@ -12761,7 +12761,7 @@ var GalleryBehavior = function (_Behavior) {
 			};
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				spacing: {
@@ -12784,7 +12784,7 @@ var GalleryBehavior = function (_Behavior) {
 			return 'gallery';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['layout'];
 		}
@@ -12834,8 +12834,8 @@ var GuidesLayoutBehavior = function (_Behavior) {
 	}
 
 	_createClass(GuidesLayoutBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this._layoutScheduled = false;
 
 			this._initLayoutEngine();
@@ -12940,7 +12940,7 @@ var GuidesLayoutBehavior = function (_Behavior) {
 			this.notify();
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				guides: {
@@ -12968,7 +12968,7 @@ var GuidesLayoutBehavior = function (_Behavior) {
 			return 'guides-layout';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return [];
 		}
@@ -13010,8 +13010,8 @@ var HashNavigationBehavior = function (_Behavior) {
 	}
 
 	_createClass(HashNavigationBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this.listen('click', this._handleClick.bind(this));
 		}
 	}, {
@@ -13089,7 +13089,7 @@ var HashNavigationBehavior = function (_Behavior) {
 			return true;
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				anchor: {
@@ -13109,7 +13109,7 @@ var HashNavigationBehavior = function (_Behavior) {
 			return 'hash-navigation';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['guides-layout', 'scroll'];
 		}
@@ -13178,8 +13178,8 @@ var InterpolateBehavior = function (_Behavior) {
 	}
 
 	_createClass(InterpolateBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this._interpolators = {};
 
 			//Non-zero defaults.
@@ -13196,7 +13196,7 @@ var InterpolateBehavior = function (_Behavior) {
 	}, {
 		key: '_createInterpolators',
 		value: function _createInterpolators(guidesLayoutBehavior) {
-			var schema = this.constructor.schema;
+			var schema = this.constructor.behaviorSchema;
 
 			for (var prop in schema) {
 				if (schema.hasOwnProperty(prop)) {
@@ -13268,7 +13268,7 @@ var InterpolateBehavior = function (_Behavior) {
 	}, {
 		key: '_interpolate',
 		value: function _interpolate(scrollBehavior) {
-			var schema = this.constructor.schema;
+			var schema = this.constructor.behaviorSchema;
 			var didChange = false;
 
 			for (var prop in schema) {
@@ -13292,7 +13292,7 @@ var InterpolateBehavior = function (_Behavior) {
 			}
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				progress: (0, _ObjectAssign2.default)({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
@@ -13312,7 +13312,7 @@ var InterpolateBehavior = function (_Behavior) {
 			return 'interpolate';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['^guides-layout', '^scroll', 'layout'];
 		}
@@ -13358,8 +13358,8 @@ var LayoutBehavior = function (_Behavior) {
 	}
 
 	_createClass(LayoutBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this.intrinsicHeight = 0;
 
 			this.scrollUpdate = {};
@@ -13390,8 +13390,8 @@ var LayoutBehavior = function (_Behavior) {
 			}
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			if (this.props.height === 'auto') {
 				this._unobserveHeight();
 			}
@@ -13638,7 +13638,7 @@ var LayoutBehavior = function (_Behavior) {
 			}
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				guides: {
@@ -13701,14 +13701,14 @@ var LayoutBehavior = function (_Behavior) {
 			};
 		}
 	}, {
-		key: 'dependencies',
-		get: function get() {
-			return ['^guides-layout', '^scroll'];
-		}
-	}, {
 		key: 'behaviorName',
 		get: function get() {
 			return 'layout';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^guides-layout', '^scroll'];
 		}
 	}]);
 
@@ -13748,8 +13748,8 @@ var LazyLoadBehavior = function (_Behavior) {
 	}
 
 	_createClass(LazyLoadBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			//This is the last resort, we definitely need to load the assets once the element is inside the viewport.
@@ -13789,7 +13789,7 @@ var LazyLoadBehavior = function (_Behavior) {
 			this.listen('^scroll:pause', handleScrollPause);
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {};
 		}
@@ -13799,7 +13799,7 @@ var LazyLoadBehavior = function (_Behavior) {
 			return 'lazy-load';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['^scroll', 'layout'];
 		}
@@ -13841,13 +13841,13 @@ var MediaBehavior = function (_Behavior) {
 	}
 
 	_createClass(MediaBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this.connectTo('layout', this._render.bind(this));
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			var img = this.el.querySelector('img');
 			var style = img.style;
 
@@ -13945,7 +13945,7 @@ var MediaBehavior = function (_Behavior) {
 			};
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				ratio: {
@@ -13977,7 +13977,7 @@ var MediaBehavior = function (_Behavior) {
 			return 'media';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['^guides-layout', 'layout'];
 		}
@@ -14019,8 +14019,8 @@ var MousetrapBehavior = function (_Behavior) {
 	}
 
 	_createClass(MousetrapBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this._render();
 		}
 	}, {
@@ -14029,8 +14029,8 @@ var MousetrapBehavior = function (_Behavior) {
 			this._render();
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			this.el.style.pointerEvents = '';
 		}
 	}, {
@@ -14041,7 +14041,7 @@ var MousetrapBehavior = function (_Behavior) {
 			this.el.style.pointerEvents = 'none';
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				native: {
@@ -14062,7 +14062,7 @@ var MousetrapBehavior = function (_Behavior) {
 			return 'mousetrap';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['^guides-layout'];
 		}
@@ -14104,8 +14104,8 @@ var RotatingGradientBehavior = function (_Behavior) {
 	}
 
 	_createClass(RotatingGradientBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			this.connectTo('interpolate', function (interpolateBehavior) {
@@ -14119,12 +14119,12 @@ var RotatingGradientBehavior = function (_Behavior) {
 			});
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			this.el.style.backgroundImage = '';
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				speed: {
@@ -14143,7 +14143,7 @@ var RotatingGradientBehavior = function (_Behavior) {
 			return 'rotating-gradient';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['interpolate'];
 		}
@@ -14213,8 +14213,8 @@ var ScrollBehavior = function (_Behavior) {
 	}
 
 	_createClass(ScrollBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this.scrollMode = 'touch';
 
 			this._scrollAnimation = null;
@@ -14230,8 +14230,8 @@ var ScrollBehavior = function (_Behavior) {
 			(0, _raf2.default)(this._scrollLoop.bind(this));
 		}
 	}, {
-		key: 'detach',
-		value: function detach() {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
 			this.scrollState.destroy();
 		}
 	}, {
@@ -14493,7 +14493,7 @@ var ScrollBehavior = function (_Behavior) {
 			this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				overscroll: {
@@ -14508,7 +14508,7 @@ var ScrollBehavior = function (_Behavior) {
 			return 'scroll';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['guides-layout'];
 		}
@@ -14550,8 +14550,8 @@ var ScrubBehavior = function (_Behavior) {
 	}
 
 	_createClass(ScrubBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			this.videoEl = this.el.querySelector('video');
@@ -14619,7 +14619,7 @@ var ScrubBehavior = function (_Behavior) {
 			}
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {
 				parameter: {
@@ -14635,7 +14635,7 @@ var ScrubBehavior = function (_Behavior) {
 			return 'scrub';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['interpolate'];
 		}
@@ -14681,8 +14681,8 @@ var TransformBehavior = function (_Behavior) {
 	}
 
 	_createClass(TransformBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			this.connectTo('interpolate', this._render.bind(this));
 		}
 	}, {
@@ -14700,7 +14700,7 @@ var TransformBehavior = function (_Behavior) {
 			this.notify();
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {};
 		}
@@ -14710,7 +14710,7 @@ var TransformBehavior = function (_Behavior) {
 			return 'transform';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return ['interpolate'];
 		}
@@ -14756,8 +14756,8 @@ var FadeInBehavior = function (_Behavior) {
 	}
 
 	_createClass(FadeInBehavior, [{
-		key: 'attach',
-		value: function attach() {
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
 			var _this2 = this;
 
 			this._playASAP = false;
@@ -14799,7 +14799,7 @@ var FadeInBehavior = function (_Behavior) {
 			}
 		}
 	}], [{
-		key: 'schema',
+		key: 'behaviorSchema',
 		get: function get() {
 			return {};
 		}
@@ -14809,7 +14809,7 @@ var FadeInBehavior = function (_Behavior) {
 			return 'youtube';
 		}
 	}, {
-		key: 'dependencies',
+		key: 'behaviorDependencies',
 		get: function get() {
 			return [];
 		}
@@ -15430,7 +15430,7 @@ var BehaviorsRegistry = function () {
 				throw new Error('You are trying to define the "' + name + '" behavior too late. You need to define behaviors before DOMContentLoaded."');
 			}
 
-			var dependencies = classDefinition.dependencies;
+			var dependencies = classDefinition.behaviorDependencies;
 
 			for (var i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
@@ -16935,8 +16935,8 @@ var Scrollmeister = {
 		var Behavior = this.behaviorsRegistry.get(name);
 		var missingDependencies = [];
 
-		for (var dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
-			var dependency = Behavior.dependencies[dependencyIndex];
+		for (var dependencyIndex = 0; dependencyIndex < Behavior.behaviorDependencies.length; dependencyIndex++) {
+			var dependency = Behavior.behaviorDependencies[dependencyIndex];
 
 			if (dependency.charAt(0) === '^') {
 				var parentDependency = dependency.slice(1);

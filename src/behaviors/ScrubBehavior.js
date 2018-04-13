@@ -5,7 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 import type InterpolateBehavior from 'behaviors/InterpolateBehavior.js';
 
 export default class ScrubBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			parameter: {
 				type: 'string',
@@ -19,11 +19,11 @@ export default class ScrubBehavior extends Behavior {
 		return 'scrub';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['interpolate'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.videoEl = this.el.querySelector('video');
 		this._waitingForSeeked = false;
 

@@ -3,7 +3,7 @@
 import Behavior from 'behaviors/Behavior.js';
 
 export default class FadeInBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -11,18 +11,18 @@ export default class FadeInBehavior extends Behavior {
 		return 'fadein';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['guides-layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		//Make sure the very first render took place and everything is updated.
 		this.listenOnce('guides-layout:change', () => {
 			this.el.style.opacity = 1;
 		});
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.el.style.opacity = '';
 	}
 }

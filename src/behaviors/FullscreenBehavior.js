@@ -9,7 +9,7 @@ import Behavior from 'behaviors/Behavior.js';
 //We also need to guarantee that only a single element is ever fullscreened. So this needs to be controlled by guides-layout at the top.
 
 export default class FullscreenBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -17,11 +17,11 @@ export default class FullscreenBehavior extends Behavior {
 		return 'fullscreen';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['^guides-layout', 'layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.fullscreen = false;
 
 		this.listen('click', () => {
@@ -34,7 +34,7 @@ export default class FullscreenBehavior extends Behavior {
 		//TODO: Mobile indicator
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.el.style.cursor = '';
 
 		if (this.fullscreen) {

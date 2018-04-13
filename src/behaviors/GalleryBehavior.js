@@ -6,7 +6,7 @@ import Behavior from 'behaviors/Behavior.js';
 import LayoutBehavior from 'behaviors/LayoutBehavior.js';
 
 export default class GalleryBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			spacing: {
 				type: 'csslength',
@@ -27,11 +27,11 @@ export default class GalleryBehavior extends Behavior {
 		return 'gallery';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._items = Array.prototype.slice.call(this.el.querySelectorAll('img[width][height]')).map(image => {
 			return {
 				image,

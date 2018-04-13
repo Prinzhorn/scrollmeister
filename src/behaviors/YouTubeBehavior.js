@@ -7,7 +7,7 @@ import Behavior from 'behaviors/Behavior.js';
 export default class FadeInBehavior extends Behavior {
 	_playASAP: boolean;
 
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -15,11 +15,11 @@ export default class FadeInBehavior extends Behavior {
 		return 'youtube';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return [];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._playASAP = false;
 
 		let iframe = this.el.querySelector('iframe');

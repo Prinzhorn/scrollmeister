@@ -3,7 +3,7 @@
 import Behavior from 'behaviors/Behavior.js';
 
 export default class RotatingGradientBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			speed: {
 				type: 'number',
@@ -20,11 +20,11 @@ export default class RotatingGradientBehavior extends Behavior {
 		return 'rotating-gradient';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['interpolate'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.connectTo('interpolate', interpolateBehavior => {
 			let angle = interpolateBehavior.values.progress * this.props.speed * 360;
 			let color1 = `hsl(${angle}, 100%, 50%)`;
@@ -36,7 +36,7 @@ export default class RotatingGradientBehavior extends Behavior {
 		});
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.el.style.backgroundImage = '';
 	}
 }

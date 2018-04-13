@@ -3,7 +3,7 @@
 import Behavior from 'behaviors/Behavior.js';
 
 export default class MousetrapBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			native: {
 				type: 'string',
@@ -22,11 +22,11 @@ export default class MousetrapBehavior extends Behavior {
 		return 'mousetrap';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['^guides-layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._render();
 	}
 
@@ -34,7 +34,7 @@ export default class MousetrapBehavior extends Behavior {
 		this._render();
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.el.style.pointerEvents = '';
 	}
 

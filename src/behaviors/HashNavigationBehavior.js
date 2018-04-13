@@ -1,7 +1,7 @@
 import Behavior from 'behaviors/Behavior.js';
 
 export default class HashNavigationBehavior extends Behavior {
-	static get schema() {
+	static get behaviorSchema() {
 		return {
 			anchor: {
 				type: 'string',
@@ -19,11 +19,11 @@ export default class HashNavigationBehavior extends Behavior {
 		return 'hash-navigation';
 	}
 
-	static get dependencies() {
+	static get behaviorDependencies() {
 		return ['guides-layout', 'scroll'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.listen('click', this._handleClick.bind(this));
 	}
 

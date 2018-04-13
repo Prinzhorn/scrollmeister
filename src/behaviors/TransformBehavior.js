@@ -4,7 +4,7 @@ import Behavior from 'behaviors/Behavior.js';
 import InterpolateBehavior from 'behaviors/InterpolateBehavior.js';
 
 export default class TransformBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -12,11 +12,11 @@ export default class TransformBehavior extends Behavior {
 		return 'transform';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['interpolate'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.connectTo('interpolate', this._render.bind(this));
 	}
 

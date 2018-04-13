@@ -48,8 +48,10 @@ function normalizeEventsArguments(element, eventName, callback) {
 }
 
 export default class Behavior {
-	static get schema() {
-		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the static "schema" getter.`);
+	static get behaviorSchema() {
+		throw new Error(
+			`Your behavior class "${this.constructor.name}" needs to implement the static "behaviorSchema" getter.`
+		);
 	}
 
 	static get behaviorName() {
@@ -58,14 +60,16 @@ export default class Behavior {
 		);
 	}
 
-	static get dependencies() {
+	static get behaviorDependencies() {
 		throw new Error(
-			`Your behavior class "${this.constructor.name}" needs to implement the static "dependencies" getter.`
+			`Your behavior class "${this.constructor.name}" needs to implement the static "behaviorDependencies" getter.`
 		);
 	}
 
-	attach() {
-		throw new Error(`Your behavior class "${this.constructor.name}" needs to implement the attach() method.`);
+	behaviorDidAttach() {
+		throw new Error(
+			`Your behavior class "${this.constructor.name}" needs to implement the behaviorDidAttach() method.`
+		);
 	}
 
 	constructor(element, rawProperties) {
@@ -81,11 +85,15 @@ export default class Behavior {
 		this._proxyProps();
 		this._parseProperties(rawProperties);
 
-		this.attach();
+		this.behaviorDidAttach();
 		this.emit('attach');
 	}
 
 	destructor() {
+		if (this.behaviorWillDetach) {
+			this.behaviorWillDetach();
+		}
+
 		//Clean up all event listeners added using listen/listenAndInvoke.
 		if (this.listeners) {
 			for (let i = 0; i < this.listeners.length; i++) {
@@ -108,10 +116,6 @@ export default class Behavior {
 
 		this._unproxyCSS();
 
-		if (this.detach) {
-			this.detach();
-		}
-
 		this.emit('detach');
 	}
 
@@ -127,7 +131,7 @@ export default class Behavior {
 	}
 
 	connectTo(dependencyName, notifyCallback, connectedCallback) {
-		if (this.constructor.dependencies.indexOf(dependencyName) === -1) {
+		if (this.constructor.behaviorDependencies.indexOf(dependencyName) === -1) {
 			throw new Error(
 				`You are trying to connect the "${
 					this.constructor.behaviorName
@@ -329,7 +333,7 @@ export default class Behavior {
 
 	_observeDOMTypes() {
 		let propertiesWithDOMTypes = [];
-		let schema = this.constructor.schema;
+		let schema = this.constructor.behaviorSchema;
 
 		for (let property in schema) {
 			if (!schema.hasOwnProperty(property)) {
@@ -387,7 +391,7 @@ export default class Behavior {
 	}
 
 	_proxyProps() {
-		let schema = this.constructor.schema;
+		let schema = this.constructor.behaviorSchema;
 
 		for (let property in schema) {
 			if (schema.hasOwnProperty(property)) {
@@ -404,7 +408,7 @@ export default class Behavior {
 	}
 
 	_parseProperties(rawProperties) {
-		const schema = this.constructor.schema;
+		const schema = this.constructor.behaviorSchema;
 
 		try {
 			schemaParser.parseProperties(this.el, schema, rawProperties, this.props);
@@ -416,7 +420,7 @@ export default class Behavior {
 	_parseProperty(property, rawValue) {
 		rawValue = rawValue.trim();
 
-		let schema = this.constructor.schema[property];
+		let schema = this.constructor.behaviorSchema[property];
 		let propertyType = schema.type;
 		let valueExpander = schema.expand;
 

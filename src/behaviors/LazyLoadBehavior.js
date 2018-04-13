@@ -3,7 +3,7 @@
 import Behavior from 'behaviors/Behavior.js';
 
 export default class LazyLoadBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -11,11 +11,11 @@ export default class LazyLoadBehavior extends Behavior {
 		return 'lazy-load';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['^scroll', 'layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		//This is the last resort, we definitely need to load the assets once the element is inside the viewport.
 		let handleViewportEnter = () => {
 			lazyLoad();

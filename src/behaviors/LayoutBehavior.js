@@ -7,7 +7,7 @@ import Behavior from 'behaviors/Behavior.js';
 import type ScrollBehavior from 'behaviors/ScrollBehavior.js';
 
 export default class LayoutBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			guides: {
 				type: [{ left: 'string' }, { right: 'string' }],
@@ -69,15 +69,15 @@ export default class LayoutBehavior extends Behavior {
 		};
 	}
 
-	static get dependencies(): Array<string> {
-		return ['^guides-layout', '^scroll'];
-	}
-
 	static get behaviorName(): string {
 		return 'layout';
 	}
 
-	attach() {
+	static get behaviorDependencies(): Array<string> {
+		return ['^guides-layout', '^scroll'];
+	}
+
+	behaviorDidAttach() {
 		this.intrinsicHeight = 0;
 
 		this.scrollUpdate = {};
@@ -107,7 +107,7 @@ export default class LayoutBehavior extends Behavior {
 		}
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		if (this.props.height === 'auto') {
 			this._unobserveHeight();
 		}

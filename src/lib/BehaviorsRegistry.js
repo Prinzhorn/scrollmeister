@@ -26,7 +26,7 @@ export default class BehaviorsRegistry {
 			);
 		}
 
-		let dependencies = classDefinition.dependencies;
+		let dependencies = classDefinition.behaviorDependencies;
 
 		for (let i = 0; i < dependencies.length; i++) {
 			let dependency = dependencies[i];

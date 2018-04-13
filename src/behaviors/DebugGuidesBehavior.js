@@ -5,7 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 import type GuidesLayoutBehavior from 'behaviors/GuidesLayoutBehavior.js';
 
 export default class DebugGuidesBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			color: {
 				type: 'string',
@@ -18,11 +18,11 @@ export default class DebugGuidesBehavior extends Behavior {
 		return 'debug-guides';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['guides-layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._createElement();
 
 		this.connectTo('guides-layout', this._render.bind(this));

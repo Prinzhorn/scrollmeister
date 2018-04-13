@@ -23,7 +23,7 @@ export default class ScrollBehavior extends Behavior {
 	_scrollLogic: ScrollLogic;
 	_mousemoveCounter: number;
 
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			overscroll: {
 				type: 'boolean',
@@ -36,11 +36,11 @@ export default class ScrollBehavior extends Behavior {
 		return 'scroll';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['guides-layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.scrollMode = 'touch';
 
 		this._scrollAnimation = null;
@@ -56,7 +56,7 @@ export default class ScrollBehavior extends Behavior {
 		raf(this._scrollLoop.bind(this));
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.scrollState.destroy();
 	}
 

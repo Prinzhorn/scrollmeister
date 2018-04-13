@@ -5,7 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 import fontSizeWidthRatio from 'lib/fontSizeWidthRatio.js';
 
 export default class FadeInBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {};
 	}
 
@@ -13,11 +13,11 @@ export default class FadeInBehavior extends Behavior {
 		return 'fluid-text';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		if (this.el.layout.contentEl.children.length !== 1) {
 			this.error(
 				new Error(
@@ -41,7 +41,7 @@ export default class FadeInBehavior extends Behavior {
 		});
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		this.el.layout.innerEl.style.whiteSpace = '';
 		this.el.layout.innerEl.style.fontSize = '';
 	}

@@ -115,8 +115,8 @@ const Scrollmeister = {
 		const Behavior = this.behaviorsRegistry.get(name);
 		let missingDependencies = [];
 
-		for (let dependencyIndex = 0; dependencyIndex < Behavior.dependencies.length; dependencyIndex++) {
-			let dependency = Behavior.dependencies[dependencyIndex];
+		for (let dependencyIndex = 0; dependencyIndex < Behavior.behaviorDependencies.length; dependencyIndex++) {
+			let dependency = Behavior.behaviorDependencies[dependencyIndex];
 
 			if (dependency.charAt(0) === '^') {
 				let parentDependency = dependency.slice(1);

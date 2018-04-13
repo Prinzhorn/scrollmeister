@@ -5,7 +5,7 @@ import Behavior from 'behaviors/Behavior.js';
 import type LayoutBehavior from 'behaviors/LayoutBehavior.js';
 
 export default class MediaBehavior extends Behavior {
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			ratio: {
 				type: 'ratio'
@@ -35,15 +35,15 @@ export default class MediaBehavior extends Behavior {
 		return 'media';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['^guides-layout', 'layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this.connectTo('layout', this._render.bind(this));
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		let img = this.el.querySelector('img');
 		let style = img.style;
 

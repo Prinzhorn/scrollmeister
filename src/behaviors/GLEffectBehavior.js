@@ -9,7 +9,7 @@ try {
 }
 
 export default class GLEffectBehavior extends Behavior {
-	static get schema() {
+	static get behaviorSchema() {
 		return {
 			shader: {
 				type: 'template',
@@ -22,11 +22,11 @@ export default class GLEffectBehavior extends Behavior {
 		return 'gl-effect';
 	}
 
-	static get dependencies() {
+	static get behaviorDependencies() {
 		return ['layout', 'interpolate', 'media'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		if (!createRegl) {
 			return;
 		}
@@ -51,7 +51,7 @@ export default class GLEffectBehavior extends Behavior {
 		this._initRegl();
 	}
 
-	detach() {
+	behaviorWillDetach() {
 		if (!createRegl) {
 			return;
 		}

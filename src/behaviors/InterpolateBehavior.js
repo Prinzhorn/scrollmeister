@@ -51,7 +51,7 @@ const keyframesSchema = {
 export default class InterpolateBehavior extends Behavior {
 	props: Props;
 
-	static get schema(): any {
+	static get behaviorSchema(): any {
 		return {
 			progress: assign({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
 			opacity: keyframesSchema,
@@ -69,11 +69,11 @@ export default class InterpolateBehavior extends Behavior {
 		return 'interpolate';
 	}
 
-	static get dependencies(): Array<string> {
+	static get behaviorDependencies(): Array<string> {
 		return ['^guides-layout', '^scroll', 'layout'];
 	}
 
-	attach() {
+	behaviorDidAttach() {
 		this._interpolators = {};
 
 		//Non-zero defaults.
@@ -89,7 +89,7 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	_createInterpolators(guidesLayoutBehavior: GuidesLayoutBehavior) {
-		let schema = this.constructor.schema;
+		let schema = this.constructor.behaviorSchema;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {
@@ -155,7 +155,7 @@ export default class InterpolateBehavior extends Behavior {
 	}
 
 	_interpolate(scrollBehavior: ScrollBehavior) {
-		let schema = this.constructor.schema;
+		let schema = this.constructor.behaviorSchema;
 		let didChange = false;
 
 		for (let prop in schema) {
