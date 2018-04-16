@@ -10,13 +10,10 @@
     "flow": "flow check",
     "server": "http-server",
     "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/*.html, dist/scrollmeister.js'",
-    "watch": "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js -o ./dist/scrollmeister.js -v",
+    "watch":
+      "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js --standalone Scrollmeister -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
-    "build": "npm run build-scrollmeister && npm run build-extras",
-    "build-scrollmeister":
-      "NODE_PATH='./src' NODE_ENV=production browserify ./src/index.js -p tinyify -p [ browserify-banner --file src/banner.txt ] > ./dist/scrollmeister.js",
-    "build-extras":
-      "NODE_PATH='./src' NODE_ENV=production browserify ./src/index-extras.js -p tinyify -p [ browserify-banner --file src/banner.txt ] > ./dist/scrollmeister-extras.js"
+    "build": "./build.sh"
   },
   "repository": {
     "type": "git",
