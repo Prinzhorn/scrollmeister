@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Scrollmeister</title>
+		<style>
+			body {
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			scroll-meister, element-meister {
+				display: block;
+			}
+
+			element-meister {
+				background: rgba(0, 255, 0, 0.5);
+				box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.5);
+			}
+		</style>
+	</head>
+	<body>
+		<scroll-meister debug-guides scroll
+			guides-layout="
+				guides:
+					left 0 2vmin,
+					leftthird 33.333% 10px,
+					center 50% 50px,
+					right 100% 2vmin;
+				width :
+					1200px;
+			"
+		>
+			<element-meister layout="height: 10vh; spacing: 2vh;"></element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 2vh;"></element-meister>
+			<element-meister layout="guides: left leftthird; height: 10vh; spacing: 2vh;"></element-meister>
+			<element-meister layout="guides: center right; height: 10vh; spacing: 2vh; dependencies: skip 1"></element-meister>
+			<element-meister layout="guides: leftthird right; height: 10vh; spacing: 2vh;"></element-meister>
+			<element-meister layout="guides: left leftthird; height: 15vh; spacing: 2vh; dependencies: skip 1"></element-meister>
+			<element-meister layout="guides: viewport leftthird; height: 10vh; spacing: 2vh"></element-meister>
+
+		<script src="../dist/scrollmeister-extras.js"></script>
+		<script>
+			var meister = document.querySelector('scroll-meister');
+
+			document.addEventListener('mousemove', function(e) {
+				var x = (e.clientX - 200) / 1280;
+
+				x = Math.min(x, 0.4);
+				x = Math.max(x, 0.1);
+
+				x = x * 100;
+
+				meister.guidesLayout.guides = `
+					left 0 2vmin,
+					leftthird ${x}% 10px,
+					center 50% 50px,
+					right 100% 2vmin
+				`;
+			});
+		</script>
+	</body>
+</html>

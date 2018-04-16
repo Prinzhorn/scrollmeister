@@ -1,3 +1,6 @@
+const skipRegex = /skip\s+(\d+)/;
+const consumeRegex = /consume\s+(\d+)/;
+
 function isFlowElement(element) {
 	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
 }
@@ -36,24 +39,48 @@ function findDependencies(value, context) {
 		}
 	}
 
-	if (value.indexOf('skip') === 0) {
-		let numberOfSkips = parseInt(value.slice('skip'.length).trim(), 10);
+	if (value.indexOf('skip') !== -1 || value.indexOf('consume') !== -1) {
+		let numberOfSkips = skipRegex.test(value) ? parseInt(value.match(skipRegex)[1], 10) : 0;
+		let numberOfConsumes = consumeRegex.test(value) ? parseInt(value.match(consumeRegex)[1], 10) : 1;
+
+		//Same as inherit
+		if (numberOfSkips === 0 && numberOfConsumes === 1) {
+			return findDependencies('inherit', context);
+		}
 
 		if (numberOfSkips < 0) {
-			throw new Error(`You've specified a negative number of skips (${numberOfSkips}) for the layout dependencies.`);
+			throw new Error(
+				`You've specified a non-positive number of skips (${numberOfSkips}) for the layout dependencies.`
+			);
 		}
 
-		let element;
+		if (numberOfConsumes < 1) {
+			throw new Error(
+				`You have specified less than 1 (${numberOfConsumes}) for "consume" for the layout dependencies..`
+			);
+		}
 
+		let element = context;
+
+		//skip
 		do {
-			element = findPreviousFlowElement(context);
+			element = findPreviousFlowElement(element);
 		} while (element && numberOfSkips--);
 
-		if (element) {
-			return [element.layout];
-		} else {
+		if (!element) {
+			//TODO: throw? We could not find the deps, too many skips.
 			return [];
 		}
+
+		//consume
+		let dependencies = [];
+
+		do {
+			dependencies.push(element.layout);
+			element = findPreviousFlowElement(element);
+		} while (element && --numberOfConsumes);
+
+		return dependencies;
 	}
 
 	//TODO: nope, this should do sth. like "prevSiblings()"
@@ -71,9 +98,6 @@ function findDependencies(value, context) {
 	return dependencies.map(el => el.layout);
 }
 
-//TODO: I believe SelectorType needs to be reavaluated (live) all the time!
-//https://stackoverflow.com/questions/30578673/is-it-possible-to-make-queryselectorall-live-like-getelementsbytagname
-//We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 export default {
 	parse: function(value, context) {
 		value = value.trim();

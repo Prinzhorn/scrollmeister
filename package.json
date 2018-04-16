@@ -9,9 +9,9 @@
     "eslint": "eslint src/*.js src/**/*.js",
     "flow": "flow check",
     "server": "http-server",
-    "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/*.html, dist/scrollmeister.js'",
+    "reload": "browser-sync start --proxy 'localhost:8080' --files 'examples/*.html, dist/scrollmeister-extras.js'",
     "watch":
-      "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js --standalone Scrollmeister -o ./dist/scrollmeister.js -v",
+      "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js --standalone Scrollmeister -o ./dist/scrollmeister-extras.js -v",
     "start": "npm run server & npm run reload & npm run watch",
     "build": "./build.sh",
     "prepublish": "npm run build"

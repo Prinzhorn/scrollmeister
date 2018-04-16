@@ -17415,7 +17415,6 @@ function findDependencies(value, context) {
 //We could return an array from here which we manipulate transparently. However, we need to know when it is not needed aylonger
 exports.default = {
 	parse: function parse(value, context) {
-		console.log(value);
 		value = value.trim();
 
 		var dependencies = findDependencies(value, context);

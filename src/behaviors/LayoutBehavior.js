@@ -63,7 +63,7 @@ export default class LayoutBehavior extends Behavior {
 				default: 'false'
 			},
 			dependencies: {
-				type: 'layoutdependency',
+				type: 'layoutdependencies',
 				default: 'inherit'
 			}
 		};
@@ -124,6 +124,8 @@ export default class LayoutBehavior extends Behavior {
 		//Includes elements and also text nodes.
 		let childNodes = this.el.childNodes;
 		let childElements = this.el.children;
+
+		//TODO: if the element is completely empty we still wrap it
 
 		//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
 		if (childElements.length === 1) {
