@@ -1,8 +1,8 @@
 {
   "name": "scrollmeister",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha",
   "description": "Open-source JavaScript framework to declaratively build scrolling experiences",
-  "main": "./src/index.js",
+  "main": "./dist/scrollmeister.min.js",
   "scripts": {
     "test": "npm run flow && npm run eslint && npm run jest",
     "jest": "NODE_PATH='./src' jest",
