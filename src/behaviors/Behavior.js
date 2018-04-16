@@ -66,12 +66,6 @@ export default class Behavior {
 		);
 	}
 
-	behaviorDidAttach() {
-		throw new Error(
-			`Your behavior class "${this.constructor.name}" needs to implement the behaviorDidAttach() method.`
-		);
-	}
-
 	constructor(element, rawProperties) {
 		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
@@ -85,7 +79,10 @@ export default class Behavior {
 		this._proxyProps();
 		this._parseProperties(rawProperties);
 
-		this.behaviorDidAttach();
+		if (this.behaviorDidAttach) {
+			this.behaviorDidAttach();
+		}
+
 		this.emit('attach');
 	}
 
