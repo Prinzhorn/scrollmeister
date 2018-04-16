@@ -13,7 +13,8 @@
     "watch":
       "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js --standalone Scrollmeister -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
-    "build": "./build.sh"
+    "build": "./build.sh",
+    "prepublish": "build"
   },
   "repository": {
     "type": "git",
