@@ -1,4 +1,4 @@
-import assign from 'ponies/Object.assign.js';
+import assign from 'object-assign';
 import CustomEvent from 'ponies/CustomEvent.js';
 
 import schemaParser from 'lib/schemaParser.js';

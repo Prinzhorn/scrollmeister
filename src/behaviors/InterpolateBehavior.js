@@ -1,6 +1,6 @@
 // @flow
 
-import assign from 'ponies/Object.assign.js';
+import assign from 'object-assign';
 import Behavior from 'behaviors/Behavior.js';
 
 import type { CSSLength } from 'types/CSSLengthType.js';
