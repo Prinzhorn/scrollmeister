@@ -14,7 +14,7 @@
       "NODE_PATH='./src' NODE_ENV=development watchify ./src/index-extras.js --standalone Scrollmeister -o ./dist/scrollmeister.js -v",
     "start": "npm run server & npm run reload & npm run watch",
     "build": "./build.sh",
-    "prepublish": "build"
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
