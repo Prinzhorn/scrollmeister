@@ -16,6 +16,7 @@ document.addEventListener(
 		Scrollmeister.behaviorsRegistry.close();
 		customElements.define('scroll-meister', ScrollMeisterComponent);
 		customElements.define('element-meister', ElementMeisterComponent);
+		customElements.define('content-meister', class extends HTMLElement {});
 		customElements.define('shadow-meister', class extends HTMLElement {});
 	},
 	{ once: true }

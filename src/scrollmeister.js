@@ -64,7 +64,9 @@ const Scrollmeister = {
 		} else {
 			//Make the behavior available as a property on the DOM node.
 			const Behavior = this.behaviorsRegistry.get(name);
-			element[name] = new Behavior(element, rawProperties);
+			let contentElement = this.wrapContents(element);
+
+			element[name] = new Behavior(element, contentElement, rawProperties);
 			element[camcelCase(name)] = element[name];
 			element.behaviors[name] = element[name];
 		}
@@ -160,6 +162,33 @@ const Scrollmeister = {
 		});
 
 		document.dispatchEvent(event);
+	},
+
+	wrapContents: function(element) {
+		if (element.tagName.toLowerCase() !== 'element-meister') {
+			return null;
+		}
+
+		let contentEl = element.querySelector('content-meister');
+
+		if (contentEl) {
+			return contentEl;
+		}
+
+		contentEl = document.createElement('content-meister');
+
+		let childNodes = element.childNodes;
+		let fragment = document.createDocumentFragment();
+
+		//childNodes is a live list, so length gets smaller.
+		while (childNodes.length > 0) {
+			fragment.appendChild(childNodes[0]);
+		}
+
+		contentEl.appendChild(fragment);
+		element.appendChild(contentEl);
+
+		return contentEl;
 	}
 };
 

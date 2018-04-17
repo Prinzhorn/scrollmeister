@@ -66,10 +66,14 @@ export default class Behavior {
 		);
 	}
 
-	constructor(element, rawProperties) {
+	constructor(element, contentElement, rawProperties) {
 		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
+
+		//contentEl and parentEl only make sense for element-behaviors (not globals).
+		this.contentEl = contentElement;
 		this.parentEl = element.parentElement;
+
 		this.props = {};
 
 		this._shadowChildren = [];

@@ -1,8 +1,6 @@
 import LayoutDependenciesType from 'types/LayoutDependenciesType.js';
 
-function $(selector) {
-	return document.querySelector(selector);
-}
+const $ = document.querySelector.bind(document);
 
 function prepareZeBody(html) {
 	document.body.innerHTML = html;

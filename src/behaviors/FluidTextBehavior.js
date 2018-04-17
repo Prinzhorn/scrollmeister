@@ -28,21 +28,21 @@ export default class FadeInBehavior extends Behavior {
 
 		//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
 
-		this.el.layout.innerEl.style.whiteSpace = 'nowrap';
+		this.contentEl.style.whiteSpace = 'nowrap';
 
 		this.connectTo('layout', layoutBehavior => {
 			if (!this._fontSizeWidthRatio) {
-				this._fontSizeWidthRatio = fontSizeWidthRatio(this.el.layout.innerEl);
+				this._fontSizeWidthRatio = fontSizeWidthRatio(this.contentEl);
 			}
 
-			this.el.layout.innerEl.style.fontSize = this._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
+			this.contentEl.style.fontSize = this._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
 
 			this.notify();
 		});
 	}
 
 	behaviorWillDetach() {
-		this.el.layout.innerEl.style.whiteSpace = '';
-		this.el.layout.innerEl.style.fontSize = '';
+		this.contentEl.style.whiteSpace = '';
+		this.contentEl.style.fontSize = '';
 	}
 }

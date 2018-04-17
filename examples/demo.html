@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Scrollmeister</title>
+		<style>
+			body {
+				/* System fonts are the new web fonts. */
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+				font-size: 18px;
+			}
+
+			h2 {
+				font-weight: normal;
+				font-size: 36px;
+				margin: 1em 0 0.5em 0;
+			}
+
+			element-meister[fluid-text] h1 {
+				font-weight: normal;
+				margin: 0.25em 0;
+				line-height: 1;
+			}
+
+			/*
+				If Scrollmeister fails to load we at least make the custom elements block elements.
+				By default custom elements are inline elements, scrollmeister will set them to block once loaded.
+			*/
+			scroll-meister, element-meister, content-meister {
+				display: block;
+			}
+
+			content-meister {
+				overflow: hidden;
+			}
+
+			/* The fadein behavior will set opacity to 1 once the behaviors are ready. */
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+
+			element-meister {
+				_background: rgba(0, 255, 0, 0.5);
+				_box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.5);
+			}
+
+			.intro {
+				font-size: 24px;
+			}
+		</style>
+	</head>
+	<body>
+		<!--
+			The <scroll-meister> element is a custom element defined by Scrollmeister.
+			Along with <element-meister> they are the building blocks of a Scrollmeister page.
+			You always have a wrapping <scroll-meister> which contains nothing but <element-meister> children.
+
+			The attributes you see are called behaviors in Scrollmeister.
+			Every attribute corresponds to a JavaScript class that adds a behavior to the element.
+
+			guides-layout: defines the guides that elements can snap to and does the actual layout
+			scroll: handes native/touch scrolling through the layout
+			fadein: will set opacity to 1 once the first layout has happened to prevent flash-of-unstyled-meister
+			hash-navigation: will make anchor-links scroll smoothly to the target
+		-->
+		<scroll-meister fadein scroll hash-navigation
+			guides-layout="
+				guides:
+					left 0 2vmin,
+					leftthird 33.333%,
+					center 50% 2vmin,
+					right 100% 2vmin;
+				width :
+					1200px;
+			"
+		>
+			<!--
+				<scroll-meister> contains a flat list of <element-meister>.
+				They can be enhanced by behaviors as well.
+			-->
+			<element-meister layout="guides: left right;" fluid-text interpolate="rotate: top 0, bottom 100vh -45" transform>
+				<content-meister>
+					<h1>Scrollmeister</h1>
+				</content-meister>
+			</element-meister>
+
+			<element-meister layout="guides: left right;">
+				<div class="intro">
+					Scrollmeister is an open-source JavaScript framework to declaratively build scrolling experiences. What does that mean? Scroll and find out ;)
+				</div>
+			</element-meister>
+
+			<element-meister layout="guides: left right;">
+				<content-meister>
+					<h2>Declarative</h2>
+					<p>Scrollmeister uses <strong>custom elements and attributes</strong>, check out the source code of this page! Attributes on the custom elements add behaviors to them.</p>
+
+					<h2>Guides Layout</h2>
+					<p>Like guides in Photoshop, elements snap to any of two guides (left and right). Guides also have a width.</p>
+					<p><button id="toggle-guides">Toggle Guides Visibility</button></p>
+				</content-meister>
+			</element-meister>
+
+			<element-meister layout="guides: left right;">
+				<content-meister>
+
+				</content-meister>
+			</element-meister>
+
+			<!-- <element-meister layout="guides: left right; height: 560/315" youtube>
+				<iframe width="560" height="315" src="https://www.youtube.com/embed/Ev4w3vxZqHU?enablejsapi=1&rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+			</element-meister> -->
+
+			<element-meister
+				id="gl"
+				media="ratio: 1920 / 1080"
+				interpolate
+				gl-effect
+				layout="guides: left right; height: 800/600; spacing: 50vh;"
+				css
+				signals="signals: layout:center:enter css add in-center, layout:center:leave css remove in-center"
+			>
+				<img class="cover" src="assets/images/bogdan-dada-156739-unsplash.jpg" />
+				<!--<video src="./chrome.mp4" type="video/mp4" muted playsInline autoplay loop></video>-->
+				<script type="text/plain">
+				precision mediump float;
+
+				uniform float progress;
+				uniform sampler2D image;
+				uniform vec2 size;
+
+				varying vec2 uv;
+
+				void main() {
+					vec2 center = size / 2.0;
+					float radius = progress * max(size.x, size.y) / 2.0;
+					float angle = progress * 3.14159 * 5.0;
+
+					vec2 coord = uv * size;
+
+					coord -= center;
+
+					float distance = length(coord);
+
+					if (distance < radius) {
+						float percent = (radius - distance) / radius;
+						float theta = percent * percent * angle;
+						float s = sin(theta);
+						float c = cos(theta);
+
+						coord = vec2(
+							coord.x * c - coord.y * s,
+							coord.x * s + coord.y * c
+						);
+					}
+
+					coord += center;
+
+					gl_FragColor = texture2D(image, coord / size);
+				}
+				</script>
+				<script type="text/plain">
+				precision mediump float;
+
+				uniform float progress;
+				uniform vec2 size;
+				uniform sampler2D image;
+
+				varying vec2 uv;
+
+				void main() {
+					//This way we see the pixels much earlier. We skip the boring part were they're just like a little bigger than original.
+					float easedProgress = pow(progress, 0.1);
+
+					//The grid size in whole squares, e.g. 15x7.
+					vec2 grid = floor(size * (1.0 - easedProgress) + 0.5);
+
+					//The size of a single pixelated block, e.g. 0.1x0.07 (10%x7% of the texture size).
+					vec2 pixelSize = 1.0 / grid;
+
+					//We use the color at the center of the block for all pixels inside of it.
+					vec2 transformedUV = (floor(uv / pixelSize) / grid) + (pixelSize / 2.0);
+
+					gl_FragColor = texture2D(image, transformedUV);
+				}
+				</script>
+			</element-meister>
+
+			<element-meister gallery layout="guides: left right; spacing: 20vh;">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1280" />
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
+				<img src="assets/images/photo-1442422502730-a90f72460717.jpg" width="1440" height="1920" />
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1280" />
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280" />
+				<img src="assets/images/photo-1442422502730-a90f72460717.jpg" width="1440" height="1920" />
+			</element-meister>
+
+			<element-meister layout="height: 50vh; spacing: 20vh 0;" interpolate rotating-gradient="speed: 1; offset: 40;"></element-meister>
+
+			<element-meister media="ratio: 1920 / 1080;" layout="guides: left right; height: 1/1; spacing: 50vh 0;">
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" />
+			</element-meister>
+
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0;" interpolate="opacity: center 1, top 0.5; rotate: center 0, top: 360" transform></element-meister>
+
+			<element-meister layout="guides: left leftthird; spacing: 20vh 0;">
+				<p>8 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" />
+				<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+				<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+			</element-meister>
+
+			<element-meister layout="guides: leftthird right; height: 640/320; mode: follow; followerMode: parallax;" interpolate="alpha: bottom 0, top 0.9" scrub="parameter: alpha;">
+				<video src="assets/videos/chrome.mp4" type="video/mp4" preload="auto" muted playsInline></video>
+			</element-meister>
+
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0;">4</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0;" interpolate="opacity: bottom 0, bottom 100vh 1; scale: bottom 0, top 1" transform>5</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0;">6</element-meister>
+
+			<element-meister layout="guides: left leftthird; height: 50vh; spacing: 20vh 0;" style="z-index: 1;">7</element-meister>
+
+			<element-meister layout="guides: viewport viewport; mode: follow; clip: true; height: 75vh;" lazy-load class="follower">
+				<img class="cover" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="assets/images/bogdan-dada-156739-unsplash.jpg" />
+			</element-meister>
+
+			<element-meister layout="guides: left leftthird; spacing: 20vh 0;">
+				8 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" />
+				Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+			</element-meister>
+
+			<element-meister
+				class="follower"
+				layout="
+					guides: leftthird center;
+					height: 10px;
+					mode: follow;
+					followerMode: pin;
+				"
+			></element-meister>
+
+			<element-meister layout="guides: center right; height: 10vh; spacing: 10vh 0; dependencies: inherit;">9</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0; dependencies: inherit;">10</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0; dependencies: inherit;">11</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 0; dependencies: inherit;">12</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 10vh 25vh; dependencies: inherit;">13</element-meister>
+		</scroll-meister>
+		<script src="../dist/scrollmeister-extras.js"></script>
+		<script>
+			let wrapper = document.querySelector('scroll-meister');
+
+			document.querySelector('#toggle-guides').addEventListener('click', function() {
+				if(wrapper.hasAttribute('debug-guides')) {
+					wrapper.removeAttribute('debug-guides')
+				} else {
+					wrapper.setAttribute('debug-guides', '')
+				}
+			});
+		</script>
+	</body>
+</html>

@@ -338,7 +338,6 @@ export default class GuidesLayoutEngine {
 		if (props.guides.left === 'viewport') {
 			layout.left = 0;
 		} else {
-			//TODO: sort the guides. E.g. it shouldn't matter if you're using "left right" or "right left"
 			layout.left = this._getGuideByName(props.guides.left).leftPosition;
 		}
 

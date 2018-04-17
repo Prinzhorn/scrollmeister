@@ -83,10 +83,6 @@ export default class LayoutBehavior extends Behavior {
 		this.scrollUpdate = {};
 		this.layout = {};
 
-		//TODO: only wrap if needed? In most cases we don't need innerEl at all. Only for specific cases, e.g. followers with clipping.
-		//But still always define innerEl, even if it is === el
-		this._wrapContents();
-
 		this.connectTo('^guides-layout', this._render.bind(this));
 		this.connectTo('^scroll', this._scroll.bind(this));
 
@@ -112,84 +108,7 @@ export default class LayoutBehavior extends Behavior {
 			this._unobserveHeight();
 		}
 
-		this._unwrapContents();
-		//TODO: remove styles
-	}
-
-	//Some of the layout rendering (e.g. clipping with parallax) requires a single child element.
-	_wrapContents() {
-		//TODO: use a custom element instead of a div, so we can use .css. and not worry about clean up.
-		//But need be innerCSS? Ugh.
-
-		//Includes elements and also text nodes.
-		let childNodes = this.el.childNodes;
-		let childElements = this.el.children;
-
-		//TODO: if the element is completely empty we still wrap it
-
-		//There is just a single element, maybe we don't need to wrap anything (*fingers crossed*).
-		if (childElements.length === 1) {
-			//There are no text nodes, just this one element. #winning
-			if (childNodes.length === 1) {
-				this.innerEl = childElements[0];
-				this.contentEl = this.el;
-				return;
-			}
-
-			//There is a single element as child, but there might also be whitespace (text nodes) around it.
-			//Check if there is nothing but "empty" text nodes, which we can ignore.
-			//This catches cases such as the following, where the whitespace (nl, tab) around the <img> is irrelevant.
-			//<element-meister>
-			//	<img>
-			//</element-meister>
-			let onlyEmptyTextNodes = true;
-
-			for (let i = 0; i < childNodes.length; i++) {
-				let child = childNodes[i];
-
-				if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== '') {
-					onlyEmptyTextNodes = false;
-					break;
-				}
-			}
-
-			if (onlyEmptyTextNodes) {
-				this.innerEl = childElements[0];
-				this.contentEl = this.el;
-				return;
-			}
-		}
-
-		//TODO: event if childElements.length is > 1, we might still not need to wrap if length - 1 are just <script> tags.
-
-		console.log(`Wrapped ${childNodes.length} children in a <div>`); // eslint-disable-line
-
-		let fragment = document.createDocumentFragment();
-		this.innerEl = document.createElement('div');
-
-		//childNodes is a live list, so length gets smaller.
-		while (childNodes.length > 0) {
-			fragment.appendChild(childNodes[0]);
-		}
-
-		this.innerEl.appendChild(fragment);
-		this.el.appendChild(this.innerEl);
-		this.contentEl = this.innerEl;
-	}
-
-	_unwrapContents() {
-		if (this.innerEl === this.contentEl) {
-			let childNodes = this.innerEl.childNodes;
-			let fragment = document.createDocumentFragment();
-
-			//childNodes is a live list.
-			while (childNodes.length > 0) {
-				fragment.appendChild(childNodes[0]);
-			}
-
-			this.el.removeChild(this.innerEl);
-			this.el.appendChild(fragment);
-		}
+		//TODO: remove styles (or use this.style and this.contentStyle for ALL the things)
 	}
 
 	_observeHeight() {
@@ -198,7 +117,7 @@ export default class LayoutBehavior extends Behavior {
 			this.emit('heightchange');
 		});
 
-		this._resizeObserver.observe(this.innerEl);
+		this._resizeObserver.observe(this.contentEl);
 	}
 
 	_unobserveHeight() {
@@ -208,7 +127,7 @@ export default class LayoutBehavior extends Behavior {
 
 	_render() {
 		this._renderWrapper();
-		this._renderInner();
+		this._renderContent();
 
 		//Force a scroll update.
 		this._scroll(this.parentEl.scroll, true);
@@ -241,8 +160,8 @@ export default class LayoutBehavior extends Behavior {
 		style.contain = contain;
 	}
 
-	_renderInner() {
-		let style = this.innerEl.style;
+	_renderContent() {
+		let style = this.contentEl.style;
 		let width = this.layout.width;
 
 		style.position = 'relative';
@@ -263,7 +182,7 @@ export default class LayoutBehavior extends Behavior {
 		let scrollUpdate = this.scrollUpdate;
 
 		let style = this.el.style;
-		let innerStyle = this.innerEl.style;
+		let contentStyle = this.contentEl.style;
 
 		this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
@@ -284,8 +203,8 @@ export default class LayoutBehavior extends Behavior {
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 			//or elements with appear effects using scaling/rotation.
-			innerStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
-			innerStyle.transform = innerStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
+			contentStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
+			contentStyle.transform = contentStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
 
 			//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
 			//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
