@@ -79,17 +79,17 @@ export default class GLEffectBehavior extends Behavior {
 	}
 
 	_initRegl() {
-		if (this._regl) {
-			this._regl.destroy();
-		}
+		let regl = this._regl;
 
-		let regl;
+		if (!regl) {
+			try {
+				regl = createRegl(this._canvas);
+			} catch (ignore) {
+				createRegl = null;
+				return false;
+			}
 
-		try {
-			regl = createRegl(this._canvas);
-		} catch (ignore) {
-			createRegl = null;
-			return false;
+			this._regl = regl;
 		}
 
 		this._draw = regl({
@@ -119,8 +119,6 @@ export default class GLEffectBehavior extends Behavior {
 
 			count: 3
 		});
-
-		this._regl = regl;
 
 		return true;
 	}
