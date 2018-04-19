@@ -61,6 +61,7 @@ export default class BehaviorsStyleMerger {
 
 			this.el.style.opacity = combinedOpacity;
 		} else {
+			//TODO: handle transition prefixes and merge them
 			//TODO: handle backfaceVisibility / WebkitBackfaceVisibility prefix
 
 			let hasProperty = false;

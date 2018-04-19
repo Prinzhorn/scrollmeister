@@ -1,4 +1,6 @@
 import assign from 'object-assign';
+
+import camcelCase from 'lib/camelCase.js';
 import CustomEvent from 'ponies/CustomEvent.js';
 
 import cssProps from 'lib/cssProps.js';
@@ -68,6 +70,11 @@ export default class Behavior {
 	}
 
 	constructor(element, contentElement, rawProperties) {
+		let behaviorName = this.constructor.behaviorName;
+		element[behaviorName] = this;
+		element[camcelCase(behaviorName)] = this;
+		element.behaviors[behaviorName] = this;
+
 		this.hasNotifiedAtLeastOnce = false;
 		this.el = element;
 
@@ -119,6 +126,11 @@ export default class Behavior {
 		this._unproxyCSS();
 
 		this.emit('detach');
+
+		let behaviorName = this.constructor.behaviorName;
+		delete this.el[behaviorName];
+		delete this.el[camcelCase(behaviorName)];
+		delete this.el.behaviors[behaviorName];
 	}
 
 	error(error) {

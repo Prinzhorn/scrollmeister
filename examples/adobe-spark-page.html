@@ -3,41 +3,145 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Scrollmeister Adobe Spark Page</title>
+		<title>Scrollmeister parallax ALL the things</title>
 		<style>
 			body {
 				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
-			}
-
-			* {
-				margin: 0;
-				padding: 0;
+				font-size: 18px;
 			}
 
 			h1 {
+				margin: 0;
+				text-align: center;
+				font-weight: normal;
+				font-size: 96px;
+				font-size: calc(36px + 10vmin);
 				color: #fff;
+			}
+
+			h2 {
+				margin: 0;
+			}
+
+			p:first-child {
+				margin-top: 0;
+			}
+
+			p:last-child {
+				margin-bottom: 0;
+			}
+
+			footer {
+				text-align: center;
+				padding: 1em 0;
+			}
+
+			scroll-meister, element-meister, content-meister {
+				display: block;
+			}
+
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+
+			.background {
+				z-index: 1;
+			}
+
+			element-meister {
+				z-index: 2;
+			}
+
+			.content {
+				color: #fff;
+				background: rgba(0, 0, 0, 0.6);
+				padding: 1em;
+			}
+
+			img {
+				width: 100%;
+				vertical-align: middle;
 			}
 		</style>
 	</head>
 	<body>
-		<scroll-meister scroll guides-layout="width: 850px; guides: left 0, right 100%;">
-			<element-meister layout>
-				<img src="./niilo-isotalo-379496-unsplash.jpg">
+		<scroll-meister fadein scroll guides-layout="guides: left 0% 2vmin, right 100% 2vmin, center 50%;">
+			<element-meister layout="height: 95vh;" media="ratio: 1920 / 1080">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
 			</element-meister>
-			<element-meister layout="guides: left right; height: 50vh; mode: follow;" fluid-text>
-				<h1>Scrollmeister</h1>
+			<element-meister layout="guides: left right; mode: follow; spacing: 0 5vh;" interpolate="opacity: top 1, bottom 100vh 0" transform>
+				<h1>Galleries</h1>
 			</element-meister>
 
-			<element-meister layout="height: 100vh; spacing: 10vh 0;"></element-meister>
+			<element-meister layout="guides: left right; spacing: 20vh;">
+				<h2>Balanced gallery (lightbox coming soon)</h2>
+			</element-meister>
+
+			<element-meister gallery layout="guides: left right;">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080">
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1280">
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280">
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080">
+				<img src="assets/images/photo-1442422502730-a90f72460717.jpg" width="1440" height="1920">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080">
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1280">
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280">
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1280">
+				<img src="assets/images/photo-1442422502730-a90f72460717.jpg" width="1440" height="1920">
+			</element-meister>
+
+			<element-meister layout="guides: left right; spacing: 20vh;">
+				<h2>Left...right?</h2>
+			</element-meister>
+
+			<element-meister layout="guides: viewport center;" interpolate="x: top -100vh 100, top -50vh 0" transform>
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg">
+			</element-meister>
+			<element-meister layout="guides: center viewport;" interpolate="x: top -100vh -100, top -50vh 0" transform>
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg">
+			</element-meister>
+			<element-meister layout="guides: viewport center;" interpolate="x: top -100vh 100, top -50vh 0" transform>
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg">
+			</element-meister>
+			<element-meister layout="guides: center viewport;" interpolate="x: top -100vh -100, top -50vh 0" transform>
+				<img src="assets/images/photo-1442422502730-a90f72460717.jpg">
+			</element-meister>
+
+			<element-meister layout="guides: left right; spacing: 20vh;">
+				<h2>Glideshow</h2>
+			</element-meister>
+
+			<element-meister layout="height: 250vh;"></element-meister>
 			<element-meister
-				layout="height: 100vh; spacing: -100vh; clip: true; mode: follow; followerMode: pin;"
-				interpolate="scale: top -100% 1.2, top;"
+				layout="height: 100vh; mode: follow; followerMode: pin; clip: true"
+				media="ratio: 1920 / 1080"
+				interpolate="rotate: top 3, top 150vh 0; scale: top 1.5, top 150vh 1"
 				transform
 			>
-				<img src="./niilo-isotalo-379496-unsplash.jpg">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
 			</element-meister>
 
-			<element-meister layout="height: 100vh;"></element-meister>
+			<element-meister layout="height: 250vh; spacing: -150vh 0;"></element-meister>
+			<element-meister
+				layout="height: 100vh; mode: follow; followerMode: pin; clip: true"
+				media="ratio: 1920 / 1080"
+				interpolate="rotate: top -3, top 150vh 0; scale: top 1.5, top 150vh 1; opacity: top 0, top 50vh 1;"
+				transform
+			>
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg" width="1920" height="1080" />
+			</element-meister>
+
+			<element-meister layout="height: 250vh; spacing: -150vh 0;"></element-meister>
+			<element-meister
+				layout="height: 100vh; mode: follow; followerMode: pin; clip: true"
+				media="ratio: 1920 / 1080"
+				interpolate="rotate: top 3, top 150vh 0; scale: top 1.5, top 150vh 1; opacity: top 0, top 50vh 1;"
+				transform
+			>
+				<img src="assets/images/bogdan-dada-156739-unsplash.jpg" width="1920" height="1080" />
+			</element-meister>
 		</scroll-meister>
 		<script src="../dist/scrollmeister-extras.js"></script>
 	</body>

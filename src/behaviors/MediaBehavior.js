@@ -44,7 +44,7 @@ export default class MediaBehavior extends Behavior {
 	}
 
 	behaviorWillDetach() {
-		let img = this.el.querySelector('img');
+		let img = this.el.querySelector('img, video');
 		let style = img.style;
 
 		style.display = '';
@@ -57,9 +57,10 @@ export default class MediaBehavior extends Behavior {
 	}
 
 	_render(layoutBehavior: LayoutBehavior) {
+		//TODO: warn if there are no img/video
 		//TODO: need a wrapper for overflow:hidden
 		let layout = this.calculateMediaLayout(layoutBehavior);
-		let img = this.el.querySelector('img');
+		let img = this.el.querySelector('img, video');
 		let style = img.style;
 
 		style.display = 'block';

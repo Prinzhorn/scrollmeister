@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Scrollmeister parallax ALL the things</title>
+		<style>
+			body {
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+				font-size: 18px;
+			}
+
+			h2 {
+				margin: 0;
+			}
+
+			p:first-child {
+				margin-top: 0;
+			}
+
+			p:last-child {
+				margin-bottom: 0;
+			}
+
+			footer {
+				text-align: center;
+				padding: 1em 0;
+			}
+
+			scroll-meister, element-meister, content-meister {
+				display: block;
+			}
+
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+
+			.background {
+				z-index: 1;
+			}
+
+			element-meister {
+				z-index: 2;
+			}
+
+			.content {
+				color: #fff;
+				background: rgba(0, 0, 0, 0.6);
+				padding: 1em;
+			}
+		</style>
+	</head>
+	<body>
+		<scroll-meister fadein scroll guides-layout="guides: text-left 10%, text-right 50%; width: 10000px;">
+			<element-meister layout="guides: text-left text-right; spacing: 50vh;">
+				<div class="content">
+					<h2>Lorem Ipsum</h2>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+				</div>
+			</element-meister>
+			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; spacing: -50vh;" media="ratio: 1920 / 1280">
+				<img src="assets/images/niilo-isotalo-379496-unsplash.jpg">
+			</element-meister>
+
+			<element-meister layout="guides: text-left text-right; spacing: 50vh;">
+				<div class="content">
+					<h2>Lorem Ipsum</h2>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+				</div>
+			</element-meister>
+			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; spacing: -50vh;" media="ratio: 480 / 270" autoplay>
+				<video src="assets/videos/bunny.mp4" type="video/mp4" muted playsInline></video>
+			</element-meister>
+		</scroll-meister>
+
+		<script src="../dist/scrollmeister-extras.js"></script>
+		<script>
+			//Conditions/responsive are not implemented yet, otherwise this would be declarative right on the element.
+			let meister = document.querySelector('scroll-meister');
+			meister.addEventListener('guides-layout:attach', function() {
+				function resize() {
+					if(window.innerWidth < 768) {
+						meister.guidesLayout.guides = 'text-left 0 2vmin, text-right 100% 2vmin';
+					} else if(window.innerWidth < 1024) {
+						meister.guidesLayout.guides = 'text-left 10%, text-right -10%';
+					} else {
+						meister.guidesLayout.guides = 'text-left 10%, text-right 50%';
+					}
+				}
+
+				window.addEventListener('resize', resize, false)
+				resize();
+			}, false);
+		</script>
+	</body>
+</html>

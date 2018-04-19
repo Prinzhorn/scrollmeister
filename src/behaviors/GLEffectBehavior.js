@@ -76,6 +76,7 @@ export default class GLEffectBehavior extends Behavior {
 		this._canvas.width = layout.width;
 		this._canvas.height = layout.height;
 		this._canvas.style.cssText = this._sourceElement.style.cssText;
+		this._canvas.style.pointerEvents = 'none';
 	}
 
 	_initRegl() {

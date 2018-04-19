@@ -1,6 +1,5 @@
 import CustomEvent from 'ponies/CustomEvent.js';
 
-import camcelCase from 'lib/camelCase.js';
 import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
 import ConditionsRegistry from 'lib/ConditionsRegistry.js';
 
@@ -66,9 +65,7 @@ const Scrollmeister = {
 			const Behavior = this.behaviorsRegistry.get(name);
 			let contentElement = this.wrapContents(element);
 
-			element[name] = new Behavior(element, contentElement, rawProperties);
-			element[camcelCase(name)] = element[name];
-			element.behaviors[name] = element[name];
+			new Behavior(element, contentElement, rawProperties);
 		}
 	},
 
@@ -90,9 +87,6 @@ const Scrollmeister = {
 	detachBehavior: function(element, name, skipDependencies = false) {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
-			delete element[name];
-			delete element[camcelCase(name)];
-			delete element.behaviors[name];
 		}
 
 		if (skipDependencies) {

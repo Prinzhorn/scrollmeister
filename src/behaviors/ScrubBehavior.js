@@ -9,8 +9,7 @@ export default class ScrubBehavior extends Behavior {
 		return {
 			parameter: {
 				type: 'string',
-				enum: ['alpha', 'beta', 'gamma'],
-				default: 'alpha'
+				default: 'progress'
 			}
 		};
 	}

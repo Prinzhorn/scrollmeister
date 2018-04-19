@@ -13,6 +13,7 @@ import GalleryBehavior from 'behaviors/GalleryBehavior.js';
 import YouTubeBehavior from 'behaviors/YouTubeBehavior.js';
 import CSSBehavior from 'behaviors/CSSBehavior.js';
 import SignalsBehavior from 'behaviors/SignalsBehavior.js';
+import AutoplayBehavior from 'behaviors/AutoplayBehavior.js';
 
 Scrollmeister.defineBehavior(HashNavigationBehavior);
 Scrollmeister.defineBehavior(InterpolateBehavior);
@@ -24,5 +25,6 @@ Scrollmeister.defineBehavior(GLEffectBehavior);
 Scrollmeister.defineBehavior(RotatingGradientBehavior);
 Scrollmeister.defineBehavior(GalleryBehavior);
 Scrollmeister.defineBehavior(YouTubeBehavior);
-Scrollmeister.defineBehavior(SignalsBehavior);
 Scrollmeister.defineBehavior(CSSBehavior);
+Scrollmeister.defineBehavior(SignalsBehavior);
+Scrollmeister.defineBehavior(AutoplayBehavior);
