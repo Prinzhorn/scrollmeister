@@ -11735,6 +11735,10 @@ var _CustomEvent = require('ponies/CustomEvent.js');
 
 var _CustomEvent2 = _interopRequireDefault(_CustomEvent);
 
+var _cssProps = require('lib/cssProps.js');
+
+var _cssProps2 = _interopRequireDefault(_cssProps);
+
 var _schemaParser = require('lib/schemaParser.js');
 
 var _schemaParser2 = _interopRequireDefault(_schemaParser);
@@ -12141,23 +12145,38 @@ var Behavior = function () {
 		value: function _proxyCSS() {
 			var behaviorName = this.constructor.behaviorName;
 			var element = this.el;
+			var contentEl = this.contentEl;
 
-			this.style = {
-				set transform(value) {
-					if (value === '') {
-						element.resetBehaviorStyle(behaviorName, 'transform');
-					} else {
-						element.setBehaviorStyle(behaviorName, 'transform', value);
+			var style = this.style = Object.create(null);
+			var contentStyle = this.contentStyle = Object.create(null);
+
+			var _loop = function _loop(i) {
+				var name = _cssProps2.default[i];
+
+				Object.defineProperty(style, name, {
+					set: function set(value) {
+						if (value === '') {
+							element.resetBehaviorStyle(behaviorName, name);
+						} else {
+							element.setBehaviorStyle(behaviorName, name, value);
+						}
 					}
-				},
-				set opacity(value) {
-					if (value === '') {
-						element.resetBehaviorStyle(behaviorName, 'opacity');
-					} else {
-						element.setBehaviorStyle(behaviorName, 'opacity', value);
+				});
+
+				Object.defineProperty(contentStyle, name, {
+					set: function set(value) {
+						if (value === '') {
+							contentEl.resetBehaviorStyle(behaviorName, name);
+						} else {
+							contentEl.setBehaviorStyle(behaviorName, name, value);
+						}
 					}
-				}
+				});
 			};
+
+			for (var i = 0; i < _cssProps2.default.length; i++) {
+				_loop(i);
+			}
 		}
 	}, {
 		key: '_unproxyCSS',
@@ -12165,6 +12184,7 @@ var Behavior = function () {
 			var behaviorName = this.constructor.behaviorName;
 
 			this.el.resetBehaviorStyles(behaviorName);
+			this.contentEl.resetBehaviorStyles(behaviorName);
 		}
 	}, {
 		key: '_proxyProps',
@@ -12173,7 +12193,7 @@ var Behavior = function () {
 
 			var schema = this.constructor.behaviorSchema;
 
-			var _loop = function _loop(property) {
+			var _loop2 = function _loop2(property) {
 				if (schema.hasOwnProperty(property)) {
 					Object.defineProperty(_this3, property, {
 						get: function get() {
@@ -12187,7 +12207,7 @@ var Behavior = function () {
 			};
 
 			for (var property in schema) {
-				_loop(property);
+				_loop2(property);
 			}
 		}
 	}, {
@@ -12229,7 +12249,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/schemaParser.js":50,"object-assign":3,"ponies/CustomEvent.js":51,"types":62}],13:[function(require,module,exports){
+},{"lib/cssProps.js":47,"lib/schemaParser.js":52,"object-assign":3,"ponies/CustomEvent.js":53,"types":64}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12446,13 +12466,8 @@ var FadeInBehavior = function (_Behavior) {
 
 			//Make sure the very first render took place and everything is updated.
 			this.listenOnce('guides-layout:change', function () {
-				_this2.el.style.opacity = 1;
+				_this2.style.opacity = 1;
 			});
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			this.el.style.opacity = '';
 		}
 	}], [{
 		key: 'behaviorSchema',
@@ -12515,29 +12530,21 @@ var FadeInBehavior = function (_Behavior) {
 		value: function behaviorDidAttach() {
 			var _this2 = this;
 
-			if (this.el.layout.contentEl.children.length !== 1) {
+			if (this.contentEl.children.length !== 1) {
 				this.error(new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.'));
 			}
 
-			//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
-
-			this.contentEl.style.whiteSpace = 'nowrap';
+			this.contentStyle.whiteSpace = 'nowrap';
 
 			this.connectTo('layout', function (layoutBehavior) {
 				if (!_this2._fontSizeWidthRatio) {
 					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.contentEl);
 				}
 
-				_this2.contentEl.style.fontSize = _this2._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
+				_this2.contentStyle.fontSize = _this2._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
 
 				_this2.notify();
 			});
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			this.contentEl.style.whiteSpace = '';
-			this.contentEl.style.fontSize = '';
 		}
 	}], [{
 		key: 'behaviorSchema',
@@ -12561,7 +12568,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":12,"lib/fontSizeWidthRatio.js":48}],17:[function(require,module,exports){
+},{"behaviors/Behavior.js":12,"lib/fontSizeWidthRatio.js":50}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12873,8 +12880,7 @@ var GalleryBehavior = function (_Behavior) {
 			var rows = Math.max(1, Math.round(totalWidth / availableWidth));
 			var layout = this._balancedLayout(this._items, availableWidth, rows, spacing);
 
-			this.el.layout.contentEl.style.position = 'relative';
-			this.el.layout.contentEl.style.height = layout.requiredHeight + 'px';
+			this.contentStyle.height = layout.requiredHeight + 'px';
 
 			for (var i = 0; i < layout.items.length; i++) {
 				var imageLayout = layout.items[i];
@@ -13158,7 +13164,7 @@ var GuidesLayoutBehavior = function (_Behavior) {
 
 exports.default = GuidesLayoutBehavior;
 
-},{"behaviors/Behavior.js":12,"lib/GuidesLayoutEngine.js":43,"raf":6}],20:[function(require,module,exports){
+},{"behaviors/Behavior.js":12,"lib/GuidesLayoutEngine.js":44,"raf":6}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13570,8 +13576,6 @@ var LayoutBehavior = function (_Behavior) {
 			if (this.props.height === 'auto') {
 				this._unobserveHeight();
 			}
-
-			//TODO: remove styles (or use this.style and this.contentStyle for ALL the things)
 		}
 	}, {
 		key: '_observeHeight',
@@ -13611,7 +13615,6 @@ var LayoutBehavior = function (_Behavior) {
 	}, {
 		key: '_renderWrapper',
 		value: function _renderWrapper() {
-			var style = this.el.style;
 			var display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 			var overflow = 'visible';
 			var width = this.layout.width;
@@ -13623,29 +13626,28 @@ var LayoutBehavior = function (_Behavior) {
 				overflow = 'hidden';
 			}
 
-			style.display = display;
-			style.overflow = overflow;
-			style.width = Math.round(width) + 'px';
-			style.height = Math.round(height) + 'px';
-			style.contain = contain;
+			this.style.display = display;
+			this.style.overflow = overflow;
+			this.style.width = Math.round(width) + 'px';
+			this.style.height = Math.round(height) + 'px';
+			this.style.contain = contain;
 		}
 	}, {
 		key: '_renderContent',
 		value: function _renderContent() {
-			var style = this.contentEl.style;
 			var width = this.layout.width;
 
-			style.position = 'relative';
-			style.width = Math.round(width) + 'px';
+			this.contentStyle.position = 'relative';
+			this.contentStyle.width = Math.round(width) + 'px';
 
 			if (this.props.height === 'auto') {
-				style.height = 'auto';
+				this.contentStyle.height = '';
 			} else {
-				style.height = Math.round(this.layout.height) + 'px';
+				this.contentStyle.height = Math.round(this.layout.height) + 'px';
 			}
 
 			if (this.props.clip) {
-				style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+				this.contentStyle.backfaceVisibility = 'hidden';
 			}
 		}
 	}, {
@@ -13654,9 +13656,6 @@ var LayoutBehavior = function (_Behavior) {
 			var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
 			var scrollUpdate = this.scrollUpdate;
-
-			var style = this.el.style;
-			var contentStyle = this.contentEl.style;
 
 			this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
@@ -13668,8 +13667,8 @@ var LayoutBehavior = function (_Behavior) {
 				//But we do not do the opposite here. This is just the last resort.
 				//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
 				if (scrollUpdate.inViewport) {
-					style.display = 'block';
-					style.willChange = 'transform';
+					this.style.display = 'block';
+					this.style.willChange = 'transform';
 				}
 
 				this.style.transform = 'translate(' + left + 'px, ' + top + 'px)';
@@ -13677,8 +13676,7 @@ var LayoutBehavior = function (_Behavior) {
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 				//or elements with appear effects using scaling/rotation.
-				contentStyle.msTransform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
-				contentStyle.transform = contentStyle.WebkitTransform = 'translate3d(0px, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+				this.contentStyle.transform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
 
 				//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
 				//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
@@ -13714,23 +13712,22 @@ var LayoutBehavior = function (_Behavior) {
 		key: '_scrollPause',
 		value: function _scrollPause() {
 			var scrollUpdate = this.scrollUpdate;
-			var style = this.el.style;
 
 			if (scrollUpdate.inExtendedViewport) {
-				style.display = 'block';
-				style.willChange = 'transform';
+				this.style.display = 'block';
+				this.style.willChange = 'transform';
 			} else {
 				if (this._canSafelyBeUnloadedFromGPU()) {
-					style.display = 'none';
+					this.style.display = 'none';
 				} else {
 					//This reduces gpu memory a ton and also hides text at the edge of the viewport.
 					//Otherwise those elements would be visible behind the adress bar in iOS.
 					//There's no inverse operation to that because once it is inside the viewport again
 					//the translation will overwrite the scale transform.
-					style.transform = style.WebkitTransform = style.msTransform = 'scale(0)';
+					this.style.transform = 'scale(0)';
 				}
 
-				style.willChange = 'auto';
+				this.style.willChange = 'auto';
 			}
 		}
 	}], [{
@@ -14125,16 +14122,11 @@ var MousetrapBehavior = function (_Behavior) {
 			this._render();
 		}
 	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			this.el.style.pointerEvents = '';
-		}
-	}, {
 		key: '_render',
 		value: function _render() {
 			//TODO: access scrollmode here?
 			//TODO: instead of pointer events, add an overlay div to the <shadow-meister>.
-			this.el.style.pointerEvents = 'none';
+			this.style.pointerEvents = 'none';
 		}
 	}], [{
 		key: 'behaviorSchema',
@@ -14209,15 +14201,10 @@ var RotatingGradientBehavior = function (_Behavior) {
 				var color1 = 'hsl(' + angle + ', 100%, 50%)';
 				var color2 = 'hsl(' + (angle + _this2.props.offset) + ', 100%, 50%)';
 
-				_this2.el.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
+				_this2.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
 
 				_this2.notify();
 			});
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			this.el.style.backgroundImage = '';
 		}
 	}], [{
 		key: 'behaviorSchema',
@@ -14575,9 +14562,9 @@ var ScrollBehavior = function (_Behavior) {
 				}
 
 				document.documentElement.style.overflow = 'visible';
-				this.el.style.height = 0;
+				this.style.height = 0;
 			} else {
-				this.el.style.height = Math.round(requiredHeight) + 'px';
+				this.style.height = Math.round(requiredHeight) + 'px';
 			}
 
 			this._scrollLogic.setContainerLength(layoutEngine.viewport.height);
@@ -14615,7 +14602,7 @@ var ScrollBehavior = function (_Behavior) {
 
 exports.default = ScrollBehavior;
 
-},{"behaviors/Behavior.js":12,"lib/ScrollState.js":44,"lib/easings.js":46,"lib/fakeClick.js":47,"lib/isTextInput.js":49,"raf":6,"scroll-logic":9}],28:[function(require,module,exports){
+},{"behaviors/Behavior.js":12,"lib/ScrollState.js":45,"lib/easings.js":48,"lib/fakeClick.js":49,"lib/isTextInput.js":51,"raf":6,"scroll-logic":9}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15070,7 +15057,7 @@ _scrollmeister2.default.defineBehavior(_YouTubeBehavior2.default);
 _scrollmeister2.default.defineBehavior(_SignalsBehavior2.default);
 _scrollmeister2.default.defineBehavior(_CSSBehavior2.default);
 
-},{"./index.js":33,"behaviors/CSSBehavior.js":13,"behaviors/FluidTextBehavior.js":16,"behaviors/GLEffectBehavior.js":17,"behaviors/GalleryBehavior.js":18,"behaviors/HashNavigationBehavior.js":20,"behaviors/InterpolateBehavior.js":21,"behaviors/LazyLoadBehavior.js":23,"behaviors/RotatingGradientBehavior.js":26,"behaviors/ScrubBehavior.js":28,"behaviors/SignalsBehavior.js":29,"behaviors/TransformBehavior.js":30,"behaviors/YouTubeBehavior.js":31,"scrollmeister.js":52}],33:[function(require,module,exports){
+},{"./index.js":33,"behaviors/CSSBehavior.js":13,"behaviors/FluidTextBehavior.js":16,"behaviors/GLEffectBehavior.js":17,"behaviors/GalleryBehavior.js":18,"behaviors/HashNavigationBehavior.js":20,"behaviors/InterpolateBehavior.js":21,"behaviors/LazyLoadBehavior.js":23,"behaviors/RotatingGradientBehavior.js":26,"behaviors/ScrubBehavior.js":28,"behaviors/SignalsBehavior.js":29,"behaviors/TransformBehavior.js":30,"behaviors/YouTubeBehavior.js":31,"scrollmeister.js":54}],33:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15119,7 +15106,73 @@ _scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
 _scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
 //Scrollmeister.defineBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":14,"behaviors/FadeInBehavior.js":15,"behaviors/GuidesLayoutBehavior.js":19,"behaviors/LayoutBehavior.js":22,"behaviors/MediaBehavior.js":24,"behaviors/MousetrapBehavior.js":25,"behaviors/ScrollBehavior.js":27,"scrollmeister.js":52}],34:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":14,"behaviors/FadeInBehavior.js":15,"behaviors/GuidesLayoutBehavior.js":19,"behaviors/LayoutBehavior.js":22,"behaviors/MediaBehavior.js":24,"behaviors/MousetrapBehavior.js":25,"behaviors/ScrollBehavior.js":27,"scrollmeister.js":54}],34:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _scrollmeister = require('scrollmeister.js');
+
+var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
+var _BehaviorsStyleMerger = require('lib/BehaviorsStyleMerger.js');
+
+var _BehaviorsStyleMerger2 = _interopRequireDefault(_BehaviorsStyleMerger);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ContentMeisterComponent = function (_HTMLElement) {
+	_inherits(ContentMeisterComponent, _HTMLElement);
+
+	// https://github.com/WebReflection/document-register-element/tree/7e2743d38f0bf01806cb9b76ba254f62f8cb24b2#v1-caveat
+	// $FlowFixMe: Won't be fixed ;)
+	function ContentMeisterComponent(_) {
+		var _this, _ret;
+
+		_classCallCheck(this, ContentMeisterComponent);
+
+		// $FlowFixMe: Won't be fixed ;)
+		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (ContentMeisterComponent.__proto__ || Object.getPrototypeOf(ContentMeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret); // eslint-disable-line
+	}
+
+	_createClass(ContentMeisterComponent, [{
+		key: 'init',
+		value: function init() {
+			this._behaviorsStyleMerger = new _BehaviorsStyleMerger2.default(this, _scrollmeister2.default.getBehaviorOrder());
+		}
+	}, {
+		key: 'setBehaviorStyle',
+		value: function setBehaviorStyle(behaviorName, property, value) {
+			this._behaviorsStyleMerger.setBehaviorStyle(behaviorName, property, value);
+		}
+	}, {
+		key: 'resetBehaviorStyle',
+		value: function resetBehaviorStyle(behaviorName, property) {
+			this._behaviorsStyleMerger.resetBehaviorStyle(behaviorName, property);
+		}
+	}, {
+		key: 'resetBehaviorStyles',
+		value: function resetBehaviorStyles(behaviorName) {
+			this._behaviorsStyleMerger.resetBehaviorStyles(behaviorName);
+		}
+	}]);
+
+	return ContentMeisterComponent;
+}(HTMLElement);
+
+exports.default = ContentMeisterComponent;
+
+},{"lib/BehaviorsStyleMerger.js":42,"scrollmeister.js":54}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15186,7 +15239,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":35,"scrollmeister.js":52}],35:[function(require,module,exports){
+},{"./MeisterComponent.js":36,"scrollmeister.js":54}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15199,13 +15252,13 @@ var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
 
-var _BehaviorsStyleMerger = require('lib/BehaviorsStyleMerger.js');
-
-var _BehaviorsStyleMerger2 = _interopRequireDefault(_BehaviorsStyleMerger);
-
 var _scrollmeister = require('scrollmeister.js');
 
 var _scrollmeister2 = _interopRequireDefault(_scrollmeister);
+
+var _BehaviorsStyleMerger = require('lib/BehaviorsStyleMerger.js');
+
+var _BehaviorsStyleMerger2 = _interopRequireDefault(_BehaviorsStyleMerger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -15217,10 +15270,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var invalidMarkupSelectors = [':not(scroll-meister) > element-meister', 'scroll-meister * element-meister', 'scroll-meister scroll-meister', 'element-meister element-meister', 'element-meister scroll-meister'];
 
-var ScrollMeisterComponent = function (_HTMLElement) {
-	_inherits(ScrollMeisterComponent, _HTMLElement);
+var MeisterComponent = function (_HTMLElement) {
+	_inherits(MeisterComponent, _HTMLElement);
 
-	_createClass(ScrollMeisterComponent, [{
+	_createClass(MeisterComponent, [{
 		key: 'isConnected',
 
 
@@ -15241,16 +15294,16 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 	}]);
 
-	function ScrollMeisterComponent(_) {
+	function MeisterComponent(_) {
 		var _this, _ret;
 
-		_classCallCheck(this, ScrollMeisterComponent);
+		_classCallCheck(this, MeisterComponent);
 
 		// $FlowFixMe: Won't be fixed ;)
-		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (ScrollMeisterComponent.__proto__ || Object.getPrototypeOf(ScrollMeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret); // eslint-disable-line
+		return _ret = ((_ = (_this = _possibleConstructorReturn(this, (MeisterComponent.__proto__ || Object.getPrototypeOf(MeisterComponent)).call(this, _)), _this)).init(), _), _possibleConstructorReturn(_this, _ret); // eslint-disable-line
 	}
 
-	_createClass(ScrollMeisterComponent, [{
+	_createClass(MeisterComponent, [{
 		key: 'init',
 		value: function init() {
 			this.behaviors = {};
@@ -15270,8 +15323,8 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 
 			//This happens when a disconnected element (e.g. document.createElement) gets attributes before being inserted.
 			//We will then update the behaviors as soon as it is connected.
-			if (this._scheduledBatchUpdate) {
-				this._batchUpdateBehaviors();
+			if (this._scheduledBatchUpdate && !this._batchHandle) {
+				this._batchHandle = (0, _raf2.default)(this._batchUpdateBehaviors.bind(this));
 			}
 
 			_scrollmeister2.default.componentConnected(this);
@@ -15295,7 +15348,9 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 				return;
 			}
 
+			this._scheduledBatchUpdate = false;
 			_raf2.default.cancel(this._batchHandle);
+			delete this._batchHandle;
 
 			//Remove all attached behaviors so they can be garbage collected.
 			_scrollmeister2.default.detachBehaviors(this, this.behaviors, true);
@@ -15341,7 +15396,7 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 	}, {
 		key: 'renderError',
 		value: function renderError(error) {
-			if ("development" === 'development') {
+			if ("development" !== 'production') {
 				var el = this;
 				var outerHTML = el.outerHTML;
 
@@ -15373,12 +15428,12 @@ var ScrollMeisterComponent = function (_HTMLElement) {
 		}
 	}]);
 
-	return ScrollMeisterComponent;
+	return MeisterComponent;
 }(HTMLElement);
 
-exports.default = ScrollMeisterComponent;
+exports.default = MeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":41,"raf":6,"scrollmeister.js":52}],36:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":42,"raf":6,"scrollmeister.js":54}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15445,7 +15500,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":35,"scrollmeister.js":52}],37:[function(require,module,exports){
+},{"./MeisterComponent.js":36,"scrollmeister.js":54}],38:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -15461,6 +15516,10 @@ var _ScrollMeisterComponent2 = _interopRequireDefault(_ScrollMeisterComponent);
 var _ElementMeisterComponent = require('components/ElementMeisterComponent.js');
 
 var _ElementMeisterComponent2 = _interopRequireDefault(_ElementMeisterComponent);
+
+var _ContentMeisterComponent = require('components/ContentMeisterComponent.js');
+
+var _ContentMeisterComponent2 = _interopRequireDefault(_ContentMeisterComponent);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -15479,7 +15538,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	_scrollmeister2.default.behaviorsRegistry.close();
 	customElements.define('scroll-meister', _ScrollMeisterComponent2.default);
 	customElements.define('element-meister', _ElementMeisterComponent2.default);
-	customElements.define('content-meister', function (_HTMLElement) {
+	customElements.define('content-meister', _ContentMeisterComponent2.default);
+	customElements.define('shadow-meister', function (_HTMLElement) {
 		_inherits(_class, _HTMLElement);
 
 		function _class() {
@@ -15490,20 +15550,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		return _class;
 	}(HTMLElement));
-	customElements.define('shadow-meister', function (_HTMLElement2) {
-		_inherits(_class2, _HTMLElement2);
-
-		function _class2() {
-			_classCallCheck(this, _class2);
-
-			return _possibleConstructorReturn(this, (_class2.__proto__ || Object.getPrototypeOf(_class2)).apply(this, arguments));
-		}
-
-		return _class2;
-	}(HTMLElement));
 }, { once: true });
 
-},{"components/ElementMeisterComponent.js":34,"components/ScrollMeisterComponent.js":36,"document-register-element":1,"scrollmeister.js":52}],38:[function(require,module,exports){
+},{"components/ContentMeisterComponent.js":34,"components/ElementMeisterComponent.js":35,"components/ScrollMeisterComponent.js":37,"document-register-element":1,"scrollmeister.js":54}],39:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15577,7 +15626,7 @@ _scrollmeister2.default.defineCondition('wat', ['xl', 'portrait'], function (xl,
 
 //window.addEventListener('resize', ....)
 
-},{"scrollmeister.js":52}],39:[function(require,module,exports){
+},{"scrollmeister.js":54}],40:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15597,7 +15646,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //This makes browserify --standalone work and exports Scrollmeister as an UMD module.
 module.exports = _scrollmeister2.default; //eslint-disable-line no-undef
 
-},{"./behaviors/extras.js":32,"./components":37,"./conditions":38,"./scrollmeister.sass":53,"scrollmeister.js":52}],40:[function(require,module,exports){
+},{"./behaviors/extras.js":32,"./components":38,"./conditions":39,"./scrollmeister.sass":55,"scrollmeister.js":54}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15692,7 +15741,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15773,14 +15822,17 @@ var BehaviorsStyleMerger = function () {
 
 				this.el.style.opacity = combinedOpacity;
 			} else {
+				//TODO: handle backfaceVisibility / WebkitBackfaceVisibility prefix
+
 				var hasProperty = false;
 
 				for (var _behaviorName2 in this._styles[property]) {
 					if (this._styles[property].hasOwnProperty(_behaviorName2)) {
 						this.el.style[property] = this._styles[property][_behaviorName2];
 
-						if (hasProperty) {
-							throw new Error('The "' + property + '" property was set by multiple behaviors (' + Object.keys(this._styles[property]).join(', ') + ') but it cannot be merged.');
+						if (hasProperty && "development" !== 'production') {
+							//eslint-disable-next-line no-console
+							console.error('The "' + property + '" property was set by multiple behaviors (' + Object.keys(this._styles[property]).join(', ') + ') but it cannot be merged.');
 						}
 
 						hasProperty = true;
@@ -15800,7 +15852,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15855,7 +15907,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16471,7 +16523,7 @@ var GuidesLayoutEngine = function () {
 
 exports.default = GuidesLayoutEngine;
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16589,7 +16641,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16602,7 +16654,18 @@ exports.default = function (input) {
 	});
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+//Feel free to extend this list if a behavior needs more styles.
+var cssProps = ['display', 'overflow', 'contain', 'transform', 'backfaceVisibility', 'willChange', 'opacity', 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'maxWidth', 'minWidth', 'maxHeight', 'minHeight', 'transition', 'whiteSpace', 'fontSize', 'cursor', 'pointerEvents', 'background', 'backgroundImage', 'backgroundColor', 'backgroundSize'];
+
+exports.default = cssProps;
+
+},{}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16654,7 +16717,7 @@ exports.default = {
 	}
 };
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16697,7 +16760,7 @@ exports.default = {
 	}
 };
 
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16730,7 +16793,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16749,7 +16812,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16944,7 +17007,7 @@ exports.default = {
 	}
 };
 
-},{"types":62}],51:[function(require,module,exports){
+},{"types":64}],53:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16967,7 +17030,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17181,10 +17244,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":12,"lib/BehaviorsRegistry.js":40,"lib/ConditionsRegistry.js":42,"lib/camelCase.js":45,"ponies/CustomEvent.js":51}],53:[function(require,module,exports){
+},{"behaviors/Behavior.js":12,"lib/BehaviorsRegistry.js":41,"lib/ConditionsRegistry.js":43,"lib/camelCase.js":46,"ponies/CustomEvent.js":53}],55:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}content-meister{display:block;overflow:hidden}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":10}],54:[function(require,module,exports){
+},{"scssify":10}],56:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17201,7 +17264,7 @@ exports.default = {
 	}
 };
 
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17243,7 +17306,7 @@ exports.default = {
 	}
 };
 
-},{}],56:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17289,7 +17352,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":55}],57:[function(require,module,exports){
+},{"types/CSSLengthType.js":57}],59:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17407,7 +17470,7 @@ exports.default = {
 	}
 };
 
-},{}],58:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17436,7 +17499,7 @@ exports.default = {
 	}
 };
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17464,7 +17527,7 @@ exports.default = {
 	}
 };
 
-},{}],60:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17479,7 +17542,7 @@ exports.default = {
 	}
 };
 
-},{}],61:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17517,7 +17580,7 @@ exports.default = {
 	}
 };
 
-},{}],62:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17571,5 +17634,5 @@ exports.default = {
 };
 var domtypes = exports.domtypes = ['layoutdependencies'];
 
-},{"types/BooleanType.js":54,"types/CSSLengthType.js":55,"types/HeightType.js":56,"types/LayoutDependenciesType.js":57,"types/NumberType.js":58,"types/RatioType.js":59,"types/StringType.js":60,"types/TemplateType.js":61}]},{},[39])(39)
+},{"types/BooleanType.js":56,"types/CSSLengthType.js":57,"types/HeightType.js":58,"types/LayoutDependenciesType.js":59,"types/NumberType.js":60,"types/RatioType.js":61,"types/StringType.js":62,"types/TemplateType.js":63}]},{},[40])(40)
 });

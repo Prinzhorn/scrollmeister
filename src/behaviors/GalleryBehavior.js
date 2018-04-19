@@ -56,8 +56,7 @@ export default class GalleryBehavior extends Behavior {
 		let rows = Math.max(1, Math.round(totalWidth / availableWidth));
 		let layout = this._balancedLayout(this._items, availableWidth, rows, spacing);
 
-		this.el.layout.contentEl.style.position = 'relative';
-		this.el.layout.contentEl.style.height = layout.requiredHeight + 'px';
+		this.contentStyle.height = layout.requiredHeight + 'px';
 
 		for (let i = 0; i < layout.items.length; i++) {
 			let imageLayout = layout.items[i];

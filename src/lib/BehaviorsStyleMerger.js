@@ -61,14 +61,17 @@ export default class BehaviorsStyleMerger {
 
 			this.el.style.opacity = combinedOpacity;
 		} else {
+			//TODO: handle backfaceVisibility / WebkitBackfaceVisibility prefix
+
 			let hasProperty = false;
 
 			for (let behaviorName in this._styles[property]) {
 				if (this._styles[property].hasOwnProperty(behaviorName)) {
 					this.el.style[property] = this._styles[property][behaviorName];
 
-					if (hasProperty) {
-						throw new Error(
+					if (hasProperty && process.env.NODE_ENV !== 'production') {
+						//eslint-disable-next-line no-console
+						console.error(
 							`The "${property}" property was set by multiple behaviors (${Object.keys(this._styles[property]).join(
 								', '
 							)}) but it cannot be merged.`

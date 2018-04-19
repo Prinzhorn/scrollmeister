@@ -2,9 +2,8 @@
 
 import raf from 'raf';
 
-import BehaviorsStyleMerger from 'lib/BehaviorsStyleMerger.js';
-
 import Scrollmeister from 'scrollmeister.js';
+import BehaviorsStyleMerger from 'lib/BehaviorsStyleMerger.js';
 
 const invalidMarkupSelectors = [
 	':not(scroll-meister) > element-meister',
@@ -14,7 +13,7 @@ const invalidMarkupSelectors = [
 	'element-meister scroll-meister'
 ];
 
-export default class ScrollMeisterComponent extends HTMLElement {
+export default class MeisterComponent extends HTMLElement {
 	behaviors: any;
 	_behaviorsStyleMerger: BehaviorsStyleMerger;
 	_scheduledBatchUpdate: boolean;
@@ -55,8 +54,8 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	connectedCallback() {
 		//This happens when a disconnected element (e.g. document.createElement) gets attributes before being inserted.
 		//We will then update the behaviors as soon as it is connected.
-		if (this._scheduledBatchUpdate) {
-			this._batchUpdateBehaviors();
+		if (this._scheduledBatchUpdate && !this._batchHandle) {
+			this._batchHandle = raf(this._batchUpdateBehaviors.bind(this));
 		}
 
 		Scrollmeister.componentConnected(this);
@@ -83,7 +82,9 @@ export default class ScrollMeisterComponent extends HTMLElement {
 			return;
 		}
 
+		this._scheduledBatchUpdate = false;
 		raf.cancel(this._batchHandle);
+		delete this._batchHandle;
 
 		//Remove all attached behaviors so they can be garbage collected.
 		Scrollmeister.detachBehaviors(this, this.behaviors, true);
@@ -124,7 +125,7 @@ export default class ScrollMeisterComponent extends HTMLElement {
 	}
 
 	renderError(error: Error) {
-		if (process.env.NODE_ENV === 'development') {
+		if (process.env.NODE_ENV !== 'production') {
 			let el = this;
 			let outerHTML = el.outerHTML;
 

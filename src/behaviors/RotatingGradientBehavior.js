@@ -30,13 +30,9 @@ export default class RotatingGradientBehavior extends Behavior {
 			let color1 = `hsl(${angle}, 100%, 50%)`;
 			let color2 = `hsl(${angle + this.props.offset}, 100%, 50%)`;
 
-			this.el.style.backgroundImage = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+			this.style.backgroundImage = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
 
 			this.notify();
 		});
-	}
-
-	behaviorWillDetach() {
-		this.el.style.backgroundImage = '';
 	}
 }

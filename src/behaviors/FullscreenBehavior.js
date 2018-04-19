@@ -28,15 +28,13 @@ export default class FullscreenBehavior extends Behavior {
 			this.toggleFullscreen();
 		});
 
-		this.el.style.cursor = 'pointer';
+		this.style.cursor = 'pointer';
 
 		//TODO: ESC key to close
 		//TODO: Mobile indicator
 	}
 
 	behaviorWillDetach() {
-		this.el.style.cursor = '';
-
 		if (this.fullscreen) {
 			this.exit();
 		}

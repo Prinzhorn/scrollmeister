@@ -1,6 +1,7 @@
 import assign from 'object-assign';
 import CustomEvent from 'ponies/CustomEvent.js';
 
+import cssProps from 'lib/cssProps.js';
 import schemaParser from 'lib/schemaParser.js';
 import { domtypes } from 'types';
 
@@ -366,29 +367,41 @@ export default class Behavior {
 	_proxyCSS() {
 		let behaviorName = this.constructor.behaviorName;
 		let element = this.el;
+		let contentEl = this.contentEl;
 
-		this.style = {
-			set transform(value) {
-				if (value === '') {
-					element.resetBehaviorStyle(behaviorName, 'transform');
-				} else {
-					element.setBehaviorStyle(behaviorName, 'transform', value);
+		let style = (this.style = Object.create(null));
+		let contentStyle = (this.contentStyle = Object.create(null));
+
+		for (let i = 0; i < cssProps.length; i++) {
+			let name = cssProps[i];
+
+			Object.defineProperty(style, name, {
+				set: function(value) {
+					if (value === '') {
+						element.resetBehaviorStyle(behaviorName, name);
+					} else {
+						element.setBehaviorStyle(behaviorName, name, value);
+					}
 				}
-			},
-			set opacity(value) {
-				if (value === '') {
-					element.resetBehaviorStyle(behaviorName, 'opacity');
-				} else {
-					element.setBehaviorStyle(behaviorName, 'opacity', value);
+			});
+
+			Object.defineProperty(contentStyle, name, {
+				set: function(value) {
+					if (value === '') {
+						contentEl.resetBehaviorStyle(behaviorName, name);
+					} else {
+						contentEl.setBehaviorStyle(behaviorName, name, value);
+					}
 				}
-			}
-		};
+			});
+		}
 	}
 
 	_unproxyCSS() {
 		let behaviorName = this.constructor.behaviorName;
 
 		this.el.resetBehaviorStyles(behaviorName);
+		this.contentEl.resetBehaviorStyles(behaviorName);
 	}
 
 	_proxyProps() {

@@ -34,13 +34,9 @@ export default class MousetrapBehavior extends Behavior {
 		this._render();
 	}
 
-	behaviorWillDetach() {
-		this.el.style.pointerEvents = '';
-	}
-
 	_render() {
 		//TODO: access scrollmode here?
 		//TODO: instead of pointer events, add an overlay div to the <shadow-meister>.
-		this.el.style.pointerEvents = 'none';
+		this.style.pointerEvents = 'none';
 	}
 }

@@ -18,11 +18,7 @@ export default class FadeInBehavior extends Behavior {
 	behaviorDidAttach() {
 		//Make sure the very first render took place and everything is updated.
 		this.listenOnce('guides-layout:change', () => {
-			this.el.style.opacity = 1;
+			this.style.opacity = 1;
 		});
-	}
-
-	behaviorWillDetach() {
-		this.el.style.opacity = '';
 	}
 }

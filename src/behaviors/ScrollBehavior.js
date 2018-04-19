@@ -285,9 +285,9 @@ export default class ScrollBehavior extends Behavior {
 			}
 
 			document.documentElement.style.overflow = 'visible';
-			this.el.style.height = 0;
+			this.style.height = 0;
 		} else {
-			this.el.style.height = Math.round(requiredHeight) + 'px';
+			this.style.height = Math.round(requiredHeight) + 'px';
 		}
 
 		this._scrollLogic.setContainerLength(layoutEngine.viewport.height);

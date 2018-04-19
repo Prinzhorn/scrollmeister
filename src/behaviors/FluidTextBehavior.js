@@ -18,7 +18,7 @@ export default class FadeInBehavior extends Behavior {
 	}
 
 	behaviorDidAttach() {
-		if (this.el.layout.contentEl.children.length !== 1) {
+		if (this.contentEl.children.length !== 1) {
 			this.error(
 				new Error(
 					'The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.'
@@ -26,23 +26,16 @@ export default class FadeInBehavior extends Behavior {
 			);
 		}
 
-		//TODO: I want to be able to do this.style(this.el.layout.innerEl, 'whiteSpace', 'nowrap') which cleans up automatically.
-
-		this.contentEl.style.whiteSpace = 'nowrap';
+		this.contentStyle.whiteSpace = 'nowrap';
 
 		this.connectTo('layout', layoutBehavior => {
 			if (!this._fontSizeWidthRatio) {
 				this._fontSizeWidthRatio = fontSizeWidthRatio(this.contentEl);
 			}
 
-			this.contentEl.style.fontSize = this._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
+			this.contentStyle.fontSize = this._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
 
 			this.notify();
 		});
-	}
-
-	behaviorWillDetach() {
-		this.contentEl.style.whiteSpace = '';
-		this.contentEl.style.fontSize = '';
 	}
 }

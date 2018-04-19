@@ -4,6 +4,7 @@ import Scrollmeister from 'scrollmeister.js';
 
 import ScrollMeisterComponent from 'components/ScrollMeisterComponent.js';
 import ElementMeisterComponent from 'components/ElementMeisterComponent.js';
+import ContentMeisterComponent from 'components/ContentMeisterComponent.js';
 
 //https://twitter.com/WebReflection/status/973932114621161473
 //https://github.com/WebReflection/ready
@@ -16,7 +17,7 @@ document.addEventListener(
 		Scrollmeister.behaviorsRegistry.close();
 		customElements.define('scroll-meister', ScrollMeisterComponent);
 		customElements.define('element-meister', ElementMeisterComponent);
-		customElements.define('content-meister', class extends HTMLElement {});
+		customElements.define('content-meister', ContentMeisterComponent);
 		customElements.define('shadow-meister', class extends HTMLElement {});
 	},
 	{ once: true }

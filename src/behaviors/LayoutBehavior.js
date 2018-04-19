@@ -107,8 +107,6 @@ export default class LayoutBehavior extends Behavior {
 		if (this.props.height === 'auto') {
 			this._unobserveHeight();
 		}
-
-		//TODO: remove styles (or use this.style and this.contentStyle for ALL the things)
 	}
 
 	_observeHeight() {
@@ -141,7 +139,6 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_renderWrapper() {
-		let style = this.el.style;
 		let display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 		let overflow = 'visible';
 		let width = this.layout.width;
@@ -153,36 +150,32 @@ export default class LayoutBehavior extends Behavior {
 			overflow = 'hidden';
 		}
 
-		style.display = display;
-		style.overflow = overflow;
-		style.width = Math.round(width) + 'px';
-		style.height = Math.round(height) + 'px';
-		style.contain = contain;
+		this.style.display = display;
+		this.style.overflow = overflow;
+		this.style.width = Math.round(width) + 'px';
+		this.style.height = Math.round(height) + 'px';
+		this.style.contain = contain;
 	}
 
 	_renderContent() {
-		let style = this.contentEl.style;
 		let width = this.layout.width;
 
-		style.position = 'relative';
-		style.width = Math.round(width) + 'px';
+		this.contentStyle.position = 'relative';
+		this.contentStyle.width = Math.round(width) + 'px';
 
 		if (this.props.height === 'auto') {
-			style.height = 'auto';
+			this.contentStyle.height = '';
 		} else {
-			style.height = Math.round(this.layout.height) + 'px';
+			this.contentStyle.height = Math.round(this.layout.height) + 'px';
 		}
 
 		if (this.props.clip) {
-			style.backfaceVisibility = style.WebkitBackfaceVisibility = 'hidden';
+			this.contentStyle.backfaceVisibility = 'hidden';
 		}
 	}
 
 	_scroll(scrollBehavior: ScrollBehavior, forceUpdate: boolean = false) {
 		let scrollUpdate = this.scrollUpdate;
-
-		let style = this.el.style;
-		let contentStyle = this.contentEl.style;
 
 		this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
@@ -194,8 +187,8 @@ export default class LayoutBehavior extends Behavior {
 			//But we do not do the opposite here. This is just the last resort.
 			//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
 			if (scrollUpdate.inViewport) {
-				style.display = 'block';
-				style.willChange = 'transform';
+				this.style.display = 'block';
+				this.style.willChange = 'transform';
 			}
 
 			this.style.transform = `translate(${left}px, ${top}px)`;
@@ -203,8 +196,7 @@ export default class LayoutBehavior extends Behavior {
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
 			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
 			//or elements with appear effects using scaling/rotation.
-			contentStyle.msTransform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
-			contentStyle.transform = contentStyle.WebkitTransform = `translate3d(0px, ${scrollUpdate.contentTopOffset}px, 0)`;
+			this.contentStyle.transform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
 
 			//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
 			//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
@@ -239,23 +231,22 @@ export default class LayoutBehavior extends Behavior {
 
 	_scrollPause() {
 		let scrollUpdate = this.scrollUpdate;
-		let style = this.el.style;
 
 		if (scrollUpdate.inExtendedViewport) {
-			style.display = 'block';
-			style.willChange = 'transform';
+			this.style.display = 'block';
+			this.style.willChange = 'transform';
 		} else {
 			if (this._canSafelyBeUnloadedFromGPU()) {
-				style.display = 'none';
+				this.style.display = 'none';
 			} else {
 				//This reduces gpu memory a ton and also hides text at the edge of the viewport.
 				//Otherwise those elements would be visible behind the adress bar in iOS.
 				//There's no inverse operation to that because once it is inside the viewport again
 				//the translation will overwrite the scale transform.
-				style.transform = style.WebkitTransform = style.msTransform = 'scale(0)';
+				this.style.transform = 'scale(0)';
 			}
 
-			style.willChange = 'auto';
+			this.style.willChange = 'auto';
 		}
 	}
 }

@@ -95,11 +95,20 @@ describe('regular properties', () => {
 	test('complains about two conflicting behaviors', () => {
 		const { merger } = createMerger();
 
-		merger.setBehaviorStyle('foo', 'color', 'purple');
+		const ce = console.error; //eslint-disable-line no-console
 
-		expect(() => {
-			merger.setBehaviorStyle('bar', 'color', 'green');
-		}).toThrow();
+		let counter = 0;
+		//eslint-disable-next-line no-console
+		console.error = function() {
+			counter++;
+		};
+
+		merger.setBehaviorStyle('foo', 'color', 'purple');
+		merger.setBehaviorStyle('bar', 'color', 'green');
+
+		expect(counter).toBe(1);
+
+		console.error = ce; //eslint-disable-line no-console
 	});
 });
 
