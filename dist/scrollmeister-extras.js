@@ -12263,7 +12263,10 @@ var Behavior = function () {
 			var behaviorName = this.constructor.behaviorName;
 
 			this.el.resetBehaviorStyles(behaviorName);
-			this.contentEl.resetBehaviorStyles(behaviorName);
+
+			if (this.contentEl) {
+				this.contentEl.resetBehaviorStyles(behaviorName);
+			}
 		}
 	}, {
 		key: '_proxyProps',

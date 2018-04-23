@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Scrollmeister parallax ALL the things</title>
+		<title>Scrollmeister full page slides</title>
 		<style>
 			body {
 				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
@@ -47,12 +47,18 @@
 			.content {
 				color: #fff;
 				background: rgba(0, 0, 0, 0.6);
-				padding: 1em;
+				padding: 2em;
+			}
+
+			img {
+				width: 100%;
+				height: auto;
+				vertical-align: middle;
 			}
 		</style>
 	</head>
 	<body>
-		<scroll-meister fadein scroll guides-layout="guides: text-left 10%, text-right 50%; width: 10000px;">
+		<scroll-meister fadein scroll guides-layout="guides: text-left 0 2vmin, text-right 50%; width: 1440px;">
 			<element-meister layout="guides: text-left text-right; spacing: 50vh;">
 				<div class="content">
 					<h2>Lorem Ipsum</h2>
@@ -68,6 +74,24 @@
 				<img src="assets/images/niilo-isotalo-379496-unsplash.jpg">
 			</element-meister>
 
+			<element-meister layout="guides: text-left text-right; spacing: 50vh 0;">
+				<div class="content">
+					<h2>Lorem Ipsum</h2>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+					<p>
+						Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+					</p>
+				</div>
+			</element-meister>
+			<element-meister layout="guides: text-left text-right; spacing: 5vh 50vh;">
+				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
+			</element-meister>
+			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; dependencies: consume 2; spacing: -50vh;" media="ratio: 480 / 270" autoplay>
+				<video src="assets/videos/bunny.mp4" type="video/mp4" muted playsInline loop></video>
+			</element-meister>
+
 			<element-meister layout="guides: text-left text-right; spacing: 50vh;">
 				<div class="content">
 					<h2>Lorem Ipsum</h2>
@@ -79,8 +103,8 @@
 					</p>
 				</div>
 			</element-meister>
-			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; spacing: -50vh;" media="ratio: 480 / 270" autoplay>
-				<video src="assets/videos/bunny.mp4" type="video/mp4" muted playsInline></video>
+			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; spacing: -50vh;" media="ratio: 1920 / 1280">
+				<img src="assets/images/photo-1432149629818-13b6e10a6e2c.jpg">
 			</element-meister>
 		</scroll-meister>
 
@@ -91,11 +115,11 @@
 			meister.addEventListener('guides-layout:attach', function() {
 				function resize() {
 					if(window.innerWidth < 768) {
-						meister.guidesLayout.guides = 'text-left 0 2vmin, text-right 100% 2vmin';
+						meister.guidesLayout.guides = 'text-left 0 20px, text-right 100% 20px';
 					} else if(window.innerWidth < 1024) {
 						meister.guidesLayout.guides = 'text-left 10%, text-right -10%';
 					} else {
-						meister.guidesLayout.guides = 'text-left 10%, text-right 50%';
+						meister.guidesLayout.guides = 'text-left 0 2vmin, text-right 50%';
 					}
 				}
 

@@ -22,6 +22,12 @@
 				background: rgba(0, 255, 0, 0.5);
 				box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.5);
 			}
+
+			.buttons {
+				position: fixed;
+				left: 1em;
+				top: 1em;
+			}
 		</style>
 	</head>
 	<body>
@@ -29,39 +35,42 @@
 			guides-layout="
 				guides:
 					left 0 2vmin,
-					leftthird 33.333% 10px,
+					rando 33.333% 10px,
 					center 50% 50px,
 					right 100% 2vmin;
 				width :
 					1200px;
 			"
 		>
-			<element-meister layout="height: 10vh; spacing: 2vh;"></element-meister>
-			<element-meister layout="guides: left right; height: 10vh; spacing: 2vh;"></element-meister>
-			<element-meister layout="guides: left leftthird; height: 10vh; spacing: 2vh;"></element-meister>
-			<element-meister layout="guides: center right; height: 10vh; spacing: 2vh; dependencies: skip 1"></element-meister>
-			<element-meister layout="guides: leftthird right; height: 10vh; spacing: 2vh;"></element-meister>
-			<element-meister layout="guides: left leftthird; height: 15vh; spacing: 2vh; dependencies: skip 1"></element-meister>
-			<element-meister layout="guides: viewport leftthird; height: 10vh; spacing: 2vh"></element-meister>
+			<element-meister layout="height: 10vh; spacing: 2vh;">a</element-meister>
+			<element-meister layout="guides: left right; height: 10vh; spacing: 2vh;">b</element-meister>
+			<element-meister layout="guides: left rando; height: 10vh; spacing: 2vh;" id="c">c</element-meister>
+			<element-meister layout="guides: center right; height: 10vh; spacing: 2vh; dependencies: skip 1" id="d">d</element-meister>
+			<element-meister layout="guides: rando center; height: 10vh; spacing: 2vh;">e</element-meister>
+			<element-meister layout="guides: left rando; height: 15vh; spacing: 2vh; dependencies: skip 1 consume 3">f</element-meister>
+			<element-meister layout="guides: viewport rando; height: 10vh; spacing: 2vh">g</element-meister>
+		</scroll-meister>
+
+		<div class="buttons">
+			<button type="button" id="toggle-guides">Toggle visibility</button>
+			<button type="button" id="rando">Randomize the "rando" guide</button>
+		</div>
 
 		<script src="../dist/scrollmeister-extras.js"></script>
 		<script>
-			var meister = document.querySelector('scroll-meister');
+			var wrapper = document.querySelector('scroll-meister');
 
-			document.addEventListener('mousemove', function(e) {
-				var x = (e.clientX - 200) / 1280;
+			document.querySelector('#toggle-guides').addEventListener('click', function() {
+				if(wrapper.hasAttribute('debug-guides')) {
+					wrapper.removeAttribute('debug-guides')
+				} else {
+					wrapper.setAttribute('debug-guides', '')
+				}
+			});
 
-				x = Math.min(x, 0.4);
-				x = Math.max(x, 0.1);
-
-				x = x * 100;
-
-				meister.guidesLayout.guides = `
-					left 0 2vmin,
-					leftthird ${x}% 10px,
-					center 50% 50px,
-					right 100% 2vmin
-				`;
+			document.querySelector('#rando').addEventListener('click', function() {
+				var position = 10 + (Math.random() * 30)
+				wrapper.guidesLayout.guides = 'left 0 2vmin, rando ' + position + '% 10px, center 50% 50px, right 100% 2vmin';
 			});
 		</script>
 	</body>

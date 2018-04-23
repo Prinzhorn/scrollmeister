@@ -413,7 +413,10 @@ export default class Behavior {
 		let behaviorName = this.constructor.behaviorName;
 
 		this.el.resetBehaviorStyles(behaviorName);
-		this.contentEl.resetBehaviorStyles(behaviorName);
+
+		if (this.contentEl) {
+			this.contentEl.resetBehaviorStyles(behaviorName);
+		}
 	}
 
 	_proxyProps() {
