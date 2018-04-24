@@ -154,7 +154,7 @@ export default class GuidesLayoutEngine {
 			position = position - this.viewport.height / 2 + height / 2;
 		}
 
-		return position + offset;
+		return Math.round(position + offset);
 	}
 
 	doLayout(nodes: Array<Node>, rawGuides: Array<RawGuide>, contentWidth: CSSLength) {
@@ -299,9 +299,6 @@ export default class GuidesLayoutEngine {
 		let { layout, props, intrinsicHeight } = node;
 		let layoutMode = props.mode;
 
-		layout.spacingTop = this.lengthToPixel(props.spacing.top);
-		layout.spacingBottom = this.lengthToPixel(props.spacing.bottom);
-
 		if (layoutMode === 'follow') {
 			//A follower can have one or more leaders.
 			//Here we normalize it to always have two, the top and bottom most.
@@ -362,6 +359,9 @@ export default class GuidesLayoutEngine {
 		} else {
 			layout.height = this.lengthToPixel(props.height, layout.width);
 		}
+
+		layout.spacingTop = this.lengthToPixel(props.spacing.top, layout.height);
+		layout.spacingBottom = this.lengthToPixel(props.spacing.bottom, layout.height);
 
 		layout.outerHeight = layout.height + layout.spacingTop + layout.spacingBottom;
 
