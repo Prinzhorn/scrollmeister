@@ -55,7 +55,7 @@ export default class InterpolateBehavior extends Behavior {
 
 	static get behaviorSchema(): any {
 		return {
-			progress: assign({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
+			progress: assign({}, keyframesSchema, { default: 'bottom -100vh 0, top 100vh 1' }),
 			opacity: keyframesSchema,
 			rotate: keyframesSchema,
 			scale: keyframesSchema,
