@@ -13560,7 +13560,7 @@ var InterpolateBehavior = function (_Behavior) {
 		key: 'behaviorSchema',
 		get: function get() {
 			return {
-				progress: (0, _objectAssign2.default)({}, keyframesSchema, { default: 'bottom -100% 0, top 100% 1' }),
+				progress: (0, _objectAssign2.default)({}, keyframesSchema, { default: 'top -100vh 0, bottom 100vh 1' }),
 				opacity: keyframesSchema,
 				rotate: keyframesSchema,
 				scale: keyframesSchema,
@@ -16085,7 +16085,7 @@ var GuidesLayoutEngine = function () {
 				position = position - this.viewport.height / 2 + height / 2;
 			}
 
-			return position + offset;
+			return Math.round(position + offset);
 		}
 	}, {
 		key: 'doLayout',
@@ -16237,9 +16237,6 @@ var GuidesLayoutEngine = function () {
 
 			var layoutMode = props.mode;
 
-			layout.spacingTop = this.lengthToPixel(props.spacing.top);
-			layout.spacingBottom = this.lengthToPixel(props.spacing.bottom);
-
 			if (layoutMode === 'follow') {
 				//A follower can have one or more leaders.
 				//Here we normalize it to always have two, the top and bottom most.
@@ -16300,6 +16297,9 @@ var GuidesLayoutEngine = function () {
 			} else {
 				layout.height = this.lengthToPixel(props.height, layout.width);
 			}
+
+			layout.spacingTop = this.lengthToPixel(props.spacing.top, layout.height);
+			layout.spacingBottom = this.lengthToPixel(props.spacing.bottom, layout.height);
 
 			layout.outerHeight = layout.height + layout.spacingTop + layout.spacingBottom;
 

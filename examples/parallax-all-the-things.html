@@ -18,19 +18,10 @@
 				margin-bottom: 0;
 			}
 
-			h2 {
-				_margin-top: 0;
-			}
-
 			img {
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-			}
-
-			footer {
-				text-align: center;
-				padding: 1em 0;
 			}
 
 			scroll-meister, element-meister, content-meister {
@@ -45,6 +36,15 @@
 			scroll-meister[fadein] {
 				opacity: 0;
 				transition: opacity 0.3s ease-in-out;
+			}
+
+			video {
+				width: 100%;
+			}
+
+			footer {
+				text-align: center;
+				padding: 1em 0;
 			}
 		</style>
 	</head>
@@ -134,6 +134,36 @@
 				<img src="assets/images/niilo-isotalo-379496-unsplash.jpg">
 			</element-meister>
 
+			<element-meister layout="height: auto; spacing: 50vh 0; guides: left text" interpolate>
+				<h2>Parallax element with video scrubbing</h2>
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation lamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat datat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+				</p>
+			</element-meister>
+			<element-meister layout="mode: follow; guides: text right; height: 640/320;" interpolate scrub>
+				<video src="assets/videos/chrome.mp4" type="video/mp4" preload="auto" muted playsInline></video>
+			</element-meister>
+
 			<element-meister layout="spacing: 50vh 0; guides: left right;">
 				<h2>PaRalLax dOeS NoT wOrK On aRbItRaRy ElEmEnTs</h2>
 			</element-meister>
@@ -209,7 +239,9 @@
 			</element-meister>
 
 			<element-meister layout="spacing: 75vh 0;">
-				<footer><a href="https://www.scrollmeister.com">https://www.scrollmeister.com</a></footer>
+				<footer>
+					a <a href="https://www.scrollmeister.com">Scrollmeister</a> demo
+				</footer>
 			</element-meister>
 		</scroll-meister>
 

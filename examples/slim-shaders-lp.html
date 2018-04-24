@@ -3,11 +3,17 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Scrollmeister WebGL shaders</title>
+		<title>Scrollmeister WebGL Shaders</title>
 		<style>
-			footer {
+			body {
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+				font-size: 18px;
+			}
+
+			h1 {
+				font-size: 40px;
+				font-weight: normal;
 				text-align: center;
-				padding: 1em 0;
 			}
 
 			scroll-meister, element-meister, content-meister {
@@ -24,12 +30,26 @@
 				left: 1em;
 				top: 1em;
 			}
+
+			footer {
+				text-align: center;
+				padding: 1em 0;
+			}
 		</style>
 	</head>
 	<body>
-		<scroll-meister fadein scroll guides-layout="guides: left 0, right 100%;">
-			<element-meister layout="height: 1920 / 1280; guides: left right; spacing: 75vh;" interpolate media="ratio: 1920 / 1280" gl-effect="shader: swirl">
+		<scroll-meister fadein scroll guides-layout="guides: left 0 2vmin, right 100% 2vmin;">
+			<element-meister layout="guides: left right; spacing: 25vh 0;">
+				<h1>WebGL shaders at your fingertips</h1>
+			</element-meister>
+			<element-meister layout="height: 1920 / 1280; guides: left right; spacing: 50vh 75vh;" interpolate media="ratio: 1920 / 1280" gl-effect="shader: swirl">
 				<img src="assets/images/niilo-isotalo-379496-unsplash.jpg">
+			</element-meister>
+
+			<element-meister layout>
+				<footer>
+					a <a href="https://www.scrollmeister.com">Scrollmeister</a> demo
+				</footer>
 			</element-meister>
 		</scroll-meister>
 
