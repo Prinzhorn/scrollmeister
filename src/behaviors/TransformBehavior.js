@@ -22,6 +22,7 @@ export default class TransformBehavior extends Behavior {
 
 	_render(interpolateBehavior: InterpolateBehavior) {
 		let { values } = interpolateBehavior;
+		this.contentStyle.willChange = 'transform, opacity';
 		this.contentStyle.opacity = values.opacity;
 
 		//TODO: in which order will we apply translate, rotate, scale and skew?
@@ -29,6 +30,8 @@ export default class TransformBehavior extends Behavior {
 		//So... translate, skew, rotate, scale?
 		//This feels natural. Skewing after rotating is nothing people can imagine in their head.
 		//Or just add an order property with a default.
+		this.contentStyle.backfaceVisibility = 'hidden';
+		this.contentStyle.perspective = '1000';
 		this.contentStyle.transform = `translate(${values.x}%, ${values.y}%) rotate(${values.rotate}deg) scale(${
 			values.scale
 		})`;
