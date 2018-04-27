@@ -36,6 +36,7 @@ type ScrollUpdate = {
 	inViewport: boolean,
 	inExtendedViewport: boolean,
 	wrapperTopChanged: boolean,
+	contentTopOffsetChanged: boolean,
 	inCenterChanged: boolean,
 	inViewportChanged: boolean,
 	inExtendedViewportChanged: boolean
@@ -91,6 +92,12 @@ export default class GuidesLayoutEngine {
 	constructor() {
 		this.guides = [];
 		this.requiredHeight = 0;
+		this.viewport = {
+			width: 0,
+			height: 0,
+			outerWidth: 0,
+			outerHeight: 0
+		};
 		this.fullscreenLayout = {
 			left: 0,
 			top: 0,
@@ -100,6 +107,15 @@ export default class GuidesLayoutEngine {
 	}
 
 	updateViewport(viewport: Viewport) {
+		if (
+			viewport.height === this.viewport.height &&
+			viewport.width === this.viewport.width &&
+			viewport.outerWidth === this.viewport.outerWidth &&
+			viewport.outerHeight === this.viewport.outerHeight
+		) {
+			return false;
+		}
+
 		this.viewport = viewport;
 		this.fullscreenLayout = {
 			left: 0,
@@ -107,6 +123,8 @@ export default class GuidesLayoutEngine {
 			width: viewport.outerWidth,
 			height: viewport.outerHeight
 		};
+
+		return true;
 	}
 
 	lengthToPixel(value: CSSLength, percentageReference: ?number): number {
@@ -230,6 +248,7 @@ export default class GuidesLayoutEngine {
 		let verticalCenter = this.viewport.height / 2;
 		let contentHeight = layout.height;
 		let prevWrapperTop = scrollUpdate.wrapperTop;
+		let prevContentTopOffset = scrollUpdate.contentTopOffset;
 		let prevInCenter = scrollUpdate.inCenter;
 		let prevInViewport = scrollUpdate.inViewport;
 		let prevInExtendedViewport = scrollUpdate.inExtendedViewport;
@@ -289,6 +308,7 @@ export default class GuidesLayoutEngine {
 		}
 
 		scrollUpdate.wrapperTopChanged = scrollUpdate.wrapperTop !== prevWrapperTop;
+		scrollUpdate.contentTopOffsetChanged = scrollUpdate.contentTopOffset !== prevContentTopOffset;
 		scrollUpdate.inCenterChanged = scrollUpdate.inCenter !== prevInCenter;
 		scrollUpdate.inViewportChanged = scrollUpdate.inViewport !== prevInViewport;
 		scrollUpdate.inExtendedViewportChanged = scrollUpdate.inExtendedViewport !== prevInExtendedViewport;
