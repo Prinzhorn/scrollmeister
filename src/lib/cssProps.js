@@ -26,7 +26,8 @@ const cssProps = [
 	'background',
 	'backgroundImage',
 	'backgroundColor',
-	'backgroundSize'
+	'backgroundSize',
+	'visibility'
 ];
 
 export default cssProps;

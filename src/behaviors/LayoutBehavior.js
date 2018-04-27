@@ -65,6 +65,10 @@ export default class LayoutBehavior extends Behavior {
 			dependencies: {
 				type: 'layoutdependencies',
 				default: 'inherit'
+			},
+			hidden: {
+				type: 'boolean',
+				default: 'false'
 			}
 		};
 	}
@@ -80,13 +84,18 @@ export default class LayoutBehavior extends Behavior {
 	behaviorDidAttach() {
 		this.intrinsicHeight = 0;
 
-		this.scrollUpdate = {};
+		this.scrollUpdate = {
+			//All others are undefined by default, which causes all of them to return *changed for the first scroll.
+			//E.g. wrapperTopChanged will _always_ be true for the very first scroll.
+			//But we don't always need CSS transforms on the content element.
+			//If the contentTopOffset is always 0 (basically if it's a flow element) then
+			//contentTopOffsetChanged will never become true.
+			contentTopOffset: 0
+		};
 		this.layout = {};
 
 		this.connectTo('^guides-layout', this._render.bind(this));
 		this.connectTo('^scroll', this._scroll.bind(this));
-
-		this.listen('^scroll:pause', this._scrollPause.bind(this));
 
 		if (this.props.height === 'auto') {
 			this._observeHeight();
@@ -139,38 +148,39 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_renderWrapper() {
-		let display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
 		let overflow = 'visible';
 		let width = this.layout.width;
 		let height = this.layout.height;
-		let contain = 'strict';
 
 		if (this.props.clip) {
-			height = this.layout.clipRect.height;
 			overflow = 'hidden';
+			height = this.layout.clipRect.height;
 		}
 
-		this.style.display = display;
+		if (this.props.hidden) {
+			this.style.left = '500vw';
+			this.style.top = '500vh';
+			this.style.visibility = 'hidden';
+			overflow = 'hidden';
+		} else {
+			this.style.left = '';
+			this.style.top = '';
+			this.style.visibility = '';
+		}
+
 		this.style.overflow = overflow;
 		this.style.width = Math.round(width) + 'px';
 		this.style.height = Math.round(height) + 'px';
-		this.style.contain = contain;
 	}
 
 	_renderContent() {
-		let width = this.layout.width;
-
 		this.contentStyle.position = 'relative';
-		this.contentStyle.width = Math.round(width) + 'px';
+		this.contentStyle.width = Math.round(this.layout.width) + 'px';
 
 		if (this.props.height === 'auto') {
 			this.contentStyle.height = '';
 		} else {
 			this.contentStyle.height = Math.round(this.layout.height) + 'px';
-		}
-
-		if (this.props.clip) {
-			this.contentStyle.backfaceVisibility = 'hidden';
 		}
 	}
 
@@ -179,29 +189,31 @@ export default class LayoutBehavior extends Behavior {
 
 		this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
 
-		if (scrollUpdate.wrapperTopChanged || forceUpdate) {
-			let left = Math.round(this.layout.left);
-			let top = scrollUpdate.wrapperTop;
+		if (this.props.hidden) {
+			this.style.willChange = '';
+			this.style.backfaceVisibility = '';
+			this.style.perspective = '';
+			this.style.transform = '';
+		} else {
+			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
+				let left = Math.round(this.layout.left);
+				let top = scrollUpdate.wrapperTop;
 
-			//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
-			//But we do not do the opposite here. This is just the last resort.
-			//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
-			if (scrollUpdate.inViewport) {
-				this.style.display = 'block';
 				this.style.willChange = 'transform';
+				this.style.backfaceVisibility = 'hidden';
+				this.style.perspective = '1000';
+				this.style.transform = `translate3d(${left}px, ${top}px, 0)`;
 			}
 
-			this.style.transform = `translate(${left}px, ${top}px)`;
-
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
-			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
-			//or elements with appear effects using scaling/rotation.
-			this.contentStyle.transform = `translate(0, ${scrollUpdate.contentTopOffset}px)`;
-
-			//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
-			//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
-
-			//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
+			//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling.
+			//Since we default contentTopOffset to 0, this check should be false for all flow elements.
+			if (scrollUpdate.contentTopOffsetChanged) {
+				this.contentStyle.willChange = 'transform';
+				this.contentStyle.backfaceVisibility = 'hidden';
+				this.contentStyle.perspective = '1000';
+				this.contentStyle.transform = `translate3d(0, ${scrollUpdate.contentTopOffset}px, 0)`;
+			}
 		}
 
 		if (scrollUpdate.inExtendedViewportChanged) {
@@ -226,27 +238,6 @@ export default class LayoutBehavior extends Behavior {
 			} else {
 				this.emit('center:leave');
 			}
-		}
-	}
-
-	_scrollPause() {
-		let scrollUpdate = this.scrollUpdate;
-
-		if (scrollUpdate.inExtendedViewport) {
-			this.style.display = 'block';
-			this.style.willChange = 'transform';
-		} else {
-			if (this._canSafelyBeUnloadedFromGPU()) {
-				this.style.display = 'none';
-			} else {
-				//This reduces gpu memory a ton and also hides text at the edge of the viewport.
-				//Otherwise those elements would be visible behind the adress bar in iOS.
-				//There's no inverse operation to that because once it is inside the viewport again
-				//the translation will overwrite the scale transform.
-				this.style.transform = 'scale(0)';
-			}
-
-			this.style.willChange = 'auto';
 		}
 	}
 }
