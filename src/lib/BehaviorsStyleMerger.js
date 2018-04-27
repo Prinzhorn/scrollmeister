@@ -1,3 +1,5 @@
+const translate2dRegex = /translate\(([^)]+)\)/g;
+
 export default class BehaviorsStyleMerger {
 	constructor(element, order) {
 		this.el = element;
@@ -42,8 +44,14 @@ export default class BehaviorsStyleMerger {
 				}
 			}
 
+			transforms = transforms.join(' ');
+
 			if (transforms.length > 0) {
-				this.el.style.transform = this.el.style.WebkitTransform = this.el.style.msTransform = transforms.join(' ');
+				this.el.style.transform = this.el.style.WebkitTransform = transforms.replace(
+					translate2dRegex,
+					'translate3d($1, 0)'
+				);
+				this.el.style.msTransform = transforms;
 			} else {
 				this.el.style.transform = '';
 			}

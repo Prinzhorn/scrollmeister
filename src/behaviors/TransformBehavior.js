@@ -29,7 +29,7 @@ export default class TransformBehavior extends Behavior {
 		//So... translate, skew, rotate, scale?
 		//This feels natural. Skewing after rotating is nothing people can imagine in their head.
 		//Or just add an order property with a default.
-		this.contentStyle.transform = `translate3d(${values.x}%, ${values.y}%, 0) rotate(${values.rotate}deg) scale(${
+		this.contentStyle.transform = `translate(${values.x}%, ${values.y}%) rotate(${values.rotate}deg) scale(${
 			values.scale
 		})`;
 

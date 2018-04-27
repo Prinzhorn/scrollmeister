@@ -202,7 +202,7 @@ export default class LayoutBehavior extends Behavior {
 				this.style.willChange = 'transform';
 				this.style.backfaceVisibility = 'hidden';
 				this.style.perspective = '1000';
-				this.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+				this.style.transform = `translate(${left}px, ${top}px, 0)`;
 			}
 
 			//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
@@ -212,7 +212,7 @@ export default class LayoutBehavior extends Behavior {
 				this.contentStyle.willChange = 'transform';
 				this.contentStyle.backfaceVisibility = 'hidden';
 				this.contentStyle.perspective = '1000';
-				this.contentStyle.transform = `translate3d(0, ${scrollUpdate.contentTopOffset}px, 0)`;
+				this.contentStyle.transform = `translate(0, ${scrollUpdate.contentTopOffset}px, 0)`;
 			}
 		}
 

@@ -127,20 +127,20 @@ describe('transform', () => {
 		const { element, merger } = createMerger();
 
 		merger.setBehaviorStyle('foo', 'transform', 'rotate(45deg)');
-		merger.setBehaviorStyle('bar', 'transform', 'translate(100px, 100px)');
+		merger.setBehaviorStyle('bar', 'transform', 'translate3d(100px, 100px, 0)');
 		merger.setBehaviorStyle('baz', 'transform', 'scale(0.5)');
 
-		expect(element.style.transform).toBe('rotate(45deg) translate(100px, 100px) scale(0.5)');
+		expect(element.style.transform).toBe('rotate(45deg) translate3d(100px, 100px, 0) scale(0.5)');
 	});
 
 	test('reset a single transform', () => {
 		const { element, merger } = createMerger();
 
 		merger.setBehaviorStyle('foo', 'transform', 'rotate(45deg)');
-		merger.setBehaviorStyle('bar', 'transform', 'translate(100px, 100px)');
+		merger.setBehaviorStyle('bar', 'transform', 'translate3d(100px, 100px, 0)');
 		merger.setBehaviorStyle('baz', 'transform', 'scale(0.5)');
 
-		expect(element.style.transform).toBe('rotate(45deg) translate(100px, 100px) scale(0.5)');
+		expect(element.style.transform).toBe('rotate(45deg) translate3d(100px, 100px, 0) scale(0.5)');
 
 		merger.resetBehaviorStyle('bar', 'transform');
 
@@ -161,24 +161,43 @@ describe('transform', () => {
 		const { element, merger } = createMerger();
 
 		merger.setBehaviorStyle('foo', 'transform', 'rotate(45deg)');
-		merger.setBehaviorStyle('bar', 'transform', 'translate(100px, 100px)');
+		merger.setBehaviorStyle('bar', 'transform', 'translate3d(100px, 100px, 0)');
 		merger.setBehaviorStyle('baz', 'transform', 'scale(0.5)');
 
-		expect(element.style.transform).toBe('rotate(45deg) translate(100px, 100px) scale(0.5)');
+		expect(element.style.transform).toBe('rotate(45deg) translate3d(100px, 100px, 0) scale(0.5)');
 
-		merger.setBehaviorStyle('bar', 'transform', 'translate(200px, 200px)');
+		merger.setBehaviorStyle('bar', 'transform', 'translate3d(200px, 200px, 0)');
 
-		expect(element.style.transform).toBe('rotate(45deg) translate(200px, 200px) scale(0.5)');
+		expect(element.style.transform).toBe('rotate(45deg) translate3d(200px, 200px, 0) scale(0.5)');
 	});
 
 	test('merges transforms in a consistent order (foo, bar, baz)', () => {
 		const { element, merger } = createMerger();
 
-		merger.setBehaviorStyle('bar', 'transform', 'translate(100px, 100px)');
+		merger.setBehaviorStyle('bar', 'transform', 'translate3d(100px, 100px, 0)');
 		merger.setBehaviorStyle('baz', 'transform', 'scale(0.5)');
 		merger.setBehaviorStyle('foo', 'transform', 'rotate(45deg)');
 
-		expect(element.style.transform).toBe('rotate(45deg) translate(100px, 100px) scale(0.5)');
+		expect(element.style.transform).toBe('rotate(45deg) translate3d(100px, 100px, 0) scale(0.5)');
+	});
+
+	test('turns translate() into translate3d() but not for IE 9', () => {
+		const { element, merger } = createMerger();
+
+		merger.setBehaviorStyle('foo', 'transform', 'translate(100px, 100px)');
+		merger.setBehaviorStyle('bar', 'transform', 'scale(1) translate(200px, 200px) scale(2)');
+		merger.setBehaviorStyle(
+			'baz',
+			'transform',
+			'scale(3) translate(300px, 300px) translate3d(400px, 400px, 400) scale(4)'
+		);
+
+		expect(element.style.transform).toBe(
+			'translate3d(100px, 100px, 0) scale(1) translate3d(200px, 200px, 0) scale(2) scale(3) translate3d(300px, 300px, 0) translate3d(400px, 400px, 400) scale(4)'
+		);
+		expect(element.style.msTransform).toBe(
+			'translate(100px, 100px) scale(1) translate(200px, 200px) scale(2) scale(3) translate(300px, 300px) translate3d(400px, 400px, 400) scale(4)'
+		);
 	});
 });
 
