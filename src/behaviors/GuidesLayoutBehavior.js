@@ -52,8 +52,11 @@ export default class GuidesLayoutBehavior extends Behavior {
 
 		this.listenAndInvoke(window, 'resize', () => {
 			let viewport = this._getViewport();
-			this.engine.updateViewport(viewport);
-			this._scheduleLayout();
+			let changed = this.engine.updateViewport(viewport);
+
+			if (changed) {
+				this._scheduleLayout();
+			}
 		});
 
 		//Whenever a new layout behavior is attached or changed, we need to do layout.
@@ -96,15 +99,25 @@ export default class GuidesLayoutBehavior extends Behavior {
 	}
 
 	_getViewport(): { width: number, height: number, outerWidth: number, outerHeight: number } {
-		let documentElement = document.documentElement;
-
-		if (!documentElement) {
-			throw new Error('There is no documentElement to get the size of.');
+		if (!this._viewportSizeElement) {
+			this._viewportSizeElement = document.createElement('div');
+			this._viewportSizeElement.style.cssText = `
+				width: 100vw;
+				height: 100vh;
+				position: fixed;
+				left: -100vw;
+				top: -100vh;
+				pointer-events: none;
+				visibility: hidden;
+				opacity: 0;
+				z-index: -1;`;
+			this.appendChild(this._viewportSizeElement);
 		}
 
-		let width = documentElement.clientWidth;
-		let outerWidth = width + this._getScrollbarWidth();
-		let height = documentElement.clientHeight;
+		let box = this._viewportSizeElement.getBoundingClientRect();
+		let outerWidth = box.width;
+		let width = outerWidth - this._getScrollbarWidth();
+		let height = box.height;
 		let outerHeight = height;
 
 		return {
