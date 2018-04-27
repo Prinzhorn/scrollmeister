@@ -28,3 +28,4 @@ Scrollmeister.defineBehavior(YouTubeBehavior);
 Scrollmeister.defineBehavior(CSSBehavior);
 Scrollmeister.defineBehavior(SignalsBehavior);
 Scrollmeister.defineBehavior(AutoplayBehavior);
+

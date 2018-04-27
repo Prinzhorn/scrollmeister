@@ -2,6 +2,7 @@ import Scrollmeister from 'scrollmeister.js';
 
 import GuidesLayoutBehavior from 'behaviors/GuidesLayoutBehavior.js';
 import ScrollBehavior from 'behaviors/ScrollBehavior.js';
+import FakeScrollBehavior from 'behaviors/FakeScrollBehavior.js';
 import DebugGuidesBehavior from 'behaviors/DebugGuidesBehavior.js';
 import FadeInBehavior from 'behaviors/FadeInBehavior.js';
 
@@ -12,6 +13,7 @@ import MousetrapBehavior from 'behaviors/MousetrapBehavior.js';
 
 Scrollmeister.defineBehavior(GuidesLayoutBehavior);
 Scrollmeister.defineBehavior(ScrollBehavior);
+Scrollmeister.defineBehavior(FakeScrollBehavior);
 Scrollmeister.defineBehavior(DebugGuidesBehavior);
 Scrollmeister.defineBehavior(FadeInBehavior);
 

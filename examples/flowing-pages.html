@@ -51,6 +51,11 @@
 				vertical-align: middle;
 			}
 
+			iframe {
+				width: 100%;
+				height: 100%;
+			}
+
 			footer {
 				text-align: center;
 				padding: 1em 0;
@@ -88,8 +93,9 @@
 			<element-meister layout="guides: text-left text-right; spacing: 5vh 50vh;">
 				<img src="assets/images/photo-1426170042593-200f250dfdaf.jpg" width="1920" height="1080" />
 			</element-meister>
-			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; dependencies: consume 2; spacing: -50vh;" media="ratio: 480 / 270" autoplay>
-				<video src="assets/videos/bunny.mp4" type="video/mp4" muted playsInline loop></video>
+			<element-meister class="background" layout="height: 100vh; mode: follow; followerMode: pin; dependencies: consume 2; spacing: -50vh;">
+				<!--<video src="assets/videos/bunny.mp4" type="video/mp4" muted playsInline loop></video>-->
+				<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/TUoOcDGMgT4?rel=0&amp;showinfo=0&amp;iv_load_policy=3" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 			</element-meister>
 
 			<element-meister layout="guides: text-left text-right; spacing: 50vh;">
@@ -117,11 +123,19 @@
 		<script>
 			//Conditions/responsive are not implemented yet, otherwise this would be declarative right on the element.
 			let meister = document.querySelector('scroll-meister');
+			let viewportWidth = 0;
+
 			meister.addEventListener('guides-layout:attach', function() {
 				function resize() {
-					if(window.innerWidth < 768) {
+					if(window.innerWidth === viewportWidth) {
+						return;
+					}
+
+					viewportWidth = window.innerWidth;
+
+					if(viewportWidth < 768) {
 						meister.guidesLayout.guides = 'text-left 0 20px, text-right 100% 20px';
-					} else if(window.innerWidth < 1024) {
+					} else if(viewportWidth < 1024) {
 						meister.guidesLayout.guides = 'text-left 10%, text-right -10%';
 					} else {
 						meister.guidesLayout.guides = 'text-left 0 2vmin, text-right 50%';

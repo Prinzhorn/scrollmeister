@@ -1,3 +1,14 @@
+/*!
+ * Scrollmeister v0.0.1-alpha.1 (April 27th 2018)
+ * Open-source JavaScript framework to declaratively build scrolling experiences
+ * 
+ * https://www.scrollmeister.com
+ * 
+ * @author  Alexander Prinzhorn (https://www.prinzhorn.it)
+ * @license MIT
+ * 
+ * This bundle contains the following npm packages: document-register-element, linear-partitioning, object-assign, raf, regl, resize-observer-polyfill, scroll-logic, youtube-iframe
+ */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Scrollmeister = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /*! (C) Andrea Giammarchi - @WebReflection - Mit Style License */
 (function(window,polyfill){"use strict";var document=window.document,Object=window.Object;var htmlClass=function(info){var catchClass=/^[A-Z]+[a-z]/,filterBy=function(re){var arr=[],tag;for(tag in register){if(re.test(tag))arr.push(tag)}return arr},add=function(Class,tag){tag=tag.toLowerCase();if(!(tag in register)){register[Class]=(register[Class]||[]).concat(tag);register[tag]=register[tag.toUpperCase()]=Class}},register=(Object.create||Object)(null),htmlClass={},i,section,tags,Class;for(section in info){for(Class in info[section]){tags=info[section][Class];register[Class]=tags;for(i=0;i<tags.length;i++){register[tags[i].toLowerCase()]=register[tags[i].toUpperCase()]=Class}}}htmlClass.get=function get(tagOrClass){return typeof tagOrClass==="string"?register[tagOrClass]||(catchClass.test(tagOrClass)?[]:""):filterBy(tagOrClass)};htmlClass.set=function set(tag,Class){return catchClass.test(tag)?add(tag,Class):add(Class,tag),htmlClass};return htmlClass}({collections:{HTMLAllCollection:["all"],HTMLCollection:["forms"],HTMLFormControlsCollection:["elements"],HTMLOptionsCollection:["options"]},elements:{Element:["element"],HTMLAnchorElement:["a"],HTMLAppletElement:["applet"],HTMLAreaElement:["area"],HTMLAttachmentElement:["attachment"],HTMLAudioElement:["audio"],HTMLBRElement:["br"],HTMLBaseElement:["base"],HTMLBodyElement:["body"],HTMLButtonElement:["button"],HTMLCanvasElement:["canvas"],HTMLContentElement:["content"],HTMLDListElement:["dl"],HTMLDataElement:["data"],HTMLDataListElement:["datalist"],HTMLDetailsElement:["details"],HTMLDialogElement:["dialog"],HTMLDirectoryElement:["dir"],HTMLDivElement:["div"],HTMLDocument:["document"],HTMLElement:["element","abbr","address","article","aside","b","bdi","bdo","cite","code","command","dd","dfn","dt","em","figcaption","figure","footer","header","i","kbd","mark","nav","noscript","rp","rt","ruby","s","samp","section","small","strong","sub","summary","sup","u","var","wbr"],HTMLEmbedElement:["embed"],HTMLFieldSetElement:["fieldset"],HTMLFontElement:["font"],HTMLFormElement:["form"],HTMLFrameElement:["frame"],HTMLFrameSetElement:["frameset"],HTMLHRElement:["hr"],HTMLHeadElement:["head"],HTMLHeadingElement:["h1","h2","h3","h4","h5","h6"],HTMLHtmlElement:["html"],HTMLIFrameElement:["iframe"],HTMLImageElement:["img"],HTMLInputElement:["input"],HTMLKeygenElement:["keygen"],HTMLLIElement:["li"],HTMLLabelElement:["label"],HTMLLegendElement:["legend"],HTMLLinkElement:["link"],HTMLMapElement:["map"],HTMLMarqueeElement:["marquee"],HTMLMediaElement:["media"],HTMLMenuElement:["menu"],HTMLMenuItemElement:["menuitem"],HTMLMetaElement:["meta"],HTMLMeterElement:["meter"],HTMLModElement:["del","ins"],HTMLOListElement:["ol"],HTMLObjectElement:["object"],HTMLOptGroupElement:["optgroup"],HTMLOptionElement:["option"],HTMLOutputElement:["output"],HTMLParagraphElement:["p"],HTMLParamElement:["param"],HTMLPictureElement:["picture"],HTMLPreElement:["pre"],HTMLProgressElement:["progress"],HTMLQuoteElement:["blockquote","q","quote"],HTMLScriptElement:["script"],HTMLSelectElement:["select"],HTMLShadowElement:["shadow"],HTMLSlotElement:["slot"],HTMLSourceElement:["source"],HTMLSpanElement:["span"],HTMLStyleElement:["style"],HTMLTableCaptionElement:["caption"],HTMLTableCellElement:["td","th"],HTMLTableColElement:["col","colgroup"],HTMLTableElement:["table"],HTMLTableRowElement:["tr"],HTMLTableSectionElement:["thead","tbody","tfoot"],HTMLTemplateElement:["template"],HTMLTextAreaElement:["textarea"],HTMLTimeElement:["time"],HTMLTitleElement:["title"],HTMLTrackElement:["track"],HTMLUListElement:["ul"],HTMLUnknownElement:["unknown","vhgroupv","vkeygen"],HTMLVideoElement:["video"]},nodes:{Attr:["node"],Audio:["audio"],CDATASection:["node"],CharacterData:["node"],Comment:["#comment"],Document:["#document"],DocumentFragment:["#document-fragment"],DocumentType:["node"],HTMLDocument:["#document"],Image:["img"],Option:["option"],ProcessingInstruction:["node"],ShadowRoot:["#shadow-root"],Text:["#text"],XMLDocument:["xml"]}});if(typeof polyfill!=="object")polyfill={type:polyfill||"auto"};var REGISTER_ELEMENT="registerElement",EXPANDO_UID="__"+REGISTER_ELEMENT+(window.Math.random()*1e5>>0),ADD_EVENT_LISTENER="addEventListener",ATTACHED="attached",CALLBACK="Callback",DETACHED="detached",EXTENDS="extends",ATTRIBUTE_CHANGED_CALLBACK="attributeChanged"+CALLBACK,ATTACHED_CALLBACK=ATTACHED+CALLBACK,CONNECTED_CALLBACK="connected"+CALLBACK,DISCONNECTED_CALLBACK="disconnected"+CALLBACK,CREATED_CALLBACK="created"+CALLBACK,DETACHED_CALLBACK=DETACHED+CALLBACK,ADDITION="ADDITION",MODIFICATION="MODIFICATION",REMOVAL="REMOVAL",DOM_ATTR_MODIFIED="DOMAttrModified",DOM_CONTENT_LOADED="DOMContentLoaded",DOM_SUBTREE_MODIFIED="DOMSubtreeModified",PREFIX_TAG="<",PREFIX_IS="=",validName=/^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/,invalidNames=["ANNOTATION-XML","COLOR-PROFILE","FONT-FACE","FONT-FACE-SRC","FONT-FACE-URI","FONT-FACE-FORMAT","FONT-FACE-NAME","MISSING-GLYPH"],types=[],protos=[],query="",documentElement=document.documentElement,indexOf=types.indexOf||function(v){for(var i=this.length;i--&&this[i]!==v;){}return i},OP=Object.prototype,hOP=OP.hasOwnProperty,iPO=OP.isPrototypeOf,defineProperty=Object.defineProperty,empty=[],gOPD=Object.getOwnPropertyDescriptor,gOPN=Object.getOwnPropertyNames,gPO=Object.getPrototypeOf,sPO=Object.setPrototypeOf,hasProto=!!Object.__proto__,fixGetClass=false,DRECEV1="__dreCEv1",customElements=window.customElements,usableCustomElements=!/^force/.test(polyfill.type)&&!!(customElements&&customElements.define&&customElements.get&&customElements.whenDefined),Dict=Object.create||Object,Map=window.Map||function Map(){var K=[],V=[],i;return{get:function(k){return V[indexOf.call(K,k)]},set:function(k,v){i=indexOf.call(K,k);if(i<0)V[K.push(k)-1]=v;else V[i]=v}}},Promise=window.Promise||function(fn){var notify=[],done=false,p={catch:function(){return p},then:function(cb){notify.push(cb);if(done)setTimeout(resolve,1);return p}};function resolve(value){done=true;while(notify.length)notify.shift()(value)}fn(resolve);return p},justCreated=false,constructors=Dict(null),waitingList=Dict(null),nodeNames=new Map,secondArgument=function(is){return is.toLowerCase()},create=Object.create||function Bridge(proto){return proto?(Bridge.prototype=proto,new Bridge):this},setPrototype=sPO||(hasProto?function(o,p){o.__proto__=p;return o}:gOPN&&gOPD?function(){function setProperties(o,p){for(var key,names=gOPN(p),i=0,length=names.length;i<length;i++){key=names[i];if(!hOP.call(o,key)){defineProperty(o,key,gOPD(p,key))}}}return function(o,p){do{setProperties(o,p)}while((p=gPO(p))&&!iPO.call(p,o));return o}}():function(o,p){for(var key in p){o[key]=p[key]}return o}),MutationObserver=window.MutationObserver||window.WebKitMutationObserver,HTMLElementPrototype=(window.HTMLElement||window.Element||window.Node).prototype,IE8=!iPO.call(HTMLElementPrototype,documentElement),safeProperty=IE8?function(o,k,d){o[k]=d.value;return o}:defineProperty,isValidNode=IE8?function(node){return node.nodeType===1}:function(node){return iPO.call(HTMLElementPrototype,node)},targets=IE8&&[],attachShadow=HTMLElementPrototype.attachShadow,cloneNode=HTMLElementPrototype.cloneNode,dispatchEvent=HTMLElementPrototype.dispatchEvent,getAttribute=HTMLElementPrototype.getAttribute,hasAttribute=HTMLElementPrototype.hasAttribute,removeAttribute=HTMLElementPrototype.removeAttribute,setAttribute=HTMLElementPrototype.setAttribute,createElement=document.createElement,patchedCreateElement=createElement,attributesObserver=MutationObserver&&{attributes:true,characterData:true,attributeOldValue:true},DOMAttrModified=MutationObserver||function(e){doesNotSupportDOMAttrModified=false;documentElement.removeEventListener(DOM_ATTR_MODIFIED,DOMAttrModified)},asapQueue,asapTimer=0,V0=REGISTER_ELEMENT in document&&!/^force-all/.test(polyfill.type),setListener=true,justSetup=false,doesNotSupportDOMAttrModified=true,dropDomContentLoaded=true,notFromInnerHTMLHelper=true,onSubtreeModified,callDOMAttrModified,getAttributesMirror,observer,observe,patchIfNotAlready,patch,tmp;if(MutationObserver){tmp=document.createElement("div");tmp.innerHTML="<div><div></div></div>";new MutationObserver(function(mutations,observer){if(mutations[0]&&mutations[0].type=="childList"&&!mutations[0].removedNodes[0].childNodes.length){tmp=gOPD(HTMLElementPrototype,"innerHTML");var set=tmp&&tmp.set;if(set)defineProperty(HTMLElementPrototype,"innerHTML",{set:function(value){while(this.lastChild)this.removeChild(this.lastChild);set.call(this,value)}})}observer.disconnect();tmp=null}).observe(tmp,{childList:true,subtree:true});tmp.innerHTML=""}if(!V0){if(sPO||hasProto){patchIfNotAlready=function(node,proto){if(!iPO.call(proto,node)){setupNode(node,proto)}};patch=setupNode}else{patchIfNotAlready=function(node,proto){if(!node[EXPANDO_UID]){node[EXPANDO_UID]=Object(true);setupNode(node,proto)}};patch=patchIfNotAlready}if(IE8){doesNotSupportDOMAttrModified=false;(function(){var descriptor=gOPD(HTMLElementPrototype,ADD_EVENT_LISTENER),addEventListener=descriptor.value,patchedRemoveAttribute=function(name){var e=new CustomEvent(DOM_ATTR_MODIFIED,{bubbles:true});e.attrName=name;e.prevValue=getAttribute.call(this,name);e.newValue=null;e[REMOVAL]=e.attrChange=2;removeAttribute.call(this,name);dispatchEvent.call(this,e)},patchedSetAttribute=function(name,value){var had=hasAttribute.call(this,name),old=had&&getAttribute.call(this,name),e=new CustomEvent(DOM_ATTR_MODIFIED,{bubbles:true});setAttribute.call(this,name,value);e.attrName=name;e.prevValue=had?old:null;e.newValue=value;if(had){e[MODIFICATION]=e.attrChange=1}else{e[ADDITION]=e.attrChange=0}dispatchEvent.call(this,e)},onPropertyChange=function(e){var node=e.currentTarget,superSecret=node[EXPANDO_UID],propertyName=e.propertyName,event;if(superSecret.hasOwnProperty(propertyName)){superSecret=superSecret[propertyName];event=new CustomEvent(DOM_ATTR_MODIFIED,{bubbles:true});event.attrName=superSecret.name;event.prevValue=superSecret.value||null;event.newValue=superSecret.value=node[propertyName]||null;if(event.prevValue==null){event[ADDITION]=event.attrChange=0}else{event[MODIFICATION]=event.attrChange=1}dispatchEvent.call(node,event)}};descriptor.value=function(type,handler,capture){if(type===DOM_ATTR_MODIFIED&&this[ATTRIBUTE_CHANGED_CALLBACK]&&this.setAttribute!==patchedSetAttribute){this[EXPANDO_UID]={className:{name:"class",value:this.className}};this.setAttribute=patchedSetAttribute;this.removeAttribute=patchedRemoveAttribute;addEventListener.call(this,"propertychange",onPropertyChange)}addEventListener.call(this,type,handler,capture)};defineProperty(HTMLElementPrototype,ADD_EVENT_LISTENER,descriptor)})()}else if(!MutationObserver){documentElement[ADD_EVENT_LISTENER](DOM_ATTR_MODIFIED,DOMAttrModified);documentElement.setAttribute(EXPANDO_UID,1);documentElement.removeAttribute(EXPANDO_UID);if(doesNotSupportDOMAttrModified){onSubtreeModified=function(e){var node=this,oldAttributes,newAttributes,key;if(node===e.target){oldAttributes=node[EXPANDO_UID];node[EXPANDO_UID]=newAttributes=getAttributesMirror(node);for(key in newAttributes){if(!(key in oldAttributes)){return callDOMAttrModified(0,node,key,oldAttributes[key],newAttributes[key],ADDITION)}else if(newAttributes[key]!==oldAttributes[key]){return callDOMAttrModified(1,node,key,oldAttributes[key],newAttributes[key],MODIFICATION)}}for(key in oldAttributes){if(!(key in newAttributes)){return callDOMAttrModified(2,node,key,oldAttributes[key],newAttributes[key],REMOVAL)}}}};callDOMAttrModified=function(attrChange,currentTarget,attrName,prevValue,newValue,action){var e={attrChange:attrChange,currentTarget:currentTarget,attrName:attrName,prevValue:prevValue,newValue:newValue};e[action]=attrChange;onDOMAttrModified(e)};getAttributesMirror=function(node){for(var attr,name,result={},attributes=node.attributes,i=0,length=attributes.length;i<length;i++){attr=attributes[i];name=attr.name;if(name!=="setAttribute"){result[name]=attr.value}}return result}}}document[REGISTER_ELEMENT]=function registerElement(type,options){upperType=type.toUpperCase();if(setListener){setListener=false;if(MutationObserver){observer=function(attached,detached){function checkEmAll(list,callback){for(var i=0,length=list.length;i<length;callback(list[i++])){}}return new MutationObserver(function(records){for(var current,node,newValue,i=0,length=records.length;i<length;i++){current=records[i];if(current.type==="childList"){checkEmAll(current.addedNodes,attached);checkEmAll(current.removedNodes,detached)}else{node=current.target;if(notFromInnerHTMLHelper&&node[ATTRIBUTE_CHANGED_CALLBACK]&&current.attributeName!=="style"){newValue=getAttribute.call(node,current.attributeName);if(newValue!==current.oldValue){node[ATTRIBUTE_CHANGED_CALLBACK](current.attributeName,current.oldValue,newValue)}}}}})}(executeAction(ATTACHED),executeAction(DETACHED));observe=function(node){observer.observe(node,{childList:true,subtree:true});return node};observe(document);if(attachShadow){HTMLElementPrototype.attachShadow=function(){return observe(attachShadow.apply(this,arguments))}}}else{asapQueue=[];document[ADD_EVENT_LISTENER]("DOMNodeInserted",onDOMNode(ATTACHED));document[ADD_EVENT_LISTENER]("DOMNodeRemoved",onDOMNode(DETACHED))}document[ADD_EVENT_LISTENER](DOM_CONTENT_LOADED,onReadyStateChange);document[ADD_EVENT_LISTENER]("readystatechange",onReadyStateChange);HTMLElementPrototype.cloneNode=function(deep){var node=cloneNode.call(this,!!deep),i=getTypeIndex(node);if(-1<i)patch(node,protos[i]);if(deep&&query.length)loopAndSetup(node.querySelectorAll(query));return node}}if(justSetup)return justSetup=false;if(-2<indexOf.call(types,PREFIX_IS+upperType)+indexOf.call(types,PREFIX_TAG+upperType)){throwTypeError(type)}if(!validName.test(upperType)||-1<indexOf.call(invalidNames,upperType)){throw new Error("The type "+type+" is invalid")}var constructor=function(){return extending?document.createElement(nodeName,upperType):document.createElement(nodeName)},opt=options||OP,extending=hOP.call(opt,EXTENDS),nodeName=extending?options[EXTENDS].toUpperCase():upperType,upperType,i;if(extending&&-1<indexOf.call(types,PREFIX_TAG+nodeName)){throwTypeError(nodeName)}i=types.push((extending?PREFIX_IS:PREFIX_TAG)+upperType)-1;query=query.concat(query.length?",":"",extending?nodeName+'[is="'+type.toLowerCase()+'"]':nodeName);constructor.prototype=protos[i]=hOP.call(opt,"prototype")?opt.prototype:create(HTMLElementPrototype);if(query.length)loopAndVerify(document.querySelectorAll(query),ATTACHED);return constructor};document.createElement=patchedCreateElement=function(localName,typeExtension){var is=getIs(typeExtension),node=is?createElement.call(document,localName,secondArgument(is)):createElement.call(document,localName),name=""+localName,i=indexOf.call(types,(is?PREFIX_IS:PREFIX_TAG)+(is||name).toUpperCase()),setup=-1<i;if(is){node.setAttribute("is",is=is.toLowerCase());if(setup){setup=isInQSA(name.toUpperCase(),is)}}notFromInnerHTMLHelper=!document.createElement.innerHTMLHelper;if(setup)patch(node,protos[i]);return node}}function ASAP(){var queue=asapQueue.splice(0,asapQueue.length);asapTimer=0;while(queue.length){queue.shift().call(null,queue.shift())}}function loopAndVerify(list,action){for(var i=0,length=list.length;i<length;i++){verifyAndSetupAndAction(list[i],action)}}function loopAndSetup(list){for(var i=0,length=list.length,node;i<length;i++){node=list[i];patch(node,protos[getTypeIndex(node)])}}function executeAction(action){return function(node){if(isValidNode(node)){verifyAndSetupAndAction(node,action);if(query.length)loopAndVerify(node.querySelectorAll(query),action)}}}function getTypeIndex(target){var is=getAttribute.call(target,"is"),nodeName=target.nodeName.toUpperCase(),i=indexOf.call(types,is?PREFIX_IS+is.toUpperCase():PREFIX_TAG+nodeName);return is&&-1<i&&!isInQSA(nodeName,is)?-1:i}function isInQSA(name,type){return-1<query.indexOf(name+'[is="'+type+'"]')}function onDOMAttrModified(e){var node=e.currentTarget,attrChange=e.attrChange,attrName=e.attrName,target=e.target,addition=e[ADDITION]||2,removal=e[REMOVAL]||3;if(notFromInnerHTMLHelper&&(!target||target===node)&&node[ATTRIBUTE_CHANGED_CALLBACK]&&attrName!=="style"&&(e.prevValue!==e.newValue||e.newValue===""&&(attrChange===addition||attrChange===removal))){node[ATTRIBUTE_CHANGED_CALLBACK](attrName,attrChange===addition?null:e.prevValue,attrChange===removal?null:e.newValue)}}function onDOMNode(action){var executor=executeAction(action);return function(e){asapQueue.push(executor,e.target);if(asapTimer)clearTimeout(asapTimer);asapTimer=setTimeout(ASAP,1)}}function onReadyStateChange(e){if(dropDomContentLoaded){dropDomContentLoaded=false;e.currentTarget.removeEventListener(DOM_CONTENT_LOADED,onReadyStateChange)}if(query.length)loopAndVerify((e.target||document).querySelectorAll(query),e.detail===DETACHED?DETACHED:ATTACHED);if(IE8)purge()}function patchedSetAttribute(name,value){var self=this;setAttribute.call(self,name,value);onSubtreeModified.call(self,{target:self})}function setupNode(node,proto){setPrototype(node,proto);if(observer){observer.observe(node,attributesObserver)}else{if(doesNotSupportDOMAttrModified){node.setAttribute=patchedSetAttribute;node[EXPANDO_UID]=getAttributesMirror(node);node[ADD_EVENT_LISTENER](DOM_SUBTREE_MODIFIED,onSubtreeModified)}node[ADD_EVENT_LISTENER](DOM_ATTR_MODIFIED,onDOMAttrModified)}if(node[CREATED_CALLBACK]&&notFromInnerHTMLHelper){node.created=true;node[CREATED_CALLBACK]();node.created=false}}function purge(){for(var node,i=0,length=targets.length;i<length;i++){node=targets[i];if(!documentElement.contains(node)){length--;targets.splice(i--,1);verifyAndSetupAndAction(node,DETACHED)}}}function throwTypeError(type){throw new Error("A "+type+" type is already registered")}function verifyAndSetupAndAction(node,action){var fn,i=getTypeIndex(node),counterAction;if(-1<i){patchIfNotAlready(node,protos[i]);i=0;if(action===ATTACHED&&!node[ATTACHED]){node[DETACHED]=false;node[ATTACHED]=true;counterAction="connected";i=1;if(IE8&&indexOf.call(targets,node)<0){targets.push(node)}}else if(action===DETACHED&&!node[DETACHED]){node[ATTACHED]=false;node[DETACHED]=true;counterAction="disconnected";i=1}if(i&&(fn=node[action+CALLBACK]||node[counterAction+CALLBACK]))fn.call(node)}}function CustomElementRegistry(){}CustomElementRegistry.prototype={constructor:CustomElementRegistry,define:usableCustomElements?function(name,Class,options){if(options){CERDefine(name,Class,options)}else{var NAME=name.toUpperCase();constructors[NAME]={constructor:Class,create:[NAME]};nodeNames.set(Class,NAME);customElements.define(name,Class)}}:CERDefine,get:usableCustomElements?function(name){return customElements.get(name)||get(name)}:get,whenDefined:usableCustomElements?function(name){return Promise.race([customElements.whenDefined(name),whenDefined(name)])}:whenDefined};function CERDefine(name,Class,options){var is=options&&options[EXTENDS]||"",CProto=Class.prototype,proto=create(CProto),attributes=Class.observedAttributes||empty,definition={prototype:proto};safeProperty(proto,CREATED_CALLBACK,{value:function(){if(justCreated)justCreated=false;else if(!this[DRECEV1]){this[DRECEV1]=true;new Class(this);if(CProto[CREATED_CALLBACK])CProto[CREATED_CALLBACK].call(this);var info=constructors[nodeNames.get(Class)];if(!usableCustomElements||info.create.length>1){notifyAttributes(this)}}}});safeProperty(proto,ATTRIBUTE_CHANGED_CALLBACK,{value:function(name){if(-1<indexOf.call(attributes,name))CProto[ATTRIBUTE_CHANGED_CALLBACK].apply(this,arguments)}});if(CProto[CONNECTED_CALLBACK]){safeProperty(proto,ATTACHED_CALLBACK,{value:CProto[CONNECTED_CALLBACK]})}if(CProto[DISCONNECTED_CALLBACK]){safeProperty(proto,DETACHED_CALLBACK,{value:CProto[DISCONNECTED_CALLBACK]})}if(is)definition[EXTENDS]=is;name=name.toUpperCase();constructors[name]={constructor:Class,create:is?[is,secondArgument(name)]:[name]};nodeNames.set(Class,name);document[REGISTER_ELEMENT](name.toLowerCase(),definition);whenDefined(name);waitingList[name].r()}function get(name){var info=constructors[name.toUpperCase()];return info&&info.constructor}function getIs(options){return typeof options==="string"?options:options&&options.is||""}function notifyAttributes(self){var callback=self[ATTRIBUTE_CHANGED_CALLBACK],attributes=callback?self.attributes:empty,i=attributes.length,attribute;while(i--){attribute=attributes[i];callback.call(self,attribute.name||attribute.nodeName,null,attribute.value||attribute.nodeValue)}}function whenDefined(name){name=name.toUpperCase();if(!(name in waitingList)){waitingList[name]={};waitingList[name].p=new Promise(function(resolve){waitingList[name].r=resolve})}return waitingList[name].p}function polyfillV1(){if(customElements)delete window.customElements;defineProperty(window,"customElements",{configurable:true,value:new CustomElementRegistry});defineProperty(window,"CustomElementRegistry",{configurable:true,value:CustomElementRegistry});for(var patchClass=function(name){var Class=window[name];if(Class){window[name]=function CustomElementsV1(self){var info,isNative;if(!self)self=this;if(!self[DRECEV1]){justCreated=true;info=constructors[nodeNames.get(self.constructor)];isNative=usableCustomElements&&info.create.length===1;self=isNative?Reflect.construct(Class,empty,info.constructor):document.createElement.apply(document,info.create);self[DRECEV1]=true;justCreated=false;if(!isNative)notifyAttributes(self)}return self};window[name].prototype=Class.prototype;try{Class.prototype.constructor=window[name]}catch(WebKit){fixGetClass=true;defineProperty(Class,DRECEV1,{value:window[name]})}}},Classes=htmlClass.get(/^HTML[A-Z]*[a-z]/),i=Classes.length;i--;patchClass(Classes[i])){}document.createElement=function(name,options){var is=getIs(options);return is?patchedCreateElement.call(this,name,secondArgument(is)):patchedCreateElement.call(this,name)};if(!V0){justSetup=true;document[REGISTER_ELEMENT]("")}}if(!customElements||/^force/.test(polyfill.type))polyfillV1();else if(!polyfill.noBuiltIn){try{(function(DRE,options,name){options[EXTENDS]="a";DRE.prototype=create(HTMLAnchorElement.prototype);DRE.prototype.constructor=DRE;window.customElements.define(name,DRE,options);if(getAttribute.call(document.createElement("a",{is:name}),"is")!==name||usableCustomElements&&getAttribute.call(new DRE,"is")!==name){throw options}})(function DRE(){return Reflect.construct(HTMLAnchorElement,[],DRE)},{},"document-register-element-a")}catch(o_O){polyfillV1()}}if(!polyfill.noBuiltIn){try{createElement.call(document,"a","a")}catch(FireFox){secondArgument=function(is){return{is:is.toLowerCase()}}}}})(window);
@@ -12331,7 +12342,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/camelCase.js":47,"lib/cssProps.js":48,"lib/schemaParser.js":53,"object-assign":3,"ponies/CustomEvent.js":54,"types":65}],14:[function(require,module,exports){
+},{"lib/camelCase.js":48,"lib/cssProps.js":49,"lib/schemaParser.js":54,"object-assign":3,"ponies/CustomEvent.js":55,"types":66}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12582,1753 +12593,6 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-var _fontSizeWidthRatio = require('lib/fontSizeWidthRatio.js');
-
-var _fontSizeWidthRatio2 = _interopRequireDefault(_fontSizeWidthRatio);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var FadeInBehavior = function (_Behavior) {
-	_inherits(FadeInBehavior, _Behavior);
-
-	function FadeInBehavior() {
-		_classCallCheck(this, FadeInBehavior);
-
-		return _possibleConstructorReturn(this, (FadeInBehavior.__proto__ || Object.getPrototypeOf(FadeInBehavior)).apply(this, arguments));
-	}
-
-	_createClass(FadeInBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			var _this2 = this;
-
-			if (this.contentEl.children.length !== 1) {
-				this.error(new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.'));
-			}
-
-			this.contentStyle.whiteSpace = 'nowrap';
-
-			this.connectTo('layout', function (layoutBehavior) {
-				if (!_this2._fontSizeWidthRatio) {
-					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.contentEl);
-				}
-
-				_this2.contentStyle.fontSize = _this2._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
-
-				_this2.notify();
-			});
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'fluid-text';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['layout'];
-		}
-	}]);
-
-	return FadeInBehavior;
-}(_Behavior3.default);
-
-exports.default = FadeInBehavior;
-
-},{"behaviors/Behavior.js":13,"lib/fontSizeWidthRatio.js":51}],18:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var createRegl = void 0;
-
-try {
-	createRegl = require('regl');
-} catch (ignore) {
-	createRegl = null;
-}
-
-var GLEffectBehavior = function (_Behavior) {
-	_inherits(GLEffectBehavior, _Behavior);
-
-	function GLEffectBehavior() {
-		_classCallCheck(this, GLEffectBehavior);
-
-		return _possibleConstructorReturn(this, (GLEffectBehavior.__proto__ || Object.getPrototypeOf(GLEffectBehavior)).apply(this, arguments));
-	}
-
-	_createClass(GLEffectBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			var _this2 = this;
-
-			if (!createRegl) {
-				return;
-			}
-
-			this._sourceElement = this.el.querySelector('img, video');
-			this._canvas = this._createCanvas();
-
-			if (!this._initRegl()) {
-				this._removeCanvas();
-				return;
-			}
-
-			this.connectTo('layout', this._resize.bind(this));
-			this.connectTo('interpolate', this._render.bind(this), function () {
-				//This updates the texture in addition to the render loop.
-				//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
-				_this2._pollTimer = setInterval(_this2._pollSource.bind(_this2, true), 1000 / 30);
-			});
-		}
-	}, {
-		key: 'update',
-		value: function update() {
-			this._initRegl();
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			if (!createRegl) {
-				return;
-			}
-
-			clearInterval(this._pollTimer);
-			this._regl.destroy();
-		}
-	}, {
-		key: '_createCanvas',
-		value: function _createCanvas() {
-			var canvas = document.createElement('canvas');
-
-			this.appendChild(canvas);
-
-			return canvas;
-		}
-	}, {
-		key: '_removeCanvas',
-		value: function _removeCanvas() {
-			this.removeChild(this._canvas);
-		}
-	}, {
-		key: '_resize',
-		value: function _resize(_ref) {
-			var layout = _ref.layout;
-
-			this._canvas.width = layout.width;
-			this._canvas.height = layout.height;
-			this._canvas.style.cssText = this._sourceElement.style.cssText;
-			this._canvas.style.pointerEvents = 'none';
-		}
-	}, {
-		key: '_initRegl',
-		value: function _initRegl() {
-			var regl = this._regl;
-
-			if (!regl) {
-				try {
-					regl = createRegl(this._canvas);
-				} catch (ignore) {
-					createRegl = null;
-					return false;
-				}
-
-				this._regl = regl;
-			}
-
-			this._draw = regl({
-				frag: this.props.shader.template,
-				vert: '\n\t\t\t\tprecision mediump float;\n\n\t\t\t\tattribute vec2 position;\n\n\t\t\t\tvarying vec2 uv;\n\n\t\t\t\tvoid main () {\n\t\t\t\t\tuv = vec2(1.0 - position.x, position.y);\n\t\t\t\t\tgl_Position = vec4(1.0 - 2.0 * position, 0, 1);\n\t\t\t\t}\n\t\t\t',
-
-				attributes: {
-					position: [-2, 0, 0, -2, 2, 2]
-				},
-
-				uniforms: {
-					image: regl.prop('image'),
-					progress: regl.prop('progress'),
-					size: regl.prop('size')
-				},
-
-				count: 3
-			});
-
-			return true;
-		}
-	}, {
-		key: '_sourceIsReady',
-		value: function _sourceIsReady() {
-			if (this._sourceElement.tagName === 'IMG') {
-				return this._sourceElement.complete && this._sourceElement.naturalWidth > 0;
-			}
-
-			if (this._sourceElement.tagName === 'VIDEO') {
-				return this._sourceElement.readyState >= 2 && !this._sourceElement.seeking;
-			}
-
-			return false;
-		}
-	}, {
-		key: '_getSourceIdentifier',
-		value: function _getSourceIdentifier() {
-			if (this._sourceElement.tagName === 'IMG') {
-				return this._sourceElement.src;
-			}
-
-			if (this._sourceElement.tagName === 'VIDEO') {
-				return [this._sourceElement.src, this._sourceElement.currentTime].join(';');
-			}
-		}
-	}, {
-		key: '_pollSource',
-		value: function _pollSource() {
-			var render = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-			var sourceIdentifier = this._getSourceIdentifier();
-
-			//The source has changed.
-			if (this._sourceIsReady() && sourceIdentifier !== this._sourceIdentifier) {
-				this._sourceIdentifier = sourceIdentifier;
-				this._updateTexture(render);
-
-				if (render) {
-					this._render(this.el.interpolate);
-				}
-			}
-		}
-	}, {
-		key: '_updateTexture',
-		value: function _updateTexture() {
-			if (this._texture) {
-				this._texture.destroy();
-				this._texture = null;
-			}
-
-			//This mainly catches IE 11, which does not support <video> textures at all
-			//Will also catch cases where CORS is not supported or configured.
-			try {
-				//TODO: The texture uses the unscaled image which makes swirl effect looks hella unantialiased.
-				this._texture = this._regl.texture(this._sourceElement);
-			} catch (err) {
-				//TODO: should we do something with the error or just let it happen every frame?
-				//Maybe only do something when the source changes.
-				return;
-			}
-		}
-	}, {
-		key: '_render',
-		value: function _render(interpolateBehavior) {
-			this._pollSource();
-
-			if (!this._texture) {
-				return;
-			}
-
-			this._regl.poll();
-
-			this._draw({
-				image: this._texture,
-				progress: interpolateBehavior.values.progress,
-				size: [this._canvas.width, this._canvas.height]
-			});
-
-			this.notify();
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				shader: {
-					type: 'template',
-					default: 'auto'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'gl-effect';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['layout', 'interpolate', 'media'];
-		}
-	}]);
-
-	return GLEffectBehavior;
-}(_Behavior3.default);
-
-exports.default = GLEffectBehavior;
-
-},{"behaviors/Behavior.js":13,"regl":7}],19:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _linearPartitioning = require('linear-partitioning');
-
-var _linearPartitioning2 = _interopRequireDefault(_linearPartitioning);
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
-
-var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var GalleryBehavior = function (_Behavior) {
-	_inherits(GalleryBehavior, _Behavior);
-
-	function GalleryBehavior() {
-		_classCallCheck(this, GalleryBehavior);
-
-		return _possibleConstructorReturn(this, (GalleryBehavior.__proto__ || Object.getPrototypeOf(GalleryBehavior)).apply(this, arguments));
-	}
-
-	_createClass(GalleryBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this._items = Array.prototype.slice.call(this.el.querySelectorAll('img[width][height]')).map(function (image) {
-				return {
-					image: image,
-					ratio: image.getAttribute('width') / image.getAttribute('height')
-				};
-			});
-
-			this.connectTo('layout', this._render.bind(this));
-		}
-	}, {
-		key: '_render',
-		value: function _render(layoutBehavior) {
-			var layoutEngine = this.parentEl.guidesLayout.engine;
-			var viewport = layoutEngine.viewport;
-
-			var spacing = layoutEngine.lengthToPixel(this.props.spacing, 0);
-			var height = layoutEngine.lengthToPixel(this.props.height, viewport.height);
-			var minHeight = layoutEngine.lengthToPixel(this.props.minHeight, viewport.height);
-			var availableWidth = layoutBehavior.layout.width;
-			var targetHeight = Math.max(minHeight, height);
-			var totalWidth = this._items.reduce(function (sum, _ref) {
-				var ratio = _ref.ratio;
-
-				return sum + ratio * targetHeight;
-			}, 0);
-			var rows = Math.max(1, Math.round(totalWidth / availableWidth));
-			var layout = this._balancedLayout(this._items, availableWidth, rows, spacing);
-
-			this.contentStyle.height = layout.requiredHeight + 'px';
-
-			for (var i = 0; i < layout.items.length; i++) {
-				var imageLayout = layout.items[i];
-				var style = imageLayout.image.style;
-
-				style.position = 'absolute';
-				style.left = style.top = '0px';
-				//style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out, transform 0.3s ease-in-out';
-				style.width = imageLayout.width + 'px';
-				style.height = imageLayout.height + 'px';
-				// $FlowFixMe: WebkitTransform and msTransform are missing in CSSStyleDeclaration
-				style.transform = style.WebkitTransform = style.msTransform = 'translate(' + imageLayout.left + 'px, ' + imageLayout.top + 'px)';
-			}
-		}
-
-		//Inspired by https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
-
-	}, {
-		key: '_balancedLayout',
-		value: function _balancedLayout(items, availableWidth, rows, spacing) {
-			var weights = items.map(function (a) {
-				return a.ratio;
-			});
-			var partition = (0, _linearPartitioning2.default)(weights, Math.min(items.length, rows));
-			var imageLayouts = [];
-			var imageIndexOffset = 0;
-			var topOffset = spacing;
-
-			partition.forEach(function (row) {
-				var itemsForThisRow = items.slice(imageIndexOffset, imageIndexOffset + row.length);
-				var summedRatios = itemsForThisRow.reduce(function (sum, _ref2) {
-					var ratio = _ref2.ratio;
-
-					return sum + ratio;
-				}, 0);
-				var rowHeight = (availableWidth - (row.length + 1) * spacing) / summedRatios;
-				var leftOffset = spacing;
-
-				itemsForThisRow.forEach(function (image) {
-					var width = rowHeight * image.ratio;
-
-					//TODO: reuse the this._items array and objects.
-					imageLayouts.push({
-						image: image.image,
-						width: Math.round(width),
-						height: Math.round(rowHeight),
-						left: Math.round(leftOffset),
-						top: Math.round(topOffset)
-					});
-
-					leftOffset = leftOffset + width + spacing;
-				});
-
-				topOffset = topOffset + rowHeight + spacing;
-
-				imageIndexOffset = imageIndexOffset + row.length;
-			});
-
-			return {
-				requiredHeight: Math.round(topOffset),
-				items: imageLayouts
-			};
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				spacing: {
-					type: 'csslength',
-					default: '1vmin'
-				},
-				height: {
-					type: 'csslength',
-					default: '33vh'
-				},
-				minHeight: {
-					type: 'csslength',
-					default: '150px'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'gallery';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['layout'];
-		}
-	}]);
-
-	return GalleryBehavior;
-}(_Behavior3.default);
-
-exports.default = GalleryBehavior;
-
-},{"behaviors/Behavior.js":13,"behaviors/LayoutBehavior.js":23,"linear-partitioning":2}],20:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _raf = require('raf');
-
-var _raf2 = _interopRequireDefault(_raf);
-
-var _GuidesLayoutEngine = require('lib/GuidesLayoutEngine.js');
-
-var _GuidesLayoutEngine2 = _interopRequireDefault(_GuidesLayoutEngine);
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var GuidesLayoutBehavior = function (_Behavior) {
-	_inherits(GuidesLayoutBehavior, _Behavior);
-
-	function GuidesLayoutBehavior() {
-		_classCallCheck(this, GuidesLayoutBehavior);
-
-		return _possibleConstructorReturn(this, (GuidesLayoutBehavior.__proto__ || Object.getPrototypeOf(GuidesLayoutBehavior)).apply(this, arguments));
-	}
-
-	_createClass(GuidesLayoutBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this._layoutScheduled = false;
-
-			this._initLayoutEngine();
-		}
-	}, {
-		key: 'update',
-		value: function update() {
-			this._scheduleLayout();
-		}
-	}, {
-		key: '_initLayoutEngine',
-		value: function _initLayoutEngine() {
-			var _this2 = this;
-
-			this.engine = new _GuidesLayoutEngine2.default();
-
-			this.listenAndInvoke(window, 'resize', function () {
-				var viewport = _this2._getViewport();
-				_this2.engine.updateViewport(viewport);
-				_this2._scheduleLayout();
-			});
-
-			//Whenever a new layout behavior is attached or changed, we need to do layout.
-			this.listen('layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
-		}
-	}, {
-		key: '_getScrollbarWidth',
-		value: function _getScrollbarWidth() {
-			//Sue me.
-			//Forcing the whole document to reflow three times (by forcing overflow scroll/hidden) is insanely costly.
-			//It took about 2.5ms. Compared to the 0.7ms that doLayout takes in total, this was the bottleneck by far.
-			//Note: I don't like the yellow stuff in my Performance tab.
-			if (this._getScrollbarWidth.hasOwnProperty('_cache')) {
-				return this._getScrollbarWidth._cache;
-			}
-
-			var documentElement = document.documentElement;
-
-			if (!documentElement) {
-				throw new Error('There is no documentElement to get the scrollbar width of.');
-			}
-
-			var originalOverflow = documentElement.style.overflowY;
-
-			//Force a scrollbar to get the inner dimensions.
-			documentElement.style.overflowY = 'scroll';
-
-			var innerWidth = documentElement.clientWidth;
-
-			//Force NO scrollbar to get the outer dimensions.
-			documentElement.style.overflowY = 'hidden';
-
-			var outerWidth = documentElement.clientWidth;
-
-			//Restore overflow.
-			documentElement.style.overflowY = originalOverflow;
-
-			var scrollbarWidth = this._getScrollbarWidth._cache = outerWidth - innerWidth;
-
-			return scrollbarWidth;
-		}
-	}, {
-		key: '_getViewport',
-		value: function _getViewport() {
-			var documentElement = document.documentElement;
-
-			if (!documentElement) {
-				throw new Error('There is no documentElement to get the size of.');
-			}
-
-			var width = documentElement.clientWidth;
-			var outerWidth = width + this._getScrollbarWidth();
-			var height = documentElement.clientHeight;
-			var outerHeight = height;
-
-			return {
-				width: width,
-				height: height,
-				outerWidth: outerWidth,
-				outerHeight: outerHeight
-			};
-		}
-	}, {
-		key: '_scheduleLayout',
-		value: function _scheduleLayout() {
-			if (!this._layoutScheduled) {
-				(0, _raf2.default)(this._doLayout.bind(this));
-				this._layoutScheduled = true;
-			}
-		}
-	}, {
-		key: '_doLayout',
-		value: function _doLayout() {
-			this._layoutScheduled = false;
-
-			var nodes = Array.prototype.slice.call(this.el.querySelectorAll('[layout]')).map(function (el) {
-				return el.layout;
-			});
-
-			this.engine.doLayout(nodes, this.props.guides, this.props.width);
-
-			this.notify();
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				guides: {
-					type: [[{ name: 'string' }, { position: 'csslength' }, { width: 'csslength' }]],
-					expand: function expand(rawProperties) {
-						//The width is optional and defaults to 0.
-						if (rawProperties.length === 2) {
-							rawProperties.push('0');
-							return true;
-						}
-
-						return false;
-					},
-					default: ''
-				},
-				width: {
-					type: 'csslength',
-					default: '1280px'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'guides-layout';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return [];
-		}
-	}]);
-
-	return GuidesLayoutBehavior;
-}(_Behavior3.default);
-
-exports.default = GuidesLayoutBehavior;
-
-},{"behaviors/Behavior.js":13,"lib/GuidesLayoutEngine.js":45,"raf":6}],21:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var HashNavigationBehavior = function (_Behavior) {
-	_inherits(HashNavigationBehavior, _Behavior);
-
-	function HashNavigationBehavior() {
-		_classCallCheck(this, HashNavigationBehavior);
-
-		return _possibleConstructorReturn(this, (HashNavigationBehavior.__proto__ || Object.getPrototypeOf(HashNavigationBehavior)).apply(this, arguments));
-	}
-
-	_createClass(HashNavigationBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this.listen('click', this._handleClick.bind(this));
-		}
-	}, {
-		key: '_handleClick',
-		value: function _handleClick(e) {
-			//Only handle left click.
-			if (e.which !== 1 && e.button !== 0) {
-				return;
-			}
-
-			var link = this._findParentLink(e.target);
-
-			//The click did not happen inside a link.
-			if (!link) {
-				return;
-			}
-
-			if (this._handleLink(link)) {
-				e.preventDefault();
-			}
-		}
-	}, {
-		key: '_findParentLink',
-		value: function _findParentLink(element) {
-			//We reached the top, no link found.
-			if (element === document || !element) {
-				return null;
-			}
-
-			//Yay, it's a link!
-			if (element.tagName.toUpperCase() === 'A') {
-				return element;
-			}
-
-			//Maybe the parent is a link.
-			return this._findParentLink(element.parentElement);
-		}
-	}, {
-		key: '_handleLink',
-		value: function _handleLink(link) {
-			if (link.hash.length < 2) {
-				return false;
-			}
-
-			//The link points to something completely different.
-			if (link.hostname !== window.location.hostname) {
-				return false;
-			}
-
-			//The link does not link to the same page/path.
-			if (link.pathname !== window.location.pathname) {
-				return false;
-			}
-
-			var scrollTarget = document.getElementById(link.hash.substr(1));
-
-			//Ignore the click if no target is found.
-			if (!scrollTarget) {
-				return false;
-			}
-
-			//The target needs the layout behavior or else we don't know where it is.
-			if (!scrollTarget.hasAttribute('layout') || !scrollTarget.layout) {
-				return false;
-			}
-
-			var layoutBehavior = scrollTarget.layout;
-			var layout = layoutBehavior.layout;
-			var engine = this.el.guidesLayout.engine;
-			var offset = engine.lengthToPixel(this.props.offset, layout.height);
-			var targetTop = engine.calculateAnchorPosition(layoutBehavior, this.props.anchor, -offset);
-
-			this.el.scroll.scrollTo(targetTop, true);
-
-			return true;
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				anchor: {
-					type: 'string',
-					enum: ['top', 'center', 'bottom'],
-					default: 'top'
-				},
-				offset: {
-					type: 'csslength',
-					default: '0'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'hash-navigation';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['guides-layout', 'scroll'];
-		}
-	}]);
-
-	return HashNavigationBehavior;
-}(_Behavior3.default);
-
-exports.default = HashNavigationBehavior;
-
-},{"behaviors/Behavior.js":13}],22:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _objectAssign = require('object-assign');
-
-var _objectAssign2 = _interopRequireDefault(_objectAssign);
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-//Parameters are a comma separated list of keyframes.
-//A keyframe is defined by a position inside the viewport and a value.
-//E.g. "alpha: top 1, bottom 0;" would set the alpha parameter to 1
-//when the top is aligned with the top of the viewport and to 0 when the bottoms are aligned.
-//The values inbetween are interpolated, hence the name of the behavior.
-var keyframesSchema = {
-	type: [[{ anchor: 'string' }, { offset: 'csslength' }, { value: 'number' }]],
-	expand: function expand(rawProperties) {
-		if (rawProperties.length === 1) {
-			//Default offset to 0 and value to 1.
-			rawProperties.push('0', '1');
-			return true;
-		} else if (rawProperties.length === 2) {
-			//Default offset to 0.
-			rawProperties.splice(1, 0, '0');
-			return true;
-		}
-
-		return false;
-	},
-	default: ''
-};
-
-var InterpolateBehavior = function (_Behavior) {
-	_inherits(InterpolateBehavior, _Behavior);
-
-	function InterpolateBehavior() {
-		_classCallCheck(this, InterpolateBehavior);
-
-		return _possibleConstructorReturn(this, (InterpolateBehavior.__proto__ || Object.getPrototypeOf(InterpolateBehavior)).apply(this, arguments));
-	}
-
-	_createClass(InterpolateBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this._interpolators = {};
-
-			//Non-zero defaults.
-			this._defaultValues = {
-				opacity: 1,
-				scale: 1
-			};
-
-			this.values = {};
-
-			this.connectTo('^guides-layout', this._createInterpolators.bind(this));
-			this.connectTo('^scroll', this._interpolate.bind(this));
-		}
-	}, {
-		key: '_createInterpolators',
-		value: function _createInterpolators(guidesLayoutBehavior) {
-			var schema = this.constructor.behaviorSchema;
-
-			for (var prop in schema) {
-				if (schema.hasOwnProperty(prop)) {
-					if (this.props[prop].length > 0) {
-						this._interpolators[prop] = this._createInterpolator(guidesLayoutBehavior, this.props[prop]);
-					} else {
-						delete this._interpolators[prop];
-					}
-				}
-			}
-
-			//Apply the interpolators right away.
-			this._interpolate(this.parentEl.scroll);
-		}
-	}, {
-		key: '_createInterpolator',
-		value: function _createInterpolator(guidesLayoutBehavior, keyframes) {
-			var _this2 = this;
-
-			var layoutEngine = guidesLayoutBehavior.engine;
-
-			//Map the keyframe anchor and offset to scroll positions.
-			var mappedKeyframes = keyframes.map(function (keyframe) {
-				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, _this2.el.layout.layout.height);
-				var position = layoutEngine.calculateAnchorPosition(_this2.el.layout, keyframe.anchor, pixelOffset);
-
-				return {
-					position: position,
-					value: keyframe.value
-				};
-			});
-
-			//Sort them by scroll position from top to bottom.
-			mappedKeyframes = mappedKeyframes.sort(function (a, b) {
-				return a.position - b.position;
-			});
-
-			var firstKeyframe = mappedKeyframes[0];
-			var lastKeyframe = mappedKeyframes[mappedKeyframes.length - 1];
-
-			//Return a function which, given the current scrollPosition, returns the interpolated value.
-			return function (scrollPosition) {
-				//If the top position is out of bounds, use the edge values.
-				if (scrollPosition <= firstKeyframe.position) {
-					return firstKeyframe.value;
-				}
-
-				if (scrollPosition >= lastKeyframe.position) {
-					return lastKeyframe.value;
-				}
-
-				//Figure out between which two keyframes we are.
-				for (var i = 1; i < mappedKeyframes.length; i++) {
-					var rightKeyframe = mappedKeyframes[i];
-
-					//We found the right keyframe!
-					if (scrollPosition < rightKeyframe.position) {
-						var leftKeyframe = mappedKeyframes[i - 1];
-
-						var _progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
-
-						return _progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
-					}
-				}
-
-				throw new Error('Could not interpolate');
-			};
-		}
-	}, {
-		key: '_interpolate',
-		value: function _interpolate(scrollBehavior) {
-			var schema = this.constructor.behaviorSchema;
-			var didChange = false;
-
-			for (var prop in schema) {
-				if (schema.hasOwnProperty(prop)) {
-					var previousValue = this.values[prop];
-
-					if (this._interpolators.hasOwnProperty(prop)) {
-						this.values[prop] = this._interpolators[prop](scrollBehavior.scrollState.position);
-					} else {
-						this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
-					}
-
-					if (previousValue !== this.values[prop]) {
-						didChange = true;
-					}
-				}
-			}
-
-			if (didChange) {
-				this.notify();
-			}
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				progress: (0, _objectAssign2.default)({}, keyframesSchema, { default: 'top -100vh 0, bottom 100vh 1' }),
-				opacity: keyframesSchema,
-				rotate: keyframesSchema,
-				scale: keyframesSchema,
-				x: keyframesSchema,
-				y: keyframesSchema,
-				alpha: keyframesSchema,
-				beta: keyframesSchema,
-				gamma: keyframesSchema,
-				delta: keyframesSchema,
-				epsilon: keyframesSchema
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'interpolate';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['^guides-layout', '^scroll', 'layout'];
-		}
-	}]);
-
-	return InterpolateBehavior;
-}(_Behavior3.default);
-
-exports.default = InterpolateBehavior;
-
-},{"behaviors/Behavior.js":13,"object-assign":3}],23:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _resizeObserverPolyfill = require('resize-observer-polyfill');
-
-var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var LayoutBehavior = function (_Behavior) {
-	_inherits(LayoutBehavior, _Behavior);
-
-	function LayoutBehavior() {
-		_classCallCheck(this, LayoutBehavior);
-
-		return _possibleConstructorReturn(this, (LayoutBehavior.__proto__ || Object.getPrototypeOf(LayoutBehavior)).apply(this, arguments));
-	}
-
-	_createClass(LayoutBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this.intrinsicHeight = 0;
-
-			this.scrollUpdate = {};
-			this.layout = {};
-
-			this.connectTo('^guides-layout', this._render.bind(this));
-			this.connectTo('^scroll', this._scroll.bind(this));
-
-			this.listen('^scroll:pause', this._scrollPause.bind(this));
-
-			if (this.props.height === 'auto') {
-				this._observeHeight();
-			}
-		}
-	}, {
-		key: 'update',
-		value: function update(prevProps) {
-			if (this.props.height !== prevProps.height) {
-				if (this.props.height === 'auto') {
-					this._observeHeight();
-				} else if (prevProps.height === 'auto') {
-					this._unobserveHeight();
-				}
-			}
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			if (this.props.height === 'auto') {
-				this._unobserveHeight();
-			}
-		}
-	}, {
-		key: '_observeHeight',
-		value: function _observeHeight() {
-			var _this2 = this;
-
-			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
-				_this2.intrinsicHeight = entries[0].contentRect.height;
-				_this2.emit('heightchange');
-			});
-
-			this._resizeObserver.observe(this.contentEl);
-		}
-	}, {
-		key: '_unobserveHeight',
-		value: function _unobserveHeight() {
-			this._resizeObserver.disconnect();
-			this._resizeObserver = null;
-		}
-	}, {
-		key: '_render',
-		value: function _render() {
-			this._renderWrapper();
-			this._renderContent();
-
-			//Force a scroll update.
-			this._scroll(this.parentEl.scroll, true);
-
-			this.notify();
-		}
-	}, {
-		key: '_canSafelyBeUnloadedFromGPU',
-		value: function _canSafelyBeUnloadedFromGPU() {
-			//It's not safe to hide tiles with auto-height because we query the DOM for their height.
-			return this.props.height !== 'auto';
-		}
-	}, {
-		key: '_renderWrapper',
-		value: function _renderWrapper() {
-			var display = this._canSafelyBeUnloadedFromGPU() ? 'none' : 'block';
-			var overflow = 'visible';
-			var width = this.layout.width;
-			var height = this.layout.height;
-			var contain = 'strict';
-
-			if (this.props.clip) {
-				height = this.layout.clipRect.height;
-				overflow = 'hidden';
-			}
-
-			this.style.display = display;
-			this.style.overflow = overflow;
-			this.style.width = Math.round(width) + 'px';
-			this.style.height = Math.round(height) + 'px';
-			this.style.contain = contain;
-		}
-	}, {
-		key: '_renderContent',
-		value: function _renderContent() {
-			var width = this.layout.width;
-
-			this.contentStyle.position = 'relative';
-			this.contentStyle.width = Math.round(width) + 'px';
-
-			if (this.props.height === 'auto') {
-				this.contentStyle.height = '';
-			} else {
-				this.contentStyle.height = Math.round(this.layout.height) + 'px';
-			}
-
-			if (this.props.clip) {
-				this.contentStyle.backfaceVisibility = 'hidden';
-			}
-		}
-	}, {
-		key: '_scroll',
-		value: function _scroll(scrollBehavior) {
-			var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-			var scrollUpdate = this.scrollUpdate;
-
-			this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
-
-			if (scrollUpdate.wrapperTopChanged || forceUpdate) {
-				var left = Math.round(this.layout.left);
-				var top = scrollUpdate.wrapperTop;
-
-				//We force the tile to be visible (loaded into GPU) when it is inside the viewport.
-				//But we do not do the opposite here. This is just the last resort.
-				//Under normal circumstances an async process (_scrollPause) toggles display block/none intelligently.
-				if (scrollUpdate.inViewport) {
-					this.style.display = 'block';
-					this.style.willChange = 'transform';
-				}
-
-				this.style.transform = 'translate(' + left + 'px, ' + top + 'px)';
-
-				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
-				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling
-				//or elements with appear effects using scaling/rotation.
-				this.contentStyle.transform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
-
-				//TODO: only needed when the inner element is actually translated, e.g. parallax / pinning.
-				//style.willChange = scrollUpdate.inExtendedViewport ? 'transform' : 'auto';
-
-				//TODO: I was here trying to implement clipping, e.g. scrollupdate.wrapperTop and wrapperHeight
-			}
-
-			if (scrollUpdate.inExtendedViewportChanged) {
-				if (scrollUpdate.inExtendedViewportChanged) {
-					this.emit('extendedviewport:enter');
-				} else {
-					this.emit('extendedviewport:leave');
-				}
-			}
-
-			if (scrollUpdate.inViewportChanged) {
-				if (scrollUpdate.inViewport) {
-					this.emit('viewport:enter');
-				} else {
-					this.emit('viewport:leave');
-				}
-			}
-
-			if (scrollUpdate.inCenterChanged) {
-				if (scrollUpdate.inCenter) {
-					this.emit('center:enter');
-				} else {
-					this.emit('center:leave');
-				}
-			}
-		}
-	}, {
-		key: '_scrollPause',
-		value: function _scrollPause() {
-			var scrollUpdate = this.scrollUpdate;
-
-			if (scrollUpdate.inExtendedViewport) {
-				this.style.display = 'block';
-				this.style.willChange = 'transform';
-			} else {
-				if (this._canSafelyBeUnloadedFromGPU()) {
-					this.style.display = 'none';
-				} else {
-					//This reduces gpu memory a ton and also hides text at the edge of the viewport.
-					//Otherwise those elements would be visible behind the adress bar in iOS.
-					//There's no inverse operation to that because once it is inside the viewport again
-					//the translation will overwrite the scale transform.
-					this.style.transform = 'scale(0)';
-				}
-
-				this.style.willChange = 'auto';
-			}
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				guides: {
-					type: [{ left: 'string' }, { right: 'string' }],
-					default: 'viewport',
-					expand: function expand(rawProperties) {
-						//We only expand a single "viewport".
-						if (rawProperties.length === 1 && rawProperties[0] === 'viewport') {
-							rawProperties.push('viewport');
-							return true;
-						}
-
-						return false;
-					}
-				},
-				height: {
-					type: 'height',
-					default: 'auto'
-				},
-				spacing: {
-					type: [{ top: 'csslength' }, { bottom: 'csslength' }],
-					expand: function expand(rawProperties) {
-						//Allow a single spacing and use it for both top and bottom.
-						if (rawProperties.length === 1) {
-							rawProperties.push(rawProperties[0]);
-							return true;
-						}
-
-						return false;
-					},
-					default: '0 0'
-				},
-				mode: {
-					type: 'string',
-					enum: ['flow', 'follow'],
-					default: 'flow'
-				},
-				followerMode: {
-					type: 'string',
-					enum: ['parallax', 'pin'],
-					default: 'parallax'
-				},
-				pinAnchor: {
-					type: 'string',
-					enum: ['top', 'center', 'bottom'],
-					default: 'center'
-				},
-				pinOffset: {
-					type: 'csslength',
-					default: '0'
-				},
-				clip: {
-					type: 'boolean',
-					default: 'false'
-				},
-				dependencies: {
-					type: 'layoutdependencies',
-					default: 'inherit'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'layout';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['^guides-layout', '^scroll'];
-		}
-	}]);
-
-	return LayoutBehavior;
-}(_Behavior3.default);
-
-exports.default = LayoutBehavior;
-
-},{"behaviors/Behavior.js":13,"resize-observer-polyfill":8}],24:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var LazyLoadBehavior = function (_Behavior) {
-	_inherits(LazyLoadBehavior, _Behavior);
-
-	function LazyLoadBehavior() {
-		_classCallCheck(this, LazyLoadBehavior);
-
-		return _possibleConstructorReturn(this, (LazyLoadBehavior.__proto__ || Object.getPrototypeOf(LazyLoadBehavior)).apply(this, arguments));
-	}
-
-	_createClass(LazyLoadBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			var _this2 = this;
-
-			//This is the last resort, we definitely need to load the assets once the element is inside the viewport.
-			var handleViewportEnter = function handleViewportEnter() {
-				lazyLoad();
-				unlisten();
-			};
-
-			//We try to intelligently load the asset when the element is close to the viewport (extended viewport).
-			//We do this inside a scroll pause to minimize jank.
-			var handleScrollPause = function handleScrollPause() {
-				if (_this2.el.layout.scrollUpdate.inExtendedViewport) {
-					lazyLoad();
-					unlisten();
-				}
-			};
-
-			var lazyLoad = function lazyLoad() {
-				var elements = _this2.el.querySelectorAll('[data-src]');
-
-				for (var i = 0; i < elements.length; i++) {
-					var el = elements[i];
-
-					el.src = el.getAttribute('data-src');
-					el.removeAttribute('data-src');
-				}
-
-				_this2.notify();
-			};
-
-			var unlisten = function unlisten() {
-				_this2.unlisten('layout:viewport:enter', handleViewportEnter);
-				_this2.unlisten('^scroll:pause', handleScrollPause);
-			};
-
-			this.listen('layout:viewport:enter', handleViewportEnter);
-			this.listen('^scroll:pause', handleScrollPause);
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'lazy-load';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['^scroll', 'layout'];
-		}
-	}]);
-
-	return LazyLoadBehavior;
-}(_Behavior3.default);
-
-exports.default = LazyLoadBehavior;
-
-},{"behaviors/Behavior.js":13}],25:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var MediaBehavior = function (_Behavior) {
-	_inherits(MediaBehavior, _Behavior);
-
-	function MediaBehavior() {
-		_classCallCheck(this, MediaBehavior);
-
-		return _possibleConstructorReturn(this, (MediaBehavior.__proto__ || Object.getPrototypeOf(MediaBehavior)).apply(this, arguments));
-	}
-
-	_createClass(MediaBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this.connectTo('layout', this._render.bind(this));
-		}
-	}, {
-		key: 'behaviorWillDetach',
-		value: function behaviorWillDetach() {
-			var img = this.el.querySelector('img, video');
-			var style = img.style;
-
-			style.display = '';
-			style.position = '';
-			style.left = style.top = '';
-			style.maxWidth = style.maxHeight = '';
-			style.width = '';
-			style.height = '';
-			style.transform = '';
-		}
-	}, {
-		key: '_render',
-		value: function _render(layoutBehavior) {
-			//TODO: warn if there are no img/video
-			//TODO: need a wrapper for overflow:hidden
-			var layout = this.calculateMediaLayout(layoutBehavior);
-			var img = this.el.querySelector('img, video');
-			var style = img.style;
-
-			style.display = 'block';
-			style.position = 'absolute';
-			style.left = style.top = 0;
-			style.maxWidth = style.maxHeight = 'none';
-			style.width = Math.round(layout.width) + 'px';
-			style.height = Math.round(layout.height) + 'px';
-			style.transform = 'translate(' + Math.round(layout.left) + 'px, ' + Math.round(layout.top) + 'px)';
-
-			this.notify();
-		}
-	}, {
-		key: '_calculateMediaSize',
-		value: function _calculateMediaSize(layoutBehavior) {
-			var ratio = this.props.ratio.num;
-			var fit = this.props.fit;
-			var _layoutBehavior$layou = layoutBehavior.layout,
-			    width = _layoutBehavior$layou.width,
-			    height = _layoutBehavior$layou.height;
-
-			var containerRatio = width / height;
-
-			if (fit !== 'fill') {
-				if (fit === 'contain' && containerRatio > ratio || fit === 'cover' && containerRatio < ratio) {
-					width = height * ratio;
-				} else {
-					height = width / ratio;
-				}
-			}
-
-			return {
-				width: width,
-				height: height
-			};
-		}
-	}, {
-		key: 'calculateMediaLayout',
-		value: function calculateMediaLayout(layoutBehavior) {
-			var layoutEngine = this.parentEl.guidesLayout.engine;
-			var size = this._calculateMediaSize(layoutBehavior);
-			var fit = this.props.fit;
-			var _layoutBehavior$layou2 = layoutBehavior.layout,
-			    width = _layoutBehavior$layou2.width,
-			    height = _layoutBehavior$layou2.height;
-			var _props$position = this.props.position,
-			    x = _props$position.x,
-			    y = _props$position.y;
-
-			var focalPointX = layoutEngine.lengthToPixel(x, size.width);
-			var focalPointY = layoutEngine.lengthToPixel(y, size.height);
-
-			var left = void 0;
-			var top = void 0;
-
-			if (fit === 'cover') {
-				//Center the focal point inside the container.
-				left = width / 2 - focalPointX;
-				top = height / 2 - focalPointY;
-
-				//Make sure the media is still aligned with the edge of the container.
-				//This means we move the focal point as close to the center as possible
-				//without exposing the container behind it.
-				left = Math.min(0, Math.max(width - size.width, left));
-				top = Math.min(0, Math.max(height - size.height, top));
-			} else {
-				//TODO: position is relevant for contain as well.
-				//For contain/stretch fit we center the media inside its container.
-				left = width / 2 - size.width / 2;
-				top = height / 2 - size.height / 2;
-			}
-
-			return {
-				width: size.width,
-				height: size.height,
-				left: left,
-				top: top
-			};
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				ratio: {
-					type: 'ratio'
-				},
-				fit: {
-					type: 'string',
-					enum: ['fill', 'cover', 'contain'],
-					default: 'cover'
-				},
-				position: {
-					type: [{ x: 'csslength' }, { y: 'csslength' }],
-					expand: function expand(rawProperties) {
-						//Allow a single position and use it for both x and y.
-						if (rawProperties.length === 1) {
-							rawProperties.push(rawProperties[0]);
-							return true;
-						}
-
-						return false;
-					},
-					default: '50% 50%'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'media';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['^guides-layout', 'layout'];
-		}
-	}]);
-
-	return MediaBehavior;
-}(_Behavior3.default);
-
-exports.default = MediaBehavior;
-
-},{"behaviors/Behavior.js":13}],26:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var MousetrapBehavior = function (_Behavior) {
-	_inherits(MousetrapBehavior, _Behavior);
-
-	function MousetrapBehavior() {
-		_classCallCheck(this, MousetrapBehavior);
-
-		return _possibleConstructorReturn(this, (MousetrapBehavior.__proto__ || Object.getPrototypeOf(MousetrapBehavior)).apply(this, arguments));
-	}
-
-	_createClass(MousetrapBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			this._render();
-		}
-	}, {
-		key: 'update',
-		value: function update() {
-			this._render();
-		}
-	}, {
-		key: '_render',
-		value: function _render() {
-			//TODO: access scrollmode here?
-			//TODO: instead of pointer events, add an overlay div to the <shadow-meister>.
-			this.style.pointerEvents = 'none';
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				native: {
-					type: 'string',
-					enum: ['always', 'fullscreen', 'never'],
-					default: 'fullscreen'
-				},
-				touch: {
-					type: 'string',
-					enum: ['always', 'fullscreen', 'never'],
-					default: 'fullscreen'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'mousetrap';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['^guides-layout'];
-		}
-	}]);
-
-	return MousetrapBehavior;
-}(_Behavior3.default);
-
-exports.default = MousetrapBehavior;
-
-},{"behaviors/Behavior.js":13}],27:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var RotatingGradientBehavior = function (_Behavior) {
-	_inherits(RotatingGradientBehavior, _Behavior);
-
-	function RotatingGradientBehavior() {
-		_classCallCheck(this, RotatingGradientBehavior);
-
-		return _possibleConstructorReturn(this, (RotatingGradientBehavior.__proto__ || Object.getPrototypeOf(RotatingGradientBehavior)).apply(this, arguments));
-	}
-
-	_createClass(RotatingGradientBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			var _this2 = this;
-
-			this.connectTo('interpolate', function (interpolateBehavior) {
-				var angle = interpolateBehavior.values.progress * _this2.props.speed * 360;
-				var color1 = 'hsl(' + angle + ', 100%, 50%)';
-				var color2 = 'hsl(' + (angle + _this2.props.offset) + ', 100%, 50%)';
-
-				_this2.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
-
-				_this2.notify();
-			});
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				speed: {
-					type: 'number',
-					default: '1'
-				},
-				offset: {
-					type: 'number',
-					default: '40'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'rotating-gradient';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['interpolate'];
-		}
-	}]);
-
-	return RotatingGradientBehavior;
-}(_Behavior3.default);
-
-exports.default = RotatingGradientBehavior;
-
-},{"behaviors/Behavior.js":13}],28:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
@@ -14369,16 +12633,16 @@ var isAndroidFirefox = /Android; (?:Mobile|Tablet); .+ Firefox/i.test(navigator.
 var isBadAndroid = /Android /.test(navigator.userAgent) && !/Chrome\/\d/.test(navigator.userAgent);
 var isAppleiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-var ScrollBehavior = function (_Behavior) {
-	_inherits(ScrollBehavior, _Behavior);
+var FakeScrollBehavior = function (_Behavior) {
+	_inherits(FakeScrollBehavior, _Behavior);
 
-	function ScrollBehavior() {
-		_classCallCheck(this, ScrollBehavior);
+	function FakeScrollBehavior() {
+		_classCallCheck(this, FakeScrollBehavior);
 
-		return _possibleConstructorReturn(this, (ScrollBehavior.__proto__ || Object.getPrototypeOf(ScrollBehavior)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (FakeScrollBehavior.__proto__ || Object.getPrototypeOf(FakeScrollBehavior)).apply(this, arguments));
 	}
 
-	_createClass(ScrollBehavior, [{
+	_createClass(FakeScrollBehavior, [{
 		key: 'behaviorDidAttach',
 		value: function behaviorDidAttach() {
 			this.scrollMode = 'touch';
@@ -14664,7 +12928,7 @@ var ScrollBehavior = function (_Behavior) {
 			return {
 				overscroll: {
 					type: 'boolean',
-					default: 'true'
+					default: isAppleiOS ? 'true' : 'false'
 				}
 			};
 		}
@@ -14680,12 +12944,1925 @@ var ScrollBehavior = function (_Behavior) {
 		}
 	}]);
 
+	return FakeScrollBehavior;
+}(_Behavior3.default);
+
+exports.default = FakeScrollBehavior;
+
+},{"behaviors/Behavior.js":13,"lib/ScrollState.js":47,"lib/easings.js":50,"lib/fakeClick.js":51,"lib/isTextInput.js":53,"raf":6,"scroll-logic":9}],18:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+var _fontSizeWidthRatio = require('lib/fontSizeWidthRatio.js');
+
+var _fontSizeWidthRatio2 = _interopRequireDefault(_fontSizeWidthRatio);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var FadeInBehavior = function (_Behavior) {
+	_inherits(FadeInBehavior, _Behavior);
+
+	function FadeInBehavior() {
+		_classCallCheck(this, FadeInBehavior);
+
+		return _possibleConstructorReturn(this, (FadeInBehavior.__proto__ || Object.getPrototypeOf(FadeInBehavior)).apply(this, arguments));
+	}
+
+	_createClass(FadeInBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			var _this2 = this;
+
+			if (this.contentEl.children.length !== 1) {
+				this.error(new Error('The fluidtext behavior expects a single child element. We recommend an <h1>, since the behavior is most suited for headlines.'));
+			}
+
+			this.contentStyle.whiteSpace = 'nowrap';
+
+			this.connectTo('layout', function (layoutBehavior) {
+				if (!_this2._fontSizeWidthRatio) {
+					_this2._fontSizeWidthRatio = (0, _fontSizeWidthRatio2.default)(_this2.contentEl);
+				}
+
+				_this2.contentStyle.fontSize = _this2._fontSizeWidthRatio * layoutBehavior.layout.width + 'px';
+
+				_this2.notify();
+			});
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'fluid-text';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['layout'];
+		}
+	}]);
+
+	return FadeInBehavior;
+}(_Behavior3.default);
+
+exports.default = FadeInBehavior;
+
+},{"behaviors/Behavior.js":13,"lib/fontSizeWidthRatio.js":52}],19:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var createRegl = void 0;
+
+try {
+	createRegl = require('regl');
+} catch (ignore) {
+	createRegl = null;
+}
+
+var GLEffectBehavior = function (_Behavior) {
+	_inherits(GLEffectBehavior, _Behavior);
+
+	function GLEffectBehavior() {
+		_classCallCheck(this, GLEffectBehavior);
+
+		return _possibleConstructorReturn(this, (GLEffectBehavior.__proto__ || Object.getPrototypeOf(GLEffectBehavior)).apply(this, arguments));
+	}
+
+	_createClass(GLEffectBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			var _this2 = this;
+
+			if (!createRegl) {
+				return;
+			}
+
+			this._sourceElement = this.el.querySelector('img, video');
+			this._canvas = this._createCanvas();
+
+			if (!this._initRegl()) {
+				this._removeCanvas();
+				return;
+			}
+
+			this.connectTo('layout', this._resize.bind(this));
+			this.connectTo('interpolate', this._render.bind(this), function () {
+				//This updates the texture in addition to the render loop.
+				//It catches stuff like onload for images and updates videos that are currently playing (even if you're not scrolling).
+				_this2._pollTimer = setInterval(_this2._pollSource.bind(_this2, true), 1000 / 30);
+			});
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._initRegl();
+		}
+	}, {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
+			if (!createRegl) {
+				return;
+			}
+
+			clearInterval(this._pollTimer);
+			this._regl.destroy();
+		}
+	}, {
+		key: '_createCanvas',
+		value: function _createCanvas() {
+			var canvas = document.createElement('canvas');
+
+			this.appendChild(canvas);
+
+			return canvas;
+		}
+	}, {
+		key: '_removeCanvas',
+		value: function _removeCanvas() {
+			this.removeChild(this._canvas);
+		}
+	}, {
+		key: '_resize',
+		value: function _resize(_ref) {
+			var layout = _ref.layout;
+
+			this._canvas.width = layout.width;
+			this._canvas.height = layout.height;
+			this._canvas.style.cssText = this._sourceElement.style.cssText;
+			this._canvas.style.pointerEvents = 'none';
+		}
+	}, {
+		key: '_initRegl',
+		value: function _initRegl() {
+			var regl = this._regl;
+
+			if (!regl) {
+				try {
+					regl = createRegl(this._canvas);
+				} catch (ignore) {
+					createRegl = null;
+					return false;
+				}
+
+				this._regl = regl;
+			}
+
+			this._draw = regl({
+				frag: this.props.shader.template,
+				vert: '\n\t\t\t\tprecision mediump float;\n\n\t\t\t\tattribute vec2 position;\n\n\t\t\t\tvarying vec2 uv;\n\n\t\t\t\tvoid main () {\n\t\t\t\t\tuv = vec2(1.0 - position.x, position.y);\n\t\t\t\t\tgl_Position = vec4(1.0 - 2.0 * position, 0, 1);\n\t\t\t\t}\n\t\t\t',
+
+				attributes: {
+					position: [-2, 0, 0, -2, 2, 2]
+				},
+
+				uniforms: {
+					image: regl.prop('image'),
+					progress: regl.prop('progress'),
+					size: regl.prop('size')
+				},
+
+				count: 3
+			});
+
+			return true;
+		}
+	}, {
+		key: '_sourceIsReady',
+		value: function _sourceIsReady() {
+			if (this._sourceElement.tagName === 'IMG') {
+				return this._sourceElement.complete && this._sourceElement.naturalWidth > 0;
+			}
+
+			if (this._sourceElement.tagName === 'VIDEO') {
+				return this._sourceElement.readyState >= 2 && !this._sourceElement.seeking;
+			}
+
+			return false;
+		}
+	}, {
+		key: '_getSourceIdentifier',
+		value: function _getSourceIdentifier() {
+			if (this._sourceElement.tagName === 'IMG') {
+				return this._sourceElement.src;
+			}
+
+			if (this._sourceElement.tagName === 'VIDEO') {
+				return [this._sourceElement.src, this._sourceElement.currentTime].join(';');
+			}
+		}
+	}, {
+		key: '_pollSource',
+		value: function _pollSource() {
+			var render = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+			var sourceIdentifier = this._getSourceIdentifier();
+
+			//The source has changed.
+			if (this._sourceIsReady() && sourceIdentifier !== this._sourceIdentifier) {
+				this._sourceIdentifier = sourceIdentifier;
+				this._updateTexture(render);
+
+				if (render) {
+					this._render(this.el.interpolate);
+				}
+			}
+		}
+	}, {
+		key: '_updateTexture',
+		value: function _updateTexture() {
+			if (this._texture) {
+				this._texture.destroy();
+				this._texture = null;
+			}
+
+			//This mainly catches IE 11, which does not support <video> textures at all
+			//Will also catch cases where CORS is not supported or configured.
+			try {
+				//TODO: The texture uses the unscaled image which makes swirl effect looks hella unantialiased.
+				this._texture = this._regl.texture(this._sourceElement);
+			} catch (err) {
+				//TODO: should we do something with the error or just let it happen every frame?
+				//Maybe only do something when the source changes.
+				return;
+			}
+		}
+	}, {
+		key: '_render',
+		value: function _render(interpolateBehavior) {
+			this._pollSource();
+
+			if (!this._texture) {
+				return;
+			}
+
+			this._regl.poll();
+
+			this._draw({
+				image: this._texture,
+				progress: interpolateBehavior.values.progress,
+				size: [this._canvas.width, this._canvas.height]
+			});
+
+			this.notify();
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				shader: {
+					type: 'template',
+					default: 'auto'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'gl-effect';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['layout', 'interpolate', 'media'];
+		}
+	}]);
+
+	return GLEffectBehavior;
+}(_Behavior3.default);
+
+exports.default = GLEffectBehavior;
+
+},{"behaviors/Behavior.js":13,"regl":7}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _linearPartitioning = require('linear-partitioning');
+
+var _linearPartitioning2 = _interopRequireDefault(_linearPartitioning);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+var _LayoutBehavior = require('behaviors/LayoutBehavior.js');
+
+var _LayoutBehavior2 = _interopRequireDefault(_LayoutBehavior);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var GalleryBehavior = function (_Behavior) {
+	_inherits(GalleryBehavior, _Behavior);
+
+	function GalleryBehavior() {
+		_classCallCheck(this, GalleryBehavior);
+
+		return _possibleConstructorReturn(this, (GalleryBehavior.__proto__ || Object.getPrototypeOf(GalleryBehavior)).apply(this, arguments));
+	}
+
+	_createClass(GalleryBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this._items = Array.prototype.slice.call(this.el.querySelectorAll('img[width][height]')).map(function (image) {
+				return {
+					image: image,
+					ratio: image.getAttribute('width') / image.getAttribute('height')
+				};
+			});
+
+			this.connectTo('layout', this._render.bind(this));
+		}
+	}, {
+		key: '_render',
+		value: function _render(layoutBehavior) {
+			var layoutEngine = this.parentEl.guidesLayout.engine;
+			var viewport = layoutEngine.viewport;
+
+			var spacing = layoutEngine.lengthToPixel(this.props.spacing, 0);
+			var height = layoutEngine.lengthToPixel(this.props.height, viewport.height);
+			var minHeight = layoutEngine.lengthToPixel(this.props.minHeight, viewport.height);
+			var availableWidth = layoutBehavior.layout.width;
+			var targetHeight = Math.max(minHeight, height);
+			var totalWidth = this._items.reduce(function (sum, _ref) {
+				var ratio = _ref.ratio;
+
+				return sum + ratio * targetHeight;
+			}, 0);
+			var rows = Math.max(1, Math.round(totalWidth / availableWidth));
+			var layout = this._balancedLayout(this._items, availableWidth, rows, spacing);
+
+			this.contentStyle.height = layout.requiredHeight + 'px';
+
+			for (var i = 0; i < layout.items.length; i++) {
+				var imageLayout = layout.items[i];
+				var style = imageLayout.image.style;
+
+				style.position = 'absolute';
+				style.left = style.top = '0px';
+				//style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out, transform 0.3s ease-in-out';
+				style.width = imageLayout.width + 'px';
+				style.height = imageLayout.height + 'px';
+				// $FlowFixMe: WebkitTransform and msTransform are missing in CSSStyleDeclaration
+				style.transform = style.WebkitTransform = style.msTransform = 'translate(' + imageLayout.left + 'px, ' + imageLayout.top + 'px)';
+			}
+		}
+
+		//Inspired by https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
+
+	}, {
+		key: '_balancedLayout',
+		value: function _balancedLayout(items, availableWidth, rows, spacing) {
+			var weights = items.map(function (a) {
+				return a.ratio;
+			});
+			var partition = (0, _linearPartitioning2.default)(weights, Math.min(items.length, rows));
+			var imageLayouts = [];
+			var imageIndexOffset = 0;
+			var topOffset = spacing;
+
+			partition.forEach(function (row) {
+				var itemsForThisRow = items.slice(imageIndexOffset, imageIndexOffset + row.length);
+				var summedRatios = itemsForThisRow.reduce(function (sum, _ref2) {
+					var ratio = _ref2.ratio;
+
+					return sum + ratio;
+				}, 0);
+				var rowHeight = (availableWidth - (row.length + 1) * spacing) / summedRatios;
+				var leftOffset = spacing;
+
+				itemsForThisRow.forEach(function (image) {
+					var width = rowHeight * image.ratio;
+
+					//TODO: reuse the this._items array and objects.
+					imageLayouts.push({
+						image: image.image,
+						width: Math.round(width),
+						height: Math.round(rowHeight),
+						left: Math.round(leftOffset),
+						top: Math.round(topOffset)
+					});
+
+					leftOffset = leftOffset + width + spacing;
+				});
+
+				topOffset = topOffset + rowHeight + spacing;
+
+				imageIndexOffset = imageIndexOffset + row.length;
+			});
+
+			return {
+				requiredHeight: Math.round(topOffset),
+				items: imageLayouts
+			};
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				spacing: {
+					type: 'csslength',
+					default: '1vmin'
+				},
+				height: {
+					type: 'csslength',
+					default: '33vh'
+				},
+				minHeight: {
+					type: 'csslength',
+					default: '150px'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'gallery';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['layout'];
+		}
+	}]);
+
+	return GalleryBehavior;
+}(_Behavior3.default);
+
+exports.default = GalleryBehavior;
+
+},{"behaviors/Behavior.js":13,"behaviors/LayoutBehavior.js":24,"linear-partitioning":2}],21:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _raf = require('raf');
+
+var _raf2 = _interopRequireDefault(_raf);
+
+var _GuidesLayoutEngine = require('lib/GuidesLayoutEngine.js');
+
+var _GuidesLayoutEngine2 = _interopRequireDefault(_GuidesLayoutEngine);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var GuidesLayoutBehavior = function (_Behavior) {
+	_inherits(GuidesLayoutBehavior, _Behavior);
+
+	function GuidesLayoutBehavior() {
+		_classCallCheck(this, GuidesLayoutBehavior);
+
+		return _possibleConstructorReturn(this, (GuidesLayoutBehavior.__proto__ || Object.getPrototypeOf(GuidesLayoutBehavior)).apply(this, arguments));
+	}
+
+	_createClass(GuidesLayoutBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this._layoutScheduled = false;
+
+			this._initLayoutEngine();
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._scheduleLayout();
+		}
+	}, {
+		key: '_initLayoutEngine',
+		value: function _initLayoutEngine() {
+			var _this2 = this;
+
+			this.engine = new _GuidesLayoutEngine2.default();
+
+			this.listenAndInvoke(window, 'resize', function () {
+				var viewport = _this2._getViewport();
+				var changed = _this2.engine.updateViewport(viewport);
+
+				if (changed) {
+					_this2._scheduleLayout();
+				}
+			});
+
+			//Whenever a new layout behavior is attached or changed, we need to do layout.
+			this.listen('layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
+		}
+	}, {
+		key: '_getScrollbarWidth',
+		value: function _getScrollbarWidth() {
+			//Sue me.
+			//Forcing the whole document to reflow three times (by forcing overflow scroll/hidden) is insanely costly.
+			//It took about 2.5ms. Compared to the 0.7ms that doLayout takes in total, this was the bottleneck by far.
+			//Note: I don't like the yellow stuff in my Performance tab.
+			if (this._getScrollbarWidth.hasOwnProperty('_cache')) {
+				return this._getScrollbarWidth._cache;
+			}
+
+			var documentElement = document.documentElement;
+
+			if (!documentElement) {
+				throw new Error('There is no documentElement to get the scrollbar width of.');
+			}
+
+			var originalOverflow = documentElement.style.overflowY;
+
+			//Force a scrollbar to get the inner dimensions.
+			documentElement.style.overflowY = 'scroll';
+
+			var innerWidth = documentElement.clientWidth;
+
+			//Force NO scrollbar to get the outer dimensions.
+			documentElement.style.overflowY = 'hidden';
+
+			var outerWidth = documentElement.clientWidth;
+
+			//Restore overflow.
+			documentElement.style.overflowY = originalOverflow;
+
+			var scrollbarWidth = this._getScrollbarWidth._cache = outerWidth - innerWidth;
+
+			return scrollbarWidth;
+		}
+	}, {
+		key: '_getViewport',
+		value: function _getViewport() {
+			if (!this._viewportSizeElement) {
+				this._viewportSizeElement = document.createElement('div');
+				this._viewportSizeElement.style.cssText = '\n\t\t\t\twidth: 100vw;\n\t\t\t\theight: 100vh;\n\t\t\t\tposition: fixed;\n\t\t\t\tleft: -100vw;\n\t\t\t\ttop: -100vh;\n\t\t\t\tpointer-events: none;\n\t\t\t\tvisibility: hidden;\n\t\t\t\topacity: 0;\n\t\t\t\tz-index: -1;';
+				this.appendChild(this._viewportSizeElement);
+			}
+
+			var box = this._viewportSizeElement.getBoundingClientRect();
+			var outerWidth = box.width;
+			var width = outerWidth - this._getScrollbarWidth();
+			var height = box.height;
+			var outerHeight = height;
+
+			return {
+				width: width,
+				height: height,
+				outerWidth: outerWidth,
+				outerHeight: outerHeight
+			};
+		}
+	}, {
+		key: '_scheduleLayout',
+		value: function _scheduleLayout() {
+			if (!this._layoutScheduled) {
+				(0, _raf2.default)(this._doLayout.bind(this));
+				this._layoutScheduled = true;
+			}
+		}
+	}, {
+		key: '_doLayout',
+		value: function _doLayout() {
+			this._layoutScheduled = false;
+
+			var nodes = Array.prototype.slice.call(this.el.querySelectorAll('[layout]')).map(function (el) {
+				return el.layout;
+			});
+
+			this.engine.doLayout(nodes, this.props.guides, this.props.width);
+
+			this.notify();
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				guides: {
+					type: [[{ name: 'string' }, { position: 'csslength' }, { width: 'csslength' }]],
+					expand: function expand(rawProperties) {
+						//The width is optional and defaults to 0.
+						if (rawProperties.length === 2) {
+							rawProperties.push('0');
+							return true;
+						}
+
+						return false;
+					},
+					default: ''
+				},
+				width: {
+					type: 'csslength',
+					default: '1280px'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'guides-layout';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return [];
+		}
+	}]);
+
+	return GuidesLayoutBehavior;
+}(_Behavior3.default);
+
+exports.default = GuidesLayoutBehavior;
+
+},{"behaviors/Behavior.js":13,"lib/GuidesLayoutEngine.js":46,"raf":6}],22:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var HashNavigationBehavior = function (_Behavior) {
+	_inherits(HashNavigationBehavior, _Behavior);
+
+	function HashNavigationBehavior() {
+		_classCallCheck(this, HashNavigationBehavior);
+
+		return _possibleConstructorReturn(this, (HashNavigationBehavior.__proto__ || Object.getPrototypeOf(HashNavigationBehavior)).apply(this, arguments));
+	}
+
+	_createClass(HashNavigationBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this.listen('click', this._handleClick.bind(this));
+		}
+	}, {
+		key: '_handleClick',
+		value: function _handleClick(e) {
+			//Only handle left click.
+			if (e.which !== 1 && e.button !== 0) {
+				return;
+			}
+
+			var link = this._findParentLink(e.target);
+
+			//The click did not happen inside a link.
+			if (!link) {
+				return;
+			}
+
+			if (this._handleLink(link)) {
+				e.preventDefault();
+			}
+		}
+	}, {
+		key: '_findParentLink',
+		value: function _findParentLink(element) {
+			//We reached the top, no link found.
+			if (element === document || !element) {
+				return null;
+			}
+
+			//Yay, it's a link!
+			if (element.tagName.toUpperCase() === 'A') {
+				return element;
+			}
+
+			//Maybe the parent is a link.
+			return this._findParentLink(element.parentElement);
+		}
+	}, {
+		key: '_handleLink',
+		value: function _handleLink(link) {
+			if (link.hash.length < 2) {
+				return false;
+			}
+
+			//The link points to something completely different.
+			if (link.hostname !== window.location.hostname) {
+				return false;
+			}
+
+			//The link does not link to the same page/path.
+			if (link.pathname !== window.location.pathname) {
+				return false;
+			}
+
+			var scrollTarget = document.getElementById(link.hash.substr(1));
+
+			//Ignore the click if no target is found.
+			if (!scrollTarget) {
+				return false;
+			}
+
+			//The target needs the layout behavior or else we don't know where it is.
+			if (!scrollTarget.hasAttribute('layout') || !scrollTarget.layout) {
+				return false;
+			}
+
+			var layoutBehavior = scrollTarget.layout;
+			var layout = layoutBehavior.layout;
+			var engine = this.el.guidesLayout.engine;
+			var offset = engine.lengthToPixel(this.props.offset, layout.height);
+			var targetTop = engine.calculateAnchorPosition(layoutBehavior, this.props.anchor, -offset);
+
+			this.el.scroll.scrollTo(targetTop, true);
+
+			return true;
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				anchor: {
+					type: 'string',
+					enum: ['top', 'center', 'bottom'],
+					default: 'top'
+				},
+				offset: {
+					type: 'csslength',
+					default: '0'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'hash-navigation';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['guides-layout', 'scroll'];
+		}
+	}]);
+
+	return HashNavigationBehavior;
+}(_Behavior3.default);
+
+exports.default = HashNavigationBehavior;
+
+},{"behaviors/Behavior.js":13}],23:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _objectAssign = require('object-assign');
+
+var _objectAssign2 = _interopRequireDefault(_objectAssign);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+//Parameters are a comma separated list of keyframes.
+//A keyframe is defined by a position inside the viewport and a value.
+//E.g. "alpha: top 1, bottom 0;" would set the alpha parameter to 1
+//when the top is aligned with the top of the viewport and to 0 when the bottoms are aligned.
+//The values inbetween are interpolated, hence the name of the behavior.
+var keyframesSchema = {
+	type: [[{ anchor: 'string' }, { offset: 'csslength' }, { value: 'number' }]],
+	expand: function expand(rawProperties) {
+		if (rawProperties.length === 1) {
+			//Default offset to 0 and value to 1.
+			rawProperties.push('0', '1');
+			return true;
+		} else if (rawProperties.length === 2) {
+			//Default offset to 0.
+			rawProperties.splice(1, 0, '0');
+			return true;
+		}
+
+		return false;
+	},
+	default: ''
+};
+
+var InterpolateBehavior = function (_Behavior) {
+	_inherits(InterpolateBehavior, _Behavior);
+
+	function InterpolateBehavior() {
+		_classCallCheck(this, InterpolateBehavior);
+
+		return _possibleConstructorReturn(this, (InterpolateBehavior.__proto__ || Object.getPrototypeOf(InterpolateBehavior)).apply(this, arguments));
+	}
+
+	_createClass(InterpolateBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this._interpolators = {};
+
+			//Non-zero defaults.
+			this._defaultValues = {
+				opacity: 1,
+				scale: 1
+			};
+
+			this.values = {};
+
+			this.connectTo('^guides-layout', this._createInterpolators.bind(this));
+			this.connectTo('^scroll', this._interpolate.bind(this));
+		}
+	}, {
+		key: '_createInterpolators',
+		value: function _createInterpolators(guidesLayoutBehavior) {
+			var schema = this.constructor.behaviorSchema;
+
+			for (var prop in schema) {
+				if (schema.hasOwnProperty(prop)) {
+					if (this.props[prop].length > 0) {
+						this._interpolators[prop] = this._createInterpolator(guidesLayoutBehavior, this.props[prop]);
+					} else {
+						delete this._interpolators[prop];
+					}
+				}
+			}
+
+			//Apply the interpolators right away.
+			this._interpolate(this.parentEl.scroll);
+		}
+	}, {
+		key: '_createInterpolator',
+		value: function _createInterpolator(guidesLayoutBehavior, keyframes) {
+			var _this2 = this;
+
+			var layoutEngine = guidesLayoutBehavior.engine;
+
+			//Map the keyframe anchor and offset to scroll positions.
+			var mappedKeyframes = keyframes.map(function (keyframe) {
+				var pixelOffset = layoutEngine.lengthToPixel(keyframe.offset, _this2.el.layout.layout.height);
+				var position = layoutEngine.calculateAnchorPosition(_this2.el.layout, keyframe.anchor, pixelOffset);
+
+				return {
+					position: position,
+					value: keyframe.value
+				};
+			});
+
+			//Sort them by scroll position from top to bottom.
+			mappedKeyframes = mappedKeyframes.sort(function (a, b) {
+				return a.position - b.position;
+			});
+
+			var firstKeyframe = mappedKeyframes[0];
+			var lastKeyframe = mappedKeyframes[mappedKeyframes.length - 1];
+
+			//Return a function which, given the current scrollPosition, returns the interpolated value.
+			return function (scrollPosition) {
+				//If the top position is out of bounds, use the edge values.
+				if (scrollPosition <= firstKeyframe.position) {
+					return firstKeyframe.value;
+				}
+
+				if (scrollPosition >= lastKeyframe.position) {
+					return lastKeyframe.value;
+				}
+
+				//Figure out between which two keyframes we are.
+				for (var i = 1; i < mappedKeyframes.length; i++) {
+					var rightKeyframe = mappedKeyframes[i];
+
+					//We found the right keyframe!
+					if (scrollPosition < rightKeyframe.position) {
+						var leftKeyframe = mappedKeyframes[i - 1];
+
+						var _progress = (rightKeyframe.position - scrollPosition) / (rightKeyframe.position - leftKeyframe.position);
+
+						return _progress * (leftKeyframe.value - rightKeyframe.value) + rightKeyframe.value;
+					}
+				}
+
+				throw new Error('Could not interpolate');
+			};
+		}
+	}, {
+		key: '_interpolate',
+		value: function _interpolate(scrollBehavior) {
+			var schema = this.constructor.behaviorSchema;
+			var didChange = false;
+
+			for (var prop in schema) {
+				if (schema.hasOwnProperty(prop)) {
+					var previousValue = this.values[prop];
+
+					if (this._interpolators.hasOwnProperty(prop)) {
+						this.values[prop] = this._interpolators[prop](scrollBehavior.scrollState.position);
+					} else {
+						this.values[prop] = this._defaultValues.hasOwnProperty(prop) ? this._defaultValues[prop] : 0;
+					}
+
+					if (previousValue !== this.values[prop]) {
+						didChange = true;
+					}
+				}
+			}
+
+			if (didChange) {
+				this.notify();
+			}
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				progress: (0, _objectAssign2.default)({}, keyframesSchema, { default: 'top -100vh 0, bottom 100vh 1' }),
+				opacity: keyframesSchema,
+				rotate: keyframesSchema,
+				scale: keyframesSchema,
+				x: keyframesSchema,
+				y: keyframesSchema,
+				alpha: keyframesSchema,
+				beta: keyframesSchema,
+				gamma: keyframesSchema,
+				delta: keyframesSchema,
+				epsilon: keyframesSchema
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'interpolate';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^guides-layout', '^scroll', 'layout'];
+		}
+	}]);
+
+	return InterpolateBehavior;
+}(_Behavior3.default);
+
+exports.default = InterpolateBehavior;
+
+},{"behaviors/Behavior.js":13,"object-assign":3}],24:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _resizeObserverPolyfill = require('resize-observer-polyfill');
+
+var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var LayoutBehavior = function (_Behavior) {
+	_inherits(LayoutBehavior, _Behavior);
+
+	function LayoutBehavior() {
+		_classCallCheck(this, LayoutBehavior);
+
+		return _possibleConstructorReturn(this, (LayoutBehavior.__proto__ || Object.getPrototypeOf(LayoutBehavior)).apply(this, arguments));
+	}
+
+	_createClass(LayoutBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this.intrinsicHeight = 0;
+
+			this.scrollUpdate = {
+				//All others are undefined by default, which causes all of them to return *changed for the first scroll.
+				//E.g. wrapperTopChanged will _always_ be true for the very first scroll.
+				//But we don't always need CSS transforms on the content element.
+				//If the contentTopOffset is always 0 (basically if it's a flow element) then
+				//contentTopOffsetChanged will never become true.
+				contentTopOffset: 0
+			};
+			this.layout = {};
+
+			this.connectTo('^guides-layout', this._render.bind(this));
+			this.connectTo('^scroll', this._scroll.bind(this));
+
+			if (this.props.height === 'auto') {
+				this._observeHeight();
+			}
+		}
+	}, {
+		key: 'update',
+		value: function update(prevProps) {
+			if (this.props.height !== prevProps.height) {
+				if (this.props.height === 'auto') {
+					this._observeHeight();
+				} else if (prevProps.height === 'auto') {
+					this._unobserveHeight();
+				}
+			}
+		}
+	}, {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
+			if (this.props.height === 'auto') {
+				this._unobserveHeight();
+			}
+		}
+	}, {
+		key: '_observeHeight',
+		value: function _observeHeight() {
+			var _this2 = this;
+
+			this._resizeObserver = new _resizeObserverPolyfill2.default(function (entries) {
+				_this2.intrinsicHeight = entries[0].contentRect.height;
+				_this2.emit('heightchange');
+			});
+
+			this._resizeObserver.observe(this.contentEl);
+		}
+	}, {
+		key: '_unobserveHeight',
+		value: function _unobserveHeight() {
+			this._resizeObserver.disconnect();
+			this._resizeObserver = null;
+		}
+	}, {
+		key: '_render',
+		value: function _render() {
+			this._renderWrapper();
+			this._renderContent();
+
+			//Force a scroll update.
+			this._scroll(this.parentEl.scroll, true);
+
+			this.notify();
+		}
+	}, {
+		key: '_canSafelyBeUnloadedFromGPU',
+		value: function _canSafelyBeUnloadedFromGPU() {
+			//It's not safe to hide tiles with auto-height because we query the DOM for their height.
+			return this.props.height !== 'auto';
+		}
+	}, {
+		key: '_renderWrapper',
+		value: function _renderWrapper() {
+			var overflow = 'visible';
+			var width = this.layout.width;
+			var height = this.layout.height;
+
+			if (this.props.clip) {
+				overflow = 'hidden';
+				height = this.layout.clipRect.height;
+			}
+
+			if (this.props.hidden) {
+				this.style.left = '500vw';
+				this.style.top = '500vh';
+				this.style.visibility = 'hidden';
+				overflow = 'hidden';
+			} else {
+				this.style.left = '';
+				this.style.top = '';
+				this.style.visibility = '';
+			}
+
+			this.style.overflow = overflow;
+			this.style.width = Math.round(width) + 'px';
+			this.style.height = Math.round(height) + 'px';
+		}
+	}, {
+		key: '_renderContent',
+		value: function _renderContent() {
+			this.contentStyle.position = 'relative';
+			this.contentStyle.width = Math.round(this.layout.width) + 'px';
+
+			if (this.props.height === 'auto') {
+				this.contentStyle.height = '';
+			} else {
+				this.contentStyle.height = Math.round(this.layout.height) + 'px';
+			}
+		}
+	}, {
+		key: '_scroll',
+		value: function _scroll(scrollBehavior) {
+			var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+			var scrollUpdate = this.scrollUpdate;
+
+			this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);
+
+			if (this.props.hidden) {
+				this.style.willChange = '';
+				this.style.backfaceVisibility = '';
+				this.style.perspective = '';
+				this.style.transform = '';
+			} else {
+				if (scrollUpdate.wrapperTopChanged || forceUpdate) {
+					var left = Math.round(this.layout.left);
+					var top = scrollUpdate.wrapperTop;
+
+					this.style.willChange = 'transform';
+					this.style.backfaceVisibility = 'hidden';
+					this.style.perspective = '1000';
+					this.style.transform = 'translate(' + left + 'px, ' + top + 'px, 0)';
+				}
+
+				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
+				//This would waste a ton of GPU memory for no reason. The only elements that need it are things like parallax scrolling.
+				//Since we default contentTopOffset to 0, this check should be false for all flow elements.
+				if (scrollUpdate.contentTopOffsetChanged) {
+					this.contentStyle.willChange = 'transform';
+					this.contentStyle.backfaceVisibility = 'hidden';
+					this.contentStyle.perspective = '1000';
+					this.contentStyle.transform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+				}
+			}
+
+			if (scrollUpdate.inExtendedViewportChanged) {
+				if (scrollUpdate.inExtendedViewportChanged) {
+					this.emit('extendedviewport:enter');
+				} else {
+					this.emit('extendedviewport:leave');
+				}
+			}
+
+			if (scrollUpdate.inViewportChanged) {
+				if (scrollUpdate.inViewport) {
+					this.emit('viewport:enter');
+				} else {
+					this.emit('viewport:leave');
+				}
+			}
+
+			if (scrollUpdate.inCenterChanged) {
+				if (scrollUpdate.inCenter) {
+					this.emit('center:enter');
+				} else {
+					this.emit('center:leave');
+				}
+			}
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				guides: {
+					type: [{ left: 'string' }, { right: 'string' }],
+					default: 'viewport',
+					expand: function expand(rawProperties) {
+						//We only expand a single "viewport".
+						if (rawProperties.length === 1 && rawProperties[0] === 'viewport') {
+							rawProperties.push('viewport');
+							return true;
+						}
+
+						return false;
+					}
+				},
+				height: {
+					type: 'height',
+					default: 'auto'
+				},
+				spacing: {
+					type: [{ top: 'csslength' }, { bottom: 'csslength' }],
+					expand: function expand(rawProperties) {
+						//Allow a single spacing and use it for both top and bottom.
+						if (rawProperties.length === 1) {
+							rawProperties.push(rawProperties[0]);
+							return true;
+						}
+
+						return false;
+					},
+					default: '0 0'
+				},
+				mode: {
+					type: 'string',
+					enum: ['flow', 'follow'],
+					default: 'flow'
+				},
+				followerMode: {
+					type: 'string',
+					enum: ['parallax', 'pin'],
+					default: 'parallax'
+				},
+				pinAnchor: {
+					type: 'string',
+					enum: ['top', 'center', 'bottom'],
+					default: 'center'
+				},
+				pinOffset: {
+					type: 'csslength',
+					default: '0'
+				},
+				clip: {
+					type: 'boolean',
+					default: 'false'
+				},
+				dependencies: {
+					type: 'layoutdependencies',
+					default: 'inherit'
+				},
+				hidden: {
+					type: 'boolean',
+					default: 'false'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'layout';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^guides-layout', '^scroll'];
+		}
+	}]);
+
+	return LayoutBehavior;
+}(_Behavior3.default);
+
+exports.default = LayoutBehavior;
+
+},{"behaviors/Behavior.js":13,"resize-observer-polyfill":8}],25:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var LazyLoadBehavior = function (_Behavior) {
+	_inherits(LazyLoadBehavior, _Behavior);
+
+	function LazyLoadBehavior() {
+		_classCallCheck(this, LazyLoadBehavior);
+
+		return _possibleConstructorReturn(this, (LazyLoadBehavior.__proto__ || Object.getPrototypeOf(LazyLoadBehavior)).apply(this, arguments));
+	}
+
+	_createClass(LazyLoadBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			var _this2 = this;
+
+			//This is the last resort, we definitely need to load the assets once the element is inside the viewport.
+			var handleViewportEnter = function handleViewportEnter() {
+				lazyLoad();
+				unlisten();
+			};
+
+			//We try to intelligently load the asset when the element is close to the viewport (extended viewport).
+			//We do this inside a scroll pause to minimize jank.
+			var handleScrollPause = function handleScrollPause() {
+				if (_this2.el.layout.scrollUpdate.inExtendedViewport) {
+					lazyLoad();
+					unlisten();
+				}
+			};
+
+			var lazyLoad = function lazyLoad() {
+				var elements = _this2.el.querySelectorAll('[data-src]');
+
+				for (var i = 0; i < elements.length; i++) {
+					var el = elements[i];
+
+					el.src = el.getAttribute('data-src');
+					el.removeAttribute('data-src');
+				}
+
+				_this2.notify();
+			};
+
+			var unlisten = function unlisten() {
+				_this2.unlisten('layout:viewport:enter', handleViewportEnter);
+				_this2.unlisten('^scroll:pause', handleScrollPause);
+			};
+
+			this.listen('layout:viewport:enter', handleViewportEnter);
+			this.listen('^scroll:pause', handleScrollPause);
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'lazy-load';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^scroll', 'layout'];
+		}
+	}]);
+
+	return LazyLoadBehavior;
+}(_Behavior3.default);
+
+exports.default = LazyLoadBehavior;
+
+},{"behaviors/Behavior.js":13}],26:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var MediaBehavior = function (_Behavior) {
+	_inherits(MediaBehavior, _Behavior);
+
+	function MediaBehavior() {
+		_classCallCheck(this, MediaBehavior);
+
+		return _possibleConstructorReturn(this, (MediaBehavior.__proto__ || Object.getPrototypeOf(MediaBehavior)).apply(this, arguments));
+	}
+
+	_createClass(MediaBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this.connectTo('layout', this._render.bind(this));
+		}
+	}, {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
+			var img = this.el.querySelector('img, video');
+			var style = img.style;
+
+			style.display = '';
+			style.position = '';
+			style.left = style.top = '';
+			style.maxWidth = style.maxHeight = '';
+			style.width = '';
+			style.height = '';
+			style.transform = '';
+		}
+	}, {
+		key: '_render',
+		value: function _render(layoutBehavior) {
+			//TODO: warn if there are no img/video
+			//TODO: need a wrapper for overflow:hidden
+			var layout = this.calculateMediaLayout(layoutBehavior);
+			var img = this.el.querySelector('img, video');
+			var style = img.style;
+
+			style.display = 'block';
+			style.position = 'absolute';
+			style.left = style.top = 0;
+			style.maxWidth = style.maxHeight = 'none';
+			style.width = Math.round(layout.width) + 'px';
+			style.height = Math.round(layout.height) + 'px';
+			style.transform = 'translate(' + Math.round(layout.left) + 'px, ' + Math.round(layout.top) + 'px)';
+
+			this.notify();
+		}
+	}, {
+		key: '_calculateMediaSize',
+		value: function _calculateMediaSize(layoutBehavior) {
+			var ratio = this.props.ratio.num;
+			var fit = this.props.fit;
+			var _layoutBehavior$layou = layoutBehavior.layout,
+			    width = _layoutBehavior$layou.width,
+			    height = _layoutBehavior$layou.height;
+
+			var containerRatio = width / height;
+
+			if (fit !== 'fill') {
+				if (fit === 'contain' && containerRatio > ratio || fit === 'cover' && containerRatio < ratio) {
+					width = height * ratio;
+				} else {
+					height = width / ratio;
+				}
+			}
+
+			return {
+				width: width,
+				height: height
+			};
+		}
+	}, {
+		key: 'calculateMediaLayout',
+		value: function calculateMediaLayout(layoutBehavior) {
+			var layoutEngine = this.parentEl.guidesLayout.engine;
+			var size = this._calculateMediaSize(layoutBehavior);
+			var fit = this.props.fit;
+			var _layoutBehavior$layou2 = layoutBehavior.layout,
+			    width = _layoutBehavior$layou2.width,
+			    height = _layoutBehavior$layou2.height;
+			var _props$position = this.props.position,
+			    x = _props$position.x,
+			    y = _props$position.y;
+
+			var focalPointX = layoutEngine.lengthToPixel(x, size.width);
+			var focalPointY = layoutEngine.lengthToPixel(y, size.height);
+
+			var left = void 0;
+			var top = void 0;
+
+			if (fit === 'cover') {
+				//Center the focal point inside the container.
+				left = width / 2 - focalPointX;
+				top = height / 2 - focalPointY;
+
+				//Make sure the media is still aligned with the edge of the container.
+				//This means we move the focal point as close to the center as possible
+				//without exposing the container behind it.
+				left = Math.min(0, Math.max(width - size.width, left));
+				top = Math.min(0, Math.max(height - size.height, top));
+			} else {
+				//TODO: position is relevant for contain as well.
+				//For contain/stretch fit we center the media inside its container.
+				left = width / 2 - size.width / 2;
+				top = height / 2 - size.height / 2;
+			}
+
+			return {
+				width: size.width,
+				height: size.height,
+				left: left,
+				top: top
+			};
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				ratio: {
+					type: 'ratio'
+				},
+				fit: {
+					type: 'string',
+					enum: ['fill', 'cover', 'contain'],
+					default: 'cover'
+				},
+				position: {
+					type: [{ x: 'csslength' }, { y: 'csslength' }],
+					expand: function expand(rawProperties) {
+						//Allow a single position and use it for both x and y.
+						if (rawProperties.length === 1) {
+							rawProperties.push(rawProperties[0]);
+							return true;
+						}
+
+						return false;
+					},
+					default: '50% 50%'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'media';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^guides-layout', 'layout'];
+		}
+	}]);
+
+	return MediaBehavior;
+}(_Behavior3.default);
+
+exports.default = MediaBehavior;
+
+},{"behaviors/Behavior.js":13}],27:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var MousetrapBehavior = function (_Behavior) {
+	_inherits(MousetrapBehavior, _Behavior);
+
+	function MousetrapBehavior() {
+		_classCallCheck(this, MousetrapBehavior);
+
+		return _possibleConstructorReturn(this, (MousetrapBehavior.__proto__ || Object.getPrototypeOf(MousetrapBehavior)).apply(this, arguments));
+	}
+
+	_createClass(MousetrapBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this._render();
+		}
+	}, {
+		key: 'update',
+		value: function update() {
+			this._render();
+		}
+	}, {
+		key: '_render',
+		value: function _render() {
+			//TODO: access scrollmode here?
+			//TODO: instead of pointer events, add an overlay div to the <shadow-meister>.
+			this.style.pointerEvents = 'none';
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				native: {
+					type: 'string',
+					enum: ['always', 'fullscreen', 'never'],
+					default: 'fullscreen'
+				},
+				touch: {
+					type: 'string',
+					enum: ['always', 'fullscreen', 'never'],
+					default: 'fullscreen'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'mousetrap';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['^guides-layout'];
+		}
+	}]);
+
+	return MousetrapBehavior;
+}(_Behavior3.default);
+
+exports.default = MousetrapBehavior;
+
+},{"behaviors/Behavior.js":13}],28:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var RotatingGradientBehavior = function (_Behavior) {
+	_inherits(RotatingGradientBehavior, _Behavior);
+
+	function RotatingGradientBehavior() {
+		_classCallCheck(this, RotatingGradientBehavior);
+
+		return _possibleConstructorReturn(this, (RotatingGradientBehavior.__proto__ || Object.getPrototypeOf(RotatingGradientBehavior)).apply(this, arguments));
+	}
+
+	_createClass(RotatingGradientBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			var _this2 = this;
+
+			this.connectTo('interpolate', function (interpolateBehavior) {
+				var angle = interpolateBehavior.values.progress * _this2.props.speed * 360;
+				var color1 = 'hsl(' + angle + ', 100%, 50%)';
+				var color2 = 'hsl(' + (angle + _this2.props.offset) + ', 100%, 50%)';
+
+				_this2.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
+
+				_this2.notify();
+			});
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {
+				speed: {
+					type: 'number',
+					default: '1'
+				},
+				offset: {
+					type: 'number',
+					default: '40'
+				}
+			};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'rotating-gradient';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['interpolate'];
+		}
+	}]);
+
+	return RotatingGradientBehavior;
+}(_Behavior3.default);
+
+exports.default = RotatingGradientBehavior;
+
+},{"behaviors/Behavior.js":13}],29:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _raf = require('raf');
+
+var _raf2 = _interopRequireDefault(_raf);
+
+var _ScrollState = require('lib/ScrollState.js');
+
+var _ScrollState2 = _interopRequireDefault(_ScrollState);
+
+var _easings = require('lib/easings.js');
+
+var _easings2 = _interopRequireDefault(_easings);
+
+var _Behavior2 = require('behaviors/Behavior.js');
+
+var _Behavior3 = _interopRequireDefault(_Behavior2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ScrollBehavior = function (_Behavior) {
+	_inherits(ScrollBehavior, _Behavior);
+
+	function ScrollBehavior() {
+		_classCallCheck(this, ScrollBehavior);
+
+		return _possibleConstructorReturn(this, (ScrollBehavior.__proto__ || Object.getPrototypeOf(ScrollBehavior)).apply(this, arguments));
+	}
+
+	_createClass(ScrollBehavior, [{
+		key: 'behaviorDidAttach',
+		value: function behaviorDidAttach() {
+			this._scrollAnimation = null;
+
+			this._lastScrollTime = -1;
+
+			this.scrollState = new _ScrollState2.default(this.notify.bind(this), this.emit.bind(this, 'pause', false));
+
+			this.connectTo('guides-layout', this._updateScrollHeight.bind(this));
+
+			//It is important that the _scrollLoop is scheduled after initLayoutEngine (which schedules layout).
+			//This guarantees that the very first `scroll` event will be emited AFTER the very first `layout` event.
+			(0, _raf2.default)(this._scrollLoop.bind(this));
+		}
+	}, {
+		key: 'behaviorWillDetach',
+		value: function behaviorWillDetach() {
+			this.scrollState.destroy();
+		}
+	}, {
+		key: '_updateScrollAnimation',
+		value: function _updateScrollAnimation(now) {
+			var animation = this._scrollAnimation;
+
+			if (!animation.hasOwnProperty('startTime')) {
+				animation.startTime = now;
+				animation.endTime = now + Math.abs(animation.targetPosition - animation.startPosition) / 3;
+			}
+
+			var currentScrollPosition = void 0;
+
+			if (now > animation.endTime) {
+				currentScrollPosition = animation.targetPosition;
+				this._scrollAnimation = null;
+			} else {
+				var progress = void 0;
+
+				progress = 1 - (animation.endTime - now) / (animation.endTime - animation.startTime);
+				progress = _easings2.default.outCubic(progress);
+
+				currentScrollPosition = animation.startPosition + (animation.targetPosition - animation.startPosition) * progress;
+			}
+
+			this.scrollTo(currentScrollPosition);
+		}
+	}, {
+		key: 'scrollTo',
+		value: function scrollTo(position) {
+			var animate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+			position = Math.round(position);
+
+			if (animate) {
+				var currentPosition = this.getPosition();
+
+				this._scrollAnimation = {
+					startPosition: currentPosition,
+					targetPosition: position
+				};
+			} else {
+				window.scrollTo(0, position);
+			}
+		}
+	}, {
+		key: '_scrollLoop',
+		value: function _scrollLoop(now) {
+			//The very first frame doesn't have a previous one.
+			if (this._lastScrollTime === -1) {
+				this._lastScrollTime = now;
+			}
+
+			this._pollScrollPosition(now);
+
+			this._lastScrollTime = now;
+			(0, _raf2.default)(this._scrollLoop.bind(this));
+		}
+	}, {
+		key: 'getPosition',
+		value: function getPosition() {
+			if (!document.documentElement || !document.body) {
+				throw new Error('There is no documentElement or body to get the scroll position from.');
+			}
+
+			return document.documentElement.scrollTop || document.body.scrollTop;
+		}
+	}, {
+		key: '_pollScrollPosition',
+		value: function _pollScrollPosition(now) {
+			if (this._scrollAnimation) {
+				this._updateScrollAnimation(now);
+			}
+
+			this.scrollState.tick(now, this.getPosition());
+		}
+	}, {
+		key: '_updateScrollHeight',
+		value: function _updateScrollHeight(guidesLayoutBehavior) {
+			var layoutEngine = guidesLayoutBehavior.engine;
+			var requiredHeight = layoutEngine.requiredHeight;
+
+			this.style.height = Math.round(requiredHeight) + 'px';
+
+			this.scrollState.maxPosition = requiredHeight - layoutEngine.viewport.height;
+
+			//Make sure we don't lose our relative scroll position.
+			this.scrollTo(this.scrollState.maxPosition * this.scrollState.progress);
+		}
+	}], [{
+		key: 'behaviorSchema',
+		get: function get() {
+			return {};
+		}
+	}, {
+		key: 'behaviorName',
+		get: function get() {
+			return 'real-scroll';
+		}
+	}, {
+		key: 'behaviorDependencies',
+		get: function get() {
+			return ['guides-layout'];
+		}
+	}]);
+
 	return ScrollBehavior;
 }(_Behavior3.default);
 
 exports.default = ScrollBehavior;
 
-},{"behaviors/Behavior.js":13,"lib/ScrollState.js":46,"lib/easings.js":49,"lib/fakeClick.js":50,"lib/isTextInput.js":52,"raf":6,"scroll-logic":9}],29:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/ScrollState.js":47,"lib/easings.js":50,"raf":6}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14811,7 +14988,7 @@ var ScrubBehavior = function (_Behavior) {
 
 exports.default = ScrubBehavior;
 
-},{"behaviors/Behavior.js":13}],30:[function(require,module,exports){
+},{"behaviors/Behavior.js":13}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14893,7 +15070,7 @@ var SignalsBehavior = function (_Behavior) {
 
 exports.default = SignalsBehavior;
 
-},{"behaviors/Behavior.js":13}],31:[function(require,module,exports){
+},{"behaviors/Behavior.js":13}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14944,7 +15121,7 @@ var TransformBehavior = function (_Behavior) {
 			//So... translate, skew, rotate, scale?
 			//This feels natural. Skewing after rotating is nothing people can imagine in their head.
 			//Or just add an order property with a default.
-			this.contentStyle.transform = 'translate3d(' + values.x + '%, ' + values.y + '%, 0) rotate(' + values.rotate + 'deg) scale(' + values.scale + ')';
+			this.contentStyle.transform = 'translate(' + values.x + '%, ' + values.y + '%) rotate(' + values.rotate + 'deg) scale(' + values.scale + ')';
 
 			this.notify();
 		}
@@ -14970,7 +15147,7 @@ var TransformBehavior = function (_Behavior) {
 
 exports.default = TransformBehavior;
 
-},{"behaviors/Behavior.js":13,"behaviors/InterpolateBehavior.js":22}],32:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"behaviors/InterpolateBehavior.js":23}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15069,7 +15246,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":13,"youtube-iframe":11}],33:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"youtube-iframe":11}],34:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15146,7 +15323,7 @@ _scrollmeister2.default.defineBehavior(_CSSBehavior2.default);
 _scrollmeister2.default.defineBehavior(_SignalsBehavior2.default);
 _scrollmeister2.default.defineBehavior(_AutoplayBehavior2.default);
 
-},{"./index.js":34,"behaviors/AutoplayBehavior.js":12,"behaviors/CSSBehavior.js":14,"behaviors/FluidTextBehavior.js":17,"behaviors/GLEffectBehavior.js":18,"behaviors/GalleryBehavior.js":19,"behaviors/HashNavigationBehavior.js":21,"behaviors/InterpolateBehavior.js":22,"behaviors/LazyLoadBehavior.js":24,"behaviors/RotatingGradientBehavior.js":27,"behaviors/ScrubBehavior.js":29,"behaviors/SignalsBehavior.js":30,"behaviors/TransformBehavior.js":31,"behaviors/YouTubeBehavior.js":32,"scrollmeister.js":55}],34:[function(require,module,exports){
+},{"./index.js":35,"behaviors/AutoplayBehavior.js":12,"behaviors/CSSBehavior.js":14,"behaviors/FluidTextBehavior.js":18,"behaviors/GLEffectBehavior.js":19,"behaviors/GalleryBehavior.js":20,"behaviors/HashNavigationBehavior.js":22,"behaviors/InterpolateBehavior.js":23,"behaviors/LazyLoadBehavior.js":25,"behaviors/RotatingGradientBehavior.js":28,"behaviors/ScrubBehavior.js":30,"behaviors/SignalsBehavior.js":31,"behaviors/TransformBehavior.js":32,"behaviors/YouTubeBehavior.js":33,"scrollmeister.js":56}],35:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15160,6 +15337,10 @@ var _GuidesLayoutBehavior2 = _interopRequireDefault(_GuidesLayoutBehavior);
 var _ScrollBehavior = require('behaviors/ScrollBehavior.js');
 
 var _ScrollBehavior2 = _interopRequireDefault(_ScrollBehavior);
+
+var _FakeScrollBehavior = require('behaviors/FakeScrollBehavior.js');
+
+var _FakeScrollBehavior2 = _interopRequireDefault(_FakeScrollBehavior);
 
 var _DebugGuidesBehavior = require('behaviors/DebugGuidesBehavior.js');
 
@@ -15187,6 +15368,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _scrollmeister2.default.defineBehavior(_GuidesLayoutBehavior2.default);
 _scrollmeister2.default.defineBehavior(_ScrollBehavior2.default);
+_scrollmeister2.default.defineBehavior(_FakeScrollBehavior2.default);
 _scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
 _scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
 
@@ -15195,7 +15377,7 @@ _scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
 _scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
 //Scrollmeister.defineBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":15,"behaviors/FadeInBehavior.js":16,"behaviors/GuidesLayoutBehavior.js":20,"behaviors/LayoutBehavior.js":23,"behaviors/MediaBehavior.js":25,"behaviors/MousetrapBehavior.js":26,"behaviors/ScrollBehavior.js":28,"scrollmeister.js":55}],35:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":15,"behaviors/FadeInBehavior.js":16,"behaviors/FakeScrollBehavior.js":17,"behaviors/GuidesLayoutBehavior.js":21,"behaviors/LayoutBehavior.js":24,"behaviors/MediaBehavior.js":26,"behaviors/MousetrapBehavior.js":27,"behaviors/ScrollBehavior.js":29,"scrollmeister.js":56}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15261,7 +15443,7 @@ var ContentMeisterComponent = function (_HTMLElement) {
 
 exports.default = ContentMeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":43,"scrollmeister.js":55}],36:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":44,"scrollmeister.js":56}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15328,7 +15510,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":37,"scrollmeister.js":55}],37:[function(require,module,exports){
+},{"./MeisterComponent.js":38,"scrollmeister.js":56}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15522,7 +15704,7 @@ var MeisterComponent = function (_HTMLElement) {
 
 exports.default = MeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":43,"raf":6,"scrollmeister.js":55}],38:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":44,"raf":6,"scrollmeister.js":56}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15589,7 +15771,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":37,"scrollmeister.js":55}],39:[function(require,module,exports){
+},{"./MeisterComponent.js":38,"scrollmeister.js":56}],40:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -15641,7 +15823,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}(HTMLElement));
 }, { once: true });
 
-},{"components/ContentMeisterComponent.js":35,"components/ElementMeisterComponent.js":36,"components/ScrollMeisterComponent.js":38,"document-register-element":1,"scrollmeister.js":55}],40:[function(require,module,exports){
+},{"components/ContentMeisterComponent.js":36,"components/ElementMeisterComponent.js":37,"components/ScrollMeisterComponent.js":39,"document-register-element":1,"scrollmeister.js":56}],41:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15715,7 +15897,7 @@ _scrollmeister2.default.defineCondition('wat', ['xl', 'portrait'], function (xl,
 
 //window.addEventListener('resize', ....)
 
-},{"scrollmeister.js":55}],41:[function(require,module,exports){
+},{"scrollmeister.js":56}],42:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15735,7 +15917,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //This makes browserify --standalone work and exports Scrollmeister as an UMD module.
 module.exports = _scrollmeister2.default; //eslint-disable-line no-undef
 
-},{"./behaviors/extras.js":33,"./components":39,"./conditions":40,"./scrollmeister.sass":56,"scrollmeister.js":55}],42:[function(require,module,exports){
+},{"./behaviors/extras.js":34,"./components":40,"./conditions":41,"./scrollmeister.sass":57,"scrollmeister.js":56}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15830,7 +16012,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15840,6 +16022,8 @@ Object.defineProperty(exports, "__esModule", {
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var translate2dRegex = /translate\(([^)]+)\)/g;
 
 var BehaviorsStyleMerger = function () {
 	function BehaviorsStyleMerger(element, order) {
@@ -15892,8 +16076,11 @@ var BehaviorsStyleMerger = function () {
 					}
 				}
 
+				transforms = transforms.join(' ');
+
 				if (transforms.length > 0) {
-					this.el.style.transform = this.el.style.WebkitTransform = this.el.style.msTransform = transforms.join(' ');
+					this.el.style.transform = this.el.style.WebkitTransform = transforms.replace(translate2dRegex, 'translate3d($1, 0)');
+					this.el.style.msTransform = transforms;
 				} else {
 					this.el.style.transform = '';
 				}
@@ -15942,7 +16129,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15997,7 +16184,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16014,6 +16201,12 @@ var GuidesLayoutEngine = function () {
 
 		this.guides = [];
 		this.requiredHeight = 0;
+		this.viewport = {
+			width: 0,
+			height: 0,
+			outerWidth: 0,
+			outerHeight: 0
+		};
 		this.fullscreenLayout = {
 			left: 0,
 			top: 0,
@@ -16025,6 +16218,10 @@ var GuidesLayoutEngine = function () {
 	_createClass(GuidesLayoutEngine, [{
 		key: 'updateViewport',
 		value: function updateViewport(viewport) {
+			if (viewport.height === this.viewport.height && viewport.width === this.viewport.width && viewport.outerWidth === this.viewport.outerWidth && viewport.outerHeight === this.viewport.outerHeight) {
+				return false;
+			}
+
 			this.viewport = viewport;
 			this.fullscreenLayout = {
 				left: 0,
@@ -16032,6 +16229,8 @@ var GuidesLayoutEngine = function () {
 				width: viewport.outerWidth,
 				height: viewport.outerHeight
 			};
+
+			return true;
 		}
 	}, {
 		key: 'lengthToPixel',
@@ -16163,6 +16362,7 @@ var GuidesLayoutEngine = function () {
 			var verticalCenter = this.viewport.height / 2;
 			var contentHeight = layout.height;
 			var prevWrapperTop = scrollUpdate.wrapperTop;
+			var prevContentTopOffset = scrollUpdate.contentTopOffset;
 			var prevInCenter = scrollUpdate.inCenter;
 			var prevInViewport = scrollUpdate.inViewport;
 			var prevInExtendedViewport = scrollUpdate.inExtendedViewport;
@@ -16221,6 +16421,7 @@ var GuidesLayoutEngine = function () {
 			}
 
 			scrollUpdate.wrapperTopChanged = scrollUpdate.wrapperTop !== prevWrapperTop;
+			scrollUpdate.contentTopOffsetChanged = scrollUpdate.contentTopOffset !== prevContentTopOffset;
 			scrollUpdate.inCenterChanged = scrollUpdate.inCenter !== prevInCenter;
 			scrollUpdate.inViewportChanged = scrollUpdate.inViewport !== prevInViewport;
 			scrollUpdate.inExtendedViewportChanged = scrollUpdate.inExtendedViewport !== prevInExtendedViewport;
@@ -16613,7 +16814,7 @@ var GuidesLayoutEngine = function () {
 
 exports.default = GuidesLayoutEngine;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16731,7 +16932,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16744,18 +16945,18 @@ exports.default = function (input) {
 	});
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 //Feel free to extend this list if a behavior needs more styles.
-var cssProps = ['display', 'overflow', 'contain', 'transform', 'backfaceVisibility', 'willChange', 'opacity', 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'maxWidth', 'minWidth', 'maxHeight', 'minHeight', 'transition', 'whiteSpace', 'fontSize', 'cursor', 'pointerEvents', 'background', 'backgroundImage', 'backgroundColor', 'backgroundSize'];
+var cssProps = ['display', 'overflow', 'contain', 'transform', 'backfaceVisibility', 'willChange', 'opacity', 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'maxWidth', 'minWidth', 'maxHeight', 'minHeight', 'transition', 'whiteSpace', 'fontSize', 'cursor', 'pointerEvents', 'background', 'backgroundImage', 'backgroundColor', 'backgroundSize', 'visibility'];
 
 exports.default = cssProps;
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16807,7 +17008,7 @@ exports.default = {
 	}
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16853,7 +17054,7 @@ exports.default = {
 	}
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16886,7 +17087,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16905,7 +17106,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17100,7 +17301,7 @@ exports.default = {
 	}
 };
 
-},{"types":65}],54:[function(require,module,exports){
+},{"types":66}],55:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17123,7 +17324,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17328,10 +17529,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":13,"lib/BehaviorsRegistry.js":42,"lib/ConditionsRegistry.js":44,"ponies/CustomEvent.js":54}],56:[function(require,module,exports){
-var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;-webkit-backface-visibility:hidden;backface-visibility:hidden}content-meister{display:block;overflow:hidden;-webkit-box-sizing:border-box;box-sizing:border-box}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
+},{"behaviors/Behavior.js":13,"lib/BehaviorsRegistry.js":43,"lib/ConditionsRegistry.js":45,"ponies/CustomEvent.js":55}],57:[function(require,module,exports){
+var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;contain:strict}content-meister{display:block;overflow:hidden;-webkit-box-sizing:border-box;box-sizing:border-box}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":10}],57:[function(require,module,exports){
+},{"scssify":10}],58:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17348,7 +17549,7 @@ exports.default = {
 	}
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17390,7 +17591,7 @@ exports.default = {
 	}
 };
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17436,7 +17637,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":58}],60:[function(require,module,exports){
+},{"types/CSSLengthType.js":59}],61:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17554,7 +17755,7 @@ exports.default = {
 	}
 };
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17583,7 +17784,7 @@ exports.default = {
 	}
 };
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17611,7 +17812,7 @@ exports.default = {
 	}
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17626,7 +17827,7 @@ exports.default = {
 	}
 };
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17664,7 +17865,7 @@ exports.default = {
 	}
 };
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17718,5 +17919,5 @@ exports.default = {
 };
 var domtypes = exports.domtypes = ['layoutdependencies'];
 
-},{"types/BooleanType.js":57,"types/CSSLengthType.js":58,"types/HeightType.js":59,"types/LayoutDependenciesType.js":60,"types/NumberType.js":61,"types/RatioType.js":62,"types/StringType.js":63,"types/TemplateType.js":64}]},{},[41])(41)
+},{"types/BooleanType.js":58,"types/CSSLengthType.js":59,"types/HeightType.js":60,"types/LayoutDependenciesType.js":61,"types/NumberType.js":62,"types/RatioType.js":63,"types/StringType.js":64,"types/TemplateType.js":65}]},{},[42])(42)
 });
