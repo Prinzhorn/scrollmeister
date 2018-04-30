@@ -1,5 +1,5 @@
 /*!
- * Scrollmeister v0.0.1-alpha.2 (April 30th 2018)
+ * Scrollmeister v0.0.1-alpha.3 (April 30th 2018)
  * Open-source JavaScript framework to declaratively build scrolling experiences
  * 
  * https://www.scrollmeister.com
@@ -12342,7 +12342,7 @@ var Behavior = function () {
 
 exports.default = Behavior;
 
-},{"lib/camelCase.js":48,"lib/cssProps.js":49,"lib/schemaParser.js":54,"object-assign":3,"ponies/CustomEvent.js":55,"types":66}],14:[function(require,module,exports){
+},{"lib/camelCase.js":47,"lib/cssProps.js":48,"lib/schemaParser.js":53,"object-assign":3,"ponies/CustomEvent.js":54,"types":65}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12949,7 +12949,7 @@ var FakeScrollBehavior = function (_Behavior) {
 
 exports.default = FakeScrollBehavior;
 
-},{"behaviors/Behavior.js":13,"lib/ScrollState.js":47,"lib/easings.js":50,"lib/fakeClick.js":51,"lib/isTextInput.js":53,"raf":6,"scroll-logic":9}],18:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/ScrollState.js":46,"lib/easings.js":49,"lib/fakeClick.js":50,"lib/isTextInput.js":52,"raf":6,"scroll-logic":9}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13026,7 +13026,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":13,"lib/fontSizeWidthRatio.js":52}],19:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/fontSizeWidthRatio.js":51}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13624,7 +13624,7 @@ var GuidesLayoutBehavior = function (_Behavior) {
 
 exports.default = GuidesLayoutBehavior;
 
-},{"behaviors/Behavior.js":13,"lib/GuidesLayoutEngine.js":46,"raf":6}],22:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/GuidesLayoutEngine.js":45,"raf":6}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14623,82 +14623,6 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Behavior2 = require('behaviors/Behavior.js');
-
-var _Behavior3 = _interopRequireDefault(_Behavior2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var RotatingGradientBehavior = function (_Behavior) {
-	_inherits(RotatingGradientBehavior, _Behavior);
-
-	function RotatingGradientBehavior() {
-		_classCallCheck(this, RotatingGradientBehavior);
-
-		return _possibleConstructorReturn(this, (RotatingGradientBehavior.__proto__ || Object.getPrototypeOf(RotatingGradientBehavior)).apply(this, arguments));
-	}
-
-	_createClass(RotatingGradientBehavior, [{
-		key: 'behaviorDidAttach',
-		value: function behaviorDidAttach() {
-			var _this2 = this;
-
-			this.connectTo('interpolate', function (interpolateBehavior) {
-				var angle = interpolateBehavior.values.progress * _this2.props.speed * 360;
-				var color1 = 'hsl(' + angle + ', 100%, 50%)';
-				var color2 = 'hsl(' + (angle + _this2.props.offset) + ', 100%, 50%)';
-
-				_this2.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + color1 + ', ' + color2 + ')';
-
-				_this2.notify();
-			});
-		}
-	}], [{
-		key: 'behaviorSchema',
-		get: function get() {
-			return {
-				speed: {
-					type: 'number',
-					default: '1'
-				},
-				offset: {
-					type: 'number',
-					default: '40'
-				}
-			};
-		}
-	}, {
-		key: 'behaviorName',
-		get: function get() {
-			return 'rotating-gradient';
-		}
-	}, {
-		key: 'behaviorDependencies',
-		get: function get() {
-			return ['interpolate'];
-		}
-	}]);
-
-	return RotatingGradientBehavior;
-}(_Behavior3.default);
-
-exports.default = RotatingGradientBehavior;
-
-},{"behaviors/Behavior.js":13}],29:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _raf = require('raf');
 
 var _raf2 = _interopRequireDefault(_raf);
@@ -14862,7 +14786,7 @@ var ScrollBehavior = function (_Behavior) {
 
 exports.default = ScrollBehavior;
 
-},{"behaviors/Behavior.js":13,"lib/ScrollState.js":47,"lib/easings.js":50,"raf":6}],30:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/ScrollState.js":46,"lib/easings.js":49,"raf":6}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14988,7 +14912,7 @@ var ScrubBehavior = function (_Behavior) {
 
 exports.default = ScrubBehavior;
 
-},{"behaviors/Behavior.js":13}],31:[function(require,module,exports){
+},{"behaviors/Behavior.js":13}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15070,7 +14994,7 @@ var SignalsBehavior = function (_Behavior) {
 
 exports.default = SignalsBehavior;
 
-},{"behaviors/Behavior.js":13}],32:[function(require,module,exports){
+},{"behaviors/Behavior.js":13}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15150,7 +15074,7 @@ var TransformBehavior = function (_Behavior) {
 
 exports.default = TransformBehavior;
 
-},{"behaviors/Behavior.js":13,"behaviors/InterpolateBehavior.js":23}],33:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"behaviors/InterpolateBehavior.js":23}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15249,7 +15173,7 @@ var FadeInBehavior = function (_Behavior) {
 
 exports.default = FadeInBehavior;
 
-},{"behaviors/Behavior.js":13,"youtube-iframe":11}],34:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"youtube-iframe":11}],33:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15286,10 +15210,6 @@ var _GLEffectBehavior = require('behaviors/GLEffectBehavior.js');
 
 var _GLEffectBehavior2 = _interopRequireDefault(_GLEffectBehavior);
 
-var _RotatingGradientBehavior = require('behaviors/RotatingGradientBehavior.js');
-
-var _RotatingGradientBehavior2 = _interopRequireDefault(_RotatingGradientBehavior);
-
 var _GalleryBehavior = require('behaviors/GalleryBehavior.js');
 
 var _GalleryBehavior2 = _interopRequireDefault(_GalleryBehavior);
@@ -15312,21 +15232,23 @@ var _AutoplayBehavior2 = _interopRequireDefault(_AutoplayBehavior);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_scrollmeister2.default.defineBehavior(_HashNavigationBehavior2.default);
-_scrollmeister2.default.defineBehavior(_InterpolateBehavior2.default);
-_scrollmeister2.default.defineBehavior(_TransformBehavior2.default);
-_scrollmeister2.default.defineBehavior(_LazyLoadBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FluidTextBehavior2.default);
-_scrollmeister2.default.defineBehavior(_ScrubBehavior2.default);
-_scrollmeister2.default.defineBehavior(_GLEffectBehavior2.default);
-_scrollmeister2.default.defineBehavior(_RotatingGradientBehavior2.default);
-_scrollmeister2.default.defineBehavior(_GalleryBehavior2.default);
-_scrollmeister2.default.defineBehavior(_YouTubeBehavior2.default);
-_scrollmeister2.default.defineBehavior(_CSSBehavior2.default);
-_scrollmeister2.default.defineBehavior(_SignalsBehavior2.default);
-_scrollmeister2.default.defineBehavior(_AutoplayBehavior2.default);
+_scrollmeister2.default.registerBehavior(_HashNavigationBehavior2.default);
+//import RotatingGradientBehavior from 'behaviors/RotatingGradientBehavior.js';
 
-},{"./index.js":35,"behaviors/AutoplayBehavior.js":12,"behaviors/CSSBehavior.js":14,"behaviors/FluidTextBehavior.js":18,"behaviors/GLEffectBehavior.js":19,"behaviors/GalleryBehavior.js":20,"behaviors/HashNavigationBehavior.js":22,"behaviors/InterpolateBehavior.js":23,"behaviors/LazyLoadBehavior.js":25,"behaviors/RotatingGradientBehavior.js":28,"behaviors/ScrubBehavior.js":30,"behaviors/SignalsBehavior.js":31,"behaviors/TransformBehavior.js":32,"behaviors/YouTubeBehavior.js":33,"scrollmeister.js":56}],35:[function(require,module,exports){
+_scrollmeister2.default.registerBehavior(_InterpolateBehavior2.default);
+_scrollmeister2.default.registerBehavior(_TransformBehavior2.default);
+_scrollmeister2.default.registerBehavior(_LazyLoadBehavior2.default);
+_scrollmeister2.default.registerBehavior(_FluidTextBehavior2.default);
+_scrollmeister2.default.registerBehavior(_ScrubBehavior2.default);
+_scrollmeister2.default.registerBehavior(_GLEffectBehavior2.default);
+//Scrollmeister.registerBehavior(RotatingGradientBehavior);
+_scrollmeister2.default.registerBehavior(_GalleryBehavior2.default);
+_scrollmeister2.default.registerBehavior(_YouTubeBehavior2.default);
+_scrollmeister2.default.registerBehavior(_CSSBehavior2.default);
+_scrollmeister2.default.registerBehavior(_SignalsBehavior2.default);
+_scrollmeister2.default.registerBehavior(_AutoplayBehavior2.default);
+
+},{"./index.js":34,"behaviors/AutoplayBehavior.js":12,"behaviors/CSSBehavior.js":14,"behaviors/FluidTextBehavior.js":18,"behaviors/GLEffectBehavior.js":19,"behaviors/GalleryBehavior.js":20,"behaviors/HashNavigationBehavior.js":22,"behaviors/InterpolateBehavior.js":23,"behaviors/LazyLoadBehavior.js":25,"behaviors/ScrubBehavior.js":29,"behaviors/SignalsBehavior.js":30,"behaviors/TransformBehavior.js":31,"behaviors/YouTubeBehavior.js":32,"scrollmeister.js":55}],34:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15369,18 +15291,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
-_scrollmeister2.default.defineBehavior(_GuidesLayoutBehavior2.default);
-_scrollmeister2.default.defineBehavior(_ScrollBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FakeScrollBehavior2.default);
-_scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
+_scrollmeister2.default.registerBehavior(_GuidesLayoutBehavior2.default);
+_scrollmeister2.default.registerBehavior(_ScrollBehavior2.default);
+_scrollmeister2.default.registerBehavior(_FakeScrollBehavior2.default);
+_scrollmeister2.default.registerBehavior(_DebugGuidesBehavior2.default);
+_scrollmeister2.default.registerBehavior(_FadeInBehavior2.default);
 
-_scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
-_scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
-_scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
-//Scrollmeister.defineBehavior(FullscreenBehavior);
+_scrollmeister2.default.registerBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.registerBehavior(_MediaBehavior2.default);
+_scrollmeister2.default.registerBehavior(_MousetrapBehavior2.default);
+//Scrollmeister.registerBehavior(FullscreenBehavior);
 
-},{"behaviors/DebugGuidesBehavior.js":15,"behaviors/FadeInBehavior.js":16,"behaviors/FakeScrollBehavior.js":17,"behaviors/GuidesLayoutBehavior.js":21,"behaviors/LayoutBehavior.js":24,"behaviors/MediaBehavior.js":26,"behaviors/MousetrapBehavior.js":27,"behaviors/ScrollBehavior.js":29,"scrollmeister.js":56}],36:[function(require,module,exports){
+},{"behaviors/DebugGuidesBehavior.js":15,"behaviors/FadeInBehavior.js":16,"behaviors/FakeScrollBehavior.js":17,"behaviors/GuidesLayoutBehavior.js":21,"behaviors/LayoutBehavior.js":24,"behaviors/MediaBehavior.js":26,"behaviors/MousetrapBehavior.js":27,"behaviors/ScrollBehavior.js":28,"scrollmeister.js":55}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15446,7 +15368,7 @@ var ContentMeisterComponent = function (_HTMLElement) {
 
 exports.default = ContentMeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":44,"scrollmeister.js":56}],37:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":43,"scrollmeister.js":55}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15513,7 +15435,7 @@ var ElementMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ElementMeisterComponent;
 
-},{"./MeisterComponent.js":38,"scrollmeister.js":56}],38:[function(require,module,exports){
+},{"./MeisterComponent.js":37,"scrollmeister.js":55}],37:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15707,7 +15629,7 @@ var MeisterComponent = function (_HTMLElement) {
 
 exports.default = MeisterComponent;
 
-},{"lib/BehaviorsStyleMerger.js":44,"raf":6,"scrollmeister.js":56}],39:[function(require,module,exports){
+},{"lib/BehaviorsStyleMerger.js":43,"raf":6,"scrollmeister.js":55}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15774,7 +15696,7 @@ var ScrollMeisterComponent = function (_MeisterComponent) {
 
 exports.default = ScrollMeisterComponent;
 
-},{"./MeisterComponent.js":38,"scrollmeister.js":56}],40:[function(require,module,exports){
+},{"./MeisterComponent.js":37,"scrollmeister.js":55}],39:[function(require,module,exports){
 'use strict';
 
 require('document-register-element');
@@ -15826,7 +15748,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}(HTMLElement));
 }, { once: true });
 
-},{"components/ContentMeisterComponent.js":36,"components/ElementMeisterComponent.js":37,"components/ScrollMeisterComponent.js":39,"document-register-element":1,"scrollmeister.js":56}],41:[function(require,module,exports){
+},{"components/ContentMeisterComponent.js":35,"components/ElementMeisterComponent.js":36,"components/ScrollMeisterComponent.js":38,"document-register-element":1,"scrollmeister.js":55}],40:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15900,7 +15822,7 @@ _scrollmeister2.default.defineCondition('wat', ['xl', 'portrait'], function (xl,
 
 //window.addEventListener('resize', ....)
 
-},{"scrollmeister.js":56}],42:[function(require,module,exports){
+},{"scrollmeister.js":55}],41:[function(require,module,exports){
 'use strict';
 
 var _scrollmeister = require('scrollmeister.js');
@@ -15920,7 +15842,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //This makes browserify --standalone work and exports Scrollmeister as an UMD module.
 module.exports = _scrollmeister2.default; //eslint-disable-line no-undef
 
-},{"./behaviors/extras.js":34,"./components":40,"./conditions":41,"./scrollmeister.sass":57,"scrollmeister.js":56}],43:[function(require,module,exports){
+},{"./behaviors/extras.js":33,"./components":39,"./conditions":40,"./scrollmeister.sass":56,"scrollmeister.js":55}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16015,7 +15937,7 @@ var BehaviorsRegistry = function () {
 
 exports.default = BehaviorsRegistry;
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16132,7 +16054,7 @@ var BehaviorsStyleMerger = function () {
 
 exports.default = BehaviorsStyleMerger;
 
-},{}],45:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16187,7 +16109,7 @@ var ConditionsRegistry = function () {
 
 exports.default = ConditionsRegistry;
 
-},{}],46:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16817,7 +16739,7 @@ var GuidesLayoutEngine = function () {
 
 exports.default = GuidesLayoutEngine;
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16935,7 +16857,7 @@ var ScrollState = function () {
 
 exports.default = ScrollState;
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16948,7 +16870,7 @@ exports.default = function (input) {
 	});
 };
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16959,7 +16881,7 @@ var cssProps = ['display', 'overflow', 'contain', 'transform', 'backfaceVisibili
 
 exports.default = cssProps;
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17011,7 +16933,7 @@ exports.default = {
 	}
 };
 
-},{}],51:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17057,7 +16979,7 @@ exports.default = {
 	}
 };
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17090,7 +17012,7 @@ var container = document.createElement('div');
 //Offscreen container.
 container.style.cssText = '\n\twidth: 0;\n\theight: 0;\n\toverflow: hidden;\n\tposition: fixed;\n\tbottom: -100px;\n\tright: -100px;\n\topacity:0;\n\tpointer-events:none;\n';
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17109,7 +17031,7 @@ exports.default = function (node) {
 	return false;
 };
 
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17304,7 +17226,7 @@ exports.default = {
 	}
 };
 
-},{"types":66}],55:[function(require,module,exports){
+},{"types":65}],54:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17327,7 +17249,7 @@ if (typeof CustomEvent !== 'function') {
 
 exports.default = CustomEvent;
 
-},{}],56:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17358,7 +17280,7 @@ var Scrollmeister = {
 	behaviorsRegistry: new _BehaviorsRegistry2.default(),
 	conditionsRegistry: new _ConditionsRegistry2.default(),
 
-	version: "0.0.1-alpha.2",
+	version: "0.0.1-alpha.3",
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
@@ -17368,7 +17290,7 @@ var Scrollmeister = {
 		return this.behaviorsRegistry.getOrder();
 	},
 
-	defineBehavior: function defineBehavior(classDefinition) {
+	registerBehavior: function registerBehavior(classDefinition) {
 		this.behaviorsRegistry.add(classDefinition);
 	},
 
@@ -17532,10 +17454,10 @@ var Scrollmeister = {
 
 exports.default = Scrollmeister;
 
-},{"behaviors/Behavior.js":13,"lib/BehaviorsRegistry.js":43,"lib/ConditionsRegistry.js":45,"ponies/CustomEvent.js":55}],57:[function(require,module,exports){
+},{"behaviors/Behavior.js":13,"lib/BehaviorsRegistry.js":42,"lib/ConditionsRegistry.js":44,"ponies/CustomEvent.js":54}],56:[function(require,module,exports){
 var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1}content-meister{display:block;overflow:hidden;-webkit-box-sizing:border-box;box-sizing:border-box}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
-},{"scssify":10}],58:[function(require,module,exports){
+},{"scssify":10}],57:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17552,7 +17474,7 @@ exports.default = {
 	}
 };
 
-},{}],59:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17594,7 +17516,7 @@ exports.default = {
 	}
 };
 
-},{}],60:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17640,7 +17562,7 @@ exports.default = {
 	}
 };
 
-},{"types/CSSLengthType.js":59}],61:[function(require,module,exports){
+},{"types/CSSLengthType.js":58}],60:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17758,7 +17680,7 @@ exports.default = {
 	}
 };
 
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17787,7 +17709,7 @@ exports.default = {
 	}
 };
 
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17815,7 +17737,7 @@ exports.default = {
 	}
 };
 
-},{}],64:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17830,7 +17752,7 @@ exports.default = {
 	}
 };
 
-},{}],65:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17868,7 +17790,7 @@ exports.default = {
 	}
 };
 
-},{}],66:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17922,5 +17844,5 @@ exports.default = {
 };
 var domtypes = exports.domtypes = ['layoutdependencies'];
 
-},{"types/BooleanType.js":58,"types/CSSLengthType.js":59,"types/HeightType.js":60,"types/LayoutDependenciesType.js":61,"types/NumberType.js":62,"types/RatioType.js":63,"types/StringType.js":64,"types/TemplateType.js":65}]},{},[42])(42)
+},{"types/BooleanType.js":57,"types/CSSLengthType.js":58,"types/HeightType.js":59,"types/LayoutDependenciesType.js":60,"types/NumberType.js":61,"types/RatioType.js":62,"types/StringType.js":63,"types/TemplateType.js":64}]},{},[41])(41)
 });

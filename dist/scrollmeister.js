@@ -1,5 +1,5 @@
 /*!
- * Scrollmeister v0.0.1-alpha.2 (April 30th 2018)
+ * Scrollmeister v0.0.1-alpha.3 (April 30th 2018)
  * Open-source JavaScript framework to declaratively build scrolling experiences
  * 
  * https://www.scrollmeister.com
@@ -4097,16 +4097,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
-_scrollmeister2.default.defineBehavior(_GuidesLayoutBehavior2.default);
-_scrollmeister2.default.defineBehavior(_ScrollBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FakeScrollBehavior2.default);
-_scrollmeister2.default.defineBehavior(_DebugGuidesBehavior2.default);
-_scrollmeister2.default.defineBehavior(_FadeInBehavior2.default);
+_scrollmeister2.default.registerBehavior(_GuidesLayoutBehavior2.default);
+_scrollmeister2.default.registerBehavior(_ScrollBehavior2.default);
+_scrollmeister2.default.registerBehavior(_FakeScrollBehavior2.default);
+_scrollmeister2.default.registerBehavior(_DebugGuidesBehavior2.default);
+_scrollmeister2.default.registerBehavior(_FadeInBehavior2.default);
 
-_scrollmeister2.default.defineBehavior(_LayoutBehavior2.default);
-_scrollmeister2.default.defineBehavior(_MediaBehavior2.default);
-_scrollmeister2.default.defineBehavior(_MousetrapBehavior2.default);
-//Scrollmeister.defineBehavior(FullscreenBehavior);
+_scrollmeister2.default.registerBehavior(_LayoutBehavior2.default);
+_scrollmeister2.default.registerBehavior(_MediaBehavior2.default);
+_scrollmeister2.default.registerBehavior(_MousetrapBehavior2.default);
+//Scrollmeister.registerBehavior(FullscreenBehavior);
 
 },{"behaviors/DebugGuidesBehavior.js":10,"behaviors/FadeInBehavior.js":11,"behaviors/FakeScrollBehavior.js":12,"behaviors/GuidesLayoutBehavior.js":13,"behaviors/LayoutBehavior.js":14,"behaviors/MediaBehavior.js":15,"behaviors/MousetrapBehavior.js":16,"behaviors/ScrollBehavior.js":17,"scrollmeister.js":38}],19:[function(require,module,exports){
 'use strict';
@@ -6053,7 +6053,7 @@ var Scrollmeister = {
 	behaviorsRegistry: new _BehaviorsRegistry2.default(),
 	conditionsRegistry: new _ConditionsRegistry2.default(),
 
-	version: "0.0.1-alpha.2",
+	version: "0.0.1-alpha.3",
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
@@ -6063,7 +6063,7 @@ var Scrollmeister = {
 		return this.behaviorsRegistry.getOrder();
 	},
 
-	defineBehavior: function defineBehavior(classDefinition) {
+	registerBehavior: function registerBehavior(classDefinition) {
 		this.behaviorsRegistry.add(classDefinition);
 	},
 
