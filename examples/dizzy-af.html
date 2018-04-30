@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Scrollmeister transform behavior</title>
+		<style>
+			body {
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			scroll-meister, element-meister {
+				display: block;
+			}
+
+			element-meister[transform] > content-meister {
+				background: rgba(0, 255, 0, 0.5);
+				text-align: center;
+				font-size: 40px;
+			}
+
+			footer {
+				text-align: center;
+				padding: 1em 0;
+			}
+
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+		</style>
+	</head>
+	<body>
+		<scroll-meister scroll fadein
+			guides-layout="
+				guides:
+					left 0 2vmin,
+					center 50% 50px,
+					right 100% 2vmin;
+				width :
+					1200px;
+			"
+		>
+			<element-meister layout="spacing: 25vh; guides: left right;">
+				<h1>Apply CSS transforms and opacity by freely defining keyframes inside the viewport</h1>
+			</element-meister>
+
+			<element-meister layout="height: 25vh" interpolate="scale: bottom 0, top: 1" transform>scale</element-meister>
+
+			<element-meister layout="height: 25vh" interpolate="y: bottom 100, top: 0" transform>y</element-meister>
+
+			<element-meister layout="height: 25vh" interpolate="opacity: bottom 0, top: 1" transform>fade</element-meister>
+
+			<element-meister layout="height: 25vh" interpolate="rotate: bottom 0, top: 720" transform>rotate</element-meister>
+
+			<element-meister layout="height: 25vh" interpolate="x: bottom 100, top: 0" transform>x</element-meister>
+
+			<element-meister
+				layout="height: 25vh"
+				interpolate="
+					x: bottom 100, center 0, top -100;
+					y: bottom 100, center 0, top 100;
+					scale: bottom 0, center 1, top 0;
+					rotate: bottom 0, center 360, top 0;
+					opacity: bottom 0, center 1, top 0;
+				"
+				transform
+			>OMFG</element-meister>
+
+
+			<element-meister layout="spacing: 100vh 0">
+				<footer>
+					a <a href="https://www.scrollmeister.com">Scrollmeister</a> demo
+				</footer>
+			</element-meister>
+		</scroll-meister>
+
+		<script src="../dist/scrollmeister-extras.js"></script>
+	</body>
+</html>
