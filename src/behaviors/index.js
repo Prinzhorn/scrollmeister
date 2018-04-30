@@ -11,13 +11,13 @@ import MediaBehavior from 'behaviors/MediaBehavior.js';
 import MousetrapBehavior from 'behaviors/MousetrapBehavior.js';
 //import FullscreenBehavior from 'behaviors/FullscreenBehavior.js';
 
-Scrollmeister.defineBehavior(GuidesLayoutBehavior);
-Scrollmeister.defineBehavior(ScrollBehavior);
-Scrollmeister.defineBehavior(FakeScrollBehavior);
-Scrollmeister.defineBehavior(DebugGuidesBehavior);
-Scrollmeister.defineBehavior(FadeInBehavior);
+Scrollmeister.registerBehavior(GuidesLayoutBehavior);
+Scrollmeister.registerBehavior(ScrollBehavior);
+Scrollmeister.registerBehavior(FakeScrollBehavior);
+Scrollmeister.registerBehavior(DebugGuidesBehavior);
+Scrollmeister.registerBehavior(FadeInBehavior);
 
-Scrollmeister.defineBehavior(LayoutBehavior);
-Scrollmeister.defineBehavior(MediaBehavior);
-Scrollmeister.defineBehavior(MousetrapBehavior);
-//Scrollmeister.defineBehavior(FullscreenBehavior);
+Scrollmeister.registerBehavior(LayoutBehavior);
+Scrollmeister.registerBehavior(MediaBehavior);
+Scrollmeister.registerBehavior(MousetrapBehavior);
+//Scrollmeister.registerBehavior(FullscreenBehavior);

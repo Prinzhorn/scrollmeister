@@ -21,7 +21,7 @@ const Scrollmeister = {
 		return this.behaviorsRegistry.getOrder();
 	},
 
-	defineBehavior: function(classDefinition) {
+	registerBehavior: function(classDefinition) {
 		this.behaviorsRegistry.add(classDefinition);
 	},
 
