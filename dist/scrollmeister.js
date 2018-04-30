@@ -1,5 +1,5 @@
 /*!
- * Scrollmeister v0.0.1-alpha.1 (April 30th 2018)
+ * Scrollmeister v0.0.1-alpha.2 (April 30th 2018)
  * Open-source JavaScript framework to declaratively build scrolling experiences
  * 
  * https://www.scrollmeister.com
@@ -6053,7 +6053,7 @@ var Scrollmeister = {
 	behaviorsRegistry: new _BehaviorsRegistry2.default(),
 	conditionsRegistry: new _ConditionsRegistry2.default(),
 
-	version: "0.0.1-alpha.1",
+	version: "0.0.1-alpha.2",
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
