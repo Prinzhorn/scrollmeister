@@ -1,5 +1,5 @@
 /*!
- * Scrollmeister v0.0.1-alpha.1 (April 27th 2018)
+ * Scrollmeister v0.0.1-alpha.1 (April 30th 2018)
  * Open-source JavaScript framework to declaratively build scrolling experiences
  * 
  * https://www.scrollmeister.com
@@ -3501,7 +3501,7 @@ var LayoutBehavior = function (_Behavior) {
 					this.style.willChange = 'transform';
 					this.style.backfaceVisibility = 'hidden';
 					this.style.perspective = '1000';
-					this.style.transform = 'translate(' + left + 'px, ' + top + 'px, 0)';
+					this.style.transform = 'translate(' + left + 'px, ' + top + 'px)';
 				}
 
 				//The reason we don't blindly apply the CSS transform is that most elements don't need a transform on the content layer at all.
@@ -3511,7 +3511,7 @@ var LayoutBehavior = function (_Behavior) {
 					this.contentStyle.willChange = 'transform';
 					this.contentStyle.backfaceVisibility = 'hidden';
 					this.contentStyle.perspective = '1000';
-					this.contentStyle.transform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px, 0)';
+					this.contentStyle.transform = 'translate(0, ' + scrollUpdate.contentTopOffset + 'px)';
 				}
 			}
 
@@ -6228,7 +6228,7 @@ var Scrollmeister = {
 exports.default = Scrollmeister;
 
 },{"behaviors/Behavior.js":9,"lib/BehaviorsRegistry.js":26,"lib/ConditionsRegistry.js":28,"ponies/CustomEvent.js":37}],39:[function(require,module,exports){
-var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1;contain:strict}content-meister{display:block;overflow:hidden;-webkit-box-sizing:border-box;box-sizing:border-box}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
+var css = "html{overflow-x:hidden;overflow-y:scroll}body{margin:0}scroll-meister{display:block;position:static;width:100%;overflow:hidden}element-meister{display:block;position:fixed;left:0;top:0;opacity:1}content-meister{display:block;overflow:hidden;-webkit-box-sizing:border-box;box-sizing:border-box}shadow-meister{position:static !important;display:block;display:contents}\n\n/*# sourceMappingURL=scrollmeister.sass.map */"
 module.exports = require('scssify').createStyle(css, {})
 },{"scssify":8}],40:[function(require,module,exports){
 'use strict';
