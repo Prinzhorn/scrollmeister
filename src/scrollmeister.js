@@ -42,7 +42,7 @@ const Scrollmeister = {
 					//TODO: render this error inline as well (behaviors have this.error, maybe MeisterComponent.error() method?)
 					`The "${behaviorName}" behavior requires the "${missingDependencies.join(
 						'", "'
-					)}" behavior(s) for. Make sure you add the attribute to the element.`
+					)}" behavior(s). Make sure you add the attribute to the element.`
 				);
 			}
 
