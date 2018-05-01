@@ -1,5 +1,5 @@
 /*!
- * Scrollmeister v0.0.1-alpha.3 (April 30th 2018)
+ * Scrollmeister v0.0.1 (May 1st 2018)
  * Open-source JavaScript framework to declaratively build scrolling experiences
  * 
  * https://www.scrollmeister.com
@@ -6053,7 +6053,7 @@ var Scrollmeister = {
 	behaviorsRegistry: new _BehaviorsRegistry2.default(),
 	conditionsRegistry: new _ConditionsRegistry2.default(),
 
-	version: "0.0.1-alpha.3",
+	version: "0.0.1",
 
 	getDefinedBehaviorNames: function getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
@@ -6082,7 +6082,7 @@ var Scrollmeister = {
 			if (missingDependencies.length > 0) {
 				throw new Error(
 				//TODO: render this error inline as well (behaviors have this.error, maybe MeisterComponent.error() method?)
-				'The "' + behaviorName + '" behavior requires the "' + missingDependencies.join('", "') + '" behavior(s) for. Make sure you add the attribute to the element.');
+				'The "' + behaviorName + '" behavior requires the "' + missingDependencies.join('", "') + '" behavior(s). Make sure you add the attribute to the element.');
 			}
 
 			this.attachBehavior(element, behaviorName, behaviorPropertiesMap[behaviorName]);
