@@ -32,16 +32,26 @@ export default class GalleryBehavior extends Behavior {
 	}
 
 	behaviorDidAttach() {
+		this._collectItems();
+
+		this.connectTo('layout', this._render.bind(this), (layoutBehavior: LayoutBehavior) => {
+			this.observeMutations(['src', 'width', 'height'], () => {
+				this._collectItems();
+				this._render(layoutBehavior);
+			});
+		});
+	}
+
+	_collectItems() {
 		this._items = Array.prototype.slice.call(this.el.querySelectorAll('img[width][height]')).map(image => {
 			return {
 				image,
 				ratio: image.getAttribute('width') / image.getAttribute('height')
 			};
 		});
-
-		this.connectTo('layout', this._render.bind(this));
 	}
 
+	//TODO: cleanup the img styles when detached
 	_render(layoutBehavior: LayoutBehavior) {
 		let layoutEngine = this.parentEl.guidesLayout.engine;
 		let { viewport } = layoutEngine;

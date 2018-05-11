@@ -1,4 +1,5 @@
 import assign from 'object-assign';
+import raf from 'raf';
 
 import camcelCase from 'lib/camelCase.js';
 import CustomEvent from 'ponies/CustomEvent.js';
@@ -121,6 +122,15 @@ export default class Behavior {
 			}
 
 			this._shadowChildren.length = 0;
+		}
+
+		for (let i = 0; i < this._mutationObservers.length; i++) {
+			let observer = this._mutationObservers[i];
+			observer.disconnect();
+		}
+
+		if (this._mutationObserverHandle) {
+			raf.cancel(this._mutationObserverHandle);
 		}
 
 		this._unproxyCSS();
@@ -271,6 +281,45 @@ export default class Behavior {
 		});
 
 		this.el.dispatchEvent(event);
+	}
+
+	observeMutations(attributes, callback) {
+		if (arguments.length === 1) {
+			callback = attributes;
+			attributes = [];
+		}
+
+		let debouncedCallback = () => {
+			if (!this._mutationObserverHandle) {
+				this._mutationObserverHandle = raf(() => {
+					callback();
+					delete this._mutationObserverHandle;
+				});
+			}
+		};
+
+		if (!window.MutationObserver) {
+			this.listen(this.contentEl, 'DOMSubtreeModified', debouncedCallback);
+			return;
+		}
+
+		let config = {
+			attributes: true,
+			childList: true,
+			subtree: true,
+			characterData: true,
+			attributeFilter: attributes
+		};
+
+		var observer = new MutationObserver(debouncedCallback);
+
+		observer.observe(this.contentEl, config);
+
+		if (!this._mutationObservers) {
+			this._mutationObservers = [];
+		}
+
+		this._mutationObservers.push(observer);
 	}
 
 	_findShadowMeister() {
