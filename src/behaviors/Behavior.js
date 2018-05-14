@@ -124,9 +124,11 @@ export default class Behavior {
 			this._shadowChildren.length = 0;
 		}
 
-		for (let i = 0; i < this._mutationObservers.length; i++) {
-			let observer = this._mutationObservers[i];
-			observer.disconnect();
+		if (this._mutationObservers) {
+			for (let i = 0; i < this._mutationObservers.length; i++) {
+				let observer = this._mutationObservers[i];
+				observer.disconnect();
+			}
 		}
 
 		if (this._mutationObserverHandle) {
