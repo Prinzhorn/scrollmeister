@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Scrollmeister</title>
+		<style>
+			body {
+				font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			scroll-meister, element-meister {
+				display: block;
+			}
+
+			scroll-meister[fadein] {
+				opacity: 0;
+				transition: opacity 0.3s ease-in-out;
+			}
+
+			element-meister {
+				background: rgba(0, 255, 0, 0.5);
+				box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.5);
+			}
+		</style>
+	</head>
+	<body>
+		<scroll-meister debug-guides fadein scroll hash-navigation
+			guides-layout="   guides: left 0 2vmin, center 50% 2vmin, right 100% 2vmin; width: 1200px;"
+			guides-layout_m="guides: left 0 2vmin, center 75% 2vmin, right 100% 2vmin;"
+		>
+			<element-meister layout="guides: left right;" fluid-text>
+				<h1>Scrollmeister thingy</h1>
+			</element-meister>
+
+			<element-meister layout="guides: left center; height: 25vh"></element-meister>
+			<element-meister layout="guides: center right; height: 25vh"></element-meister>
+		</scroll-meister>
+		<script src="../dist/scrollmeister-extras.js"></script>
+	</body>
+</html>
