@@ -21,12 +21,17 @@ const Scrollmeister = {
 		return this.behaviorsRegistry.getOrder();
 	},
 
+	getConditionsOrder: function() {
+		return this.conditionsRegistry.getOrder();
+	},
+
 	registerBehavior: function(classDefinition) {
 		this.behaviorsRegistry.add(classDefinition);
 	},
 
 	attachBehaviors: function(element, behaviorPropertiesMap) {
 		let behaviorOrder = this.getBehaviorOrder();
+		let conditionsOrder = this.getConditionsOrder();
 
 		for (let i = 0; i < behaviorOrder.length; i++) {
 			let behaviorName = behaviorOrder[i];
@@ -38,19 +43,34 @@ const Scrollmeister = {
 			let missingDependencies = this._checkBehaviorDependencies(element, behaviorName);
 
 			if (missingDependencies.length > 0) {
-				throw new Error(
-					//TODO: render this error inline as well (behaviors have this.error, maybe MeisterComponent.error() method?)
+				let error = new Error(
 					`The "${behaviorName}" behavior requires the "${missingDependencies.join(
 						'", "'
 					)}" behavior(s). Make sure you add the attribute to the element.`
 				);
+
+				element.renderError(error);
+
+				throw error;
 			}
 
-			this.attachBehavior(element, behaviorName, behaviorPropertiesMap[behaviorName]);
+			let conditionalProperties = [behaviorPropertiesMap[behaviorName]];
+
+			for (let j = 0; j < conditionsOrder.length; j++) {
+				let conditionName = conditionsOrder[j];
+
+				if (behaviorPropertiesMap.hasOwnProperty(`${behaviorName}_${conditionName}`)) {
+					if (this.conditionsRegistry.is(conditionName)) {
+						conditionalProperties.push(behaviorPropertiesMap[`${behaviorName}_${conditionName}`]);
+					}
+				}
+			}
+
+			this.attachBehavior(element, behaviorName, conditionalProperties);
 		}
 	},
 
-	attachBehavior: function(element, name, rawProperties) {
+	attachBehavior: function(element, name, rawPropertiesList) {
 		if (!this.behaviorsRegistry.has(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes that correspond to defined behaviors.`
@@ -59,13 +79,13 @@ const Scrollmeister = {
 
 		//The behavior is already attached, update it.
 		if (element.hasOwnProperty(name)) {
-			element[name].updateProperties(rawProperties);
+			element[name].updateProperties(rawPropertiesList);
 		} else {
 			//Make the behavior available as a property on the DOM node.
 			const Behavior = this.behaviorsRegistry.get(name);
 			let contentElement = this.wrapContents(element);
 
-			new Behavior(element, contentElement, rawProperties);
+			new Behavior(element, contentElement, rawPropertiesList);
 		}
 	},
 
@@ -130,8 +150,8 @@ const Scrollmeister = {
 		return missingDependencies;
 	},
 
-	defineCondition: function(name, valueFn) {
-		this.conditionsRegistry.add(name, valueFn);
+	defineCondition: function(name, valueFn, updaterFn) {
+		this.conditionsRegistry.add(name, valueFn, updaterFn);
 	},
 
 	getDefinedConditionNames: function() {

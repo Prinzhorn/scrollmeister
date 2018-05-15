@@ -3,7 +3,7 @@ import schemaParser from 'lib/schemaParser.js';
 function parseProperties({ schema, attr }) {
 	const props = {};
 
-	schemaParser.parseProperties(null, schema, attr, props);
+	schemaParser.parseProperties(null, schema, [attr], props);
 
 	return props;
 }

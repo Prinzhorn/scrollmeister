@@ -70,7 +70,7 @@ export default class Behavior {
 		);
 	}
 
-	constructor(element, contentElement, rawProperties) {
+	constructor(element, contentElement, rawPropertiesList) {
 		let behaviorName = this.constructor.behaviorName;
 		element[behaviorName] = this;
 		element[camcelCase(behaviorName)] = this;
@@ -90,7 +90,7 @@ export default class Behavior {
 		this._observeDOMTypes();
 		this._proxyCSS();
 		this._proxyProps();
-		this._parseProperties(rawProperties);
+		this._parseProperties(rawPropertiesList);
 
 		if (this.behaviorDidAttach) {
 			this.behaviorDidAttach();
@@ -367,7 +367,7 @@ export default class Behavior {
 	updateProperties(properties) {
 		const prevProps = assign({}, this.props);
 
-		if (typeof properties === 'string') {
+		if (properties instanceof Array) {
 			this._parseProperties(properties);
 		} else {
 			for (let name in properties) {
@@ -480,6 +480,8 @@ export default class Behavior {
 						return schemaParser.stringifyProperty(this.el, this.props[property], schema[property].type);
 					},
 					set(value) {
+						//TODO: to make this compatible with conditions, push these to an array at the end of the list.
+						//This way they get applied after all the met conditions.
 						this._updateProperty(property, value);
 					}
 				});
@@ -487,11 +489,11 @@ export default class Behavior {
 		}
 	}
 
-	_parseProperties(rawProperties) {
+	_parseProperties(rawPropertiesList) {
 		const schema = this.constructor.behaviorSchema;
 
 		try {
-			schemaParser.parseProperties(this.el, schema, rawProperties, this.props);
+			schemaParser.parseProperties(this.el, schema, rawPropertiesList, this.props);
 		} catch (err) {
 			this.error(err);
 		}

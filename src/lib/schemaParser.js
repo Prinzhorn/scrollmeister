@@ -5,7 +5,14 @@ const propertiesAndValuesRegex = /([^:;]+):([^;]+)/g;
 const whiteSpaceRegex = /\s+/;
 
 export default {
-	parseProperties: function(element, schema, rawProperties, props) {
+	parseProperties: function(element, schema, rawPropertiesList, props) {
+		for (let i = 0; i < rawPropertiesList.length; i++) {
+			let rawProperties = rawPropertiesList[i];
+			this._parseProperties(element, schema, rawProperties, props);
+		}
+	},
+
+	_parseProperties(element, schema, rawProperties, props) {
 		const rawPropertiesMap = {};
 		let match;
 

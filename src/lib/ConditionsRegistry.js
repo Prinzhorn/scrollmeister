@@ -3,9 +3,11 @@ const lowerCaseAndDashRegex = /^[a-z-]+$/;
 export default class ConditionsRegistry {
 	constructor() {
 		this._conditions = {};
+		this._values = {};
+		this._order = [];
 	}
 
-	add(name, valueFn) {
+	add(name, valueFn, updaterFn) {
 		if (this._conditions.hasOwnProperty(name)) {
 			throw new Error(`You are trying to redefine the "${name}" condition.`);
 		}
@@ -16,7 +18,17 @@ export default class ConditionsRegistry {
 			);
 		}
 
+		updaterFn((...args) => {
+			this._values[name] = valueFn(...args);
+		});
+
 		this._conditions[name] = valueFn;
+
+		this._order.push(name);
+	}
+
+	is(name) {
+		return this._values[name];
 	}
 
 	has(name) {
@@ -29,5 +41,9 @@ export default class ConditionsRegistry {
 
 	getNames() {
 		return Object.keys(this._conditions);
+	}
+
+	getOrder() {
+		return this._order.slice();
 	}
 }

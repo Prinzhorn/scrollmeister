@@ -8,19 +8,14 @@ import Scrollmeister from 'scrollmeister.js';
 
 Scrollmeister.defineCondition(
 	'm',
-	win => win.innerWidth >= 768,
+	() => window.innerWidth >= 768,
 	update => {
-		window.addEventListener(
-			'resize',
-			() => {
-				update();
-			},
-			false
-		);
-
+		window.addEventListener('resize', update, false);
 		update();
 	}
 );
+
+/*
 Scrollmeister.defineCondition('l', win => win.innerWidth >= 992);
 Scrollmeister.defineCondition('xl', win => win.innerWidth >= 1200);
 
@@ -31,20 +26,16 @@ Scrollmeister.defineCondition('xl-down', win => win.innerWidth < 1200);
 
 Scrollmeister.defineCondition('portrait', win => win.innerWidth < win.innerHeight);
 Scrollmeister.defineCondition('landscape', win => win.innerWidth >= win.innerHeight);
+*/
 
 //TODO: let's see what Modernizr, feature.js and has.js offer to get some inspiration.
-Scrollmeister.defineCondition('webgl', () => true);
-
-//TODO: function is optional, a condition can also be constant
-Scrollmeister.defineCondition('websockets', () => typeof WebSocket === 'function');
+//Scrollmeister.defineCondition('webgl', () => true);
 
 //TODO: do we allow element-queries? They can potentially end in infinite loops.
 
 //TODO: Allow composing conditions from existing
 //let update = Scrollmeister.defineCondition('wat', ['xl', 'portrait'], (xl, portrait, more, extra) => xl && portrait);
 //update('foo', 'bar') will set "more" and "extra" to these.
-Scrollmeister.defineCondition('wat', ['xl', 'portrait'], (xl, portrait) => xl && portrait);
+//Scrollmeister.defineCondition('wat', ['xl', 'portrait'], (xl, portrait) => xl && portrait);
 
 //TODO: Condition changes propagate synchrnously. But Scrollmeister will batch them and schedule an update just like detach/attach
-
-//window.addEventListener('resize', ....)
