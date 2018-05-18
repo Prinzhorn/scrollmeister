@@ -84,7 +84,12 @@ export default class GLEffectBehavior extends Behavior {
 
 		if (!regl) {
 			try {
-				regl = createRegl(this._canvas);
+				regl = createRegl({
+					canvas: this._canvas,
+					attributes: {
+						depth: false
+					}
+				});
 			} catch (ignore) {
 				createRegl = null;
 				return false;
