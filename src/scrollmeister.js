@@ -1,3 +1,5 @@
+import raf from 'raf';
+
 import CustomEvent from 'ponies/CustomEvent.js';
 
 import BehaviorsRegistry from 'lib/BehaviorsRegistry.js';
@@ -5,72 +7,105 @@ import ConditionsRegistry from 'lib/ConditionsRegistry.js';
 
 import Behavior from 'behaviors/Behavior.js';
 
-const Scrollmeister = {
-	Behavior,
+class Scrollmeister {
+	constructor() {
+		this.version = process.env.npm_package_version;
+		//This is exposed for user-land custom behaviors to extend Scrollmeister.Behavior
+		this.Behavior = Behavior;
+		this.behaviorsRegistry = new BehaviorsRegistry();
 
-	behaviorsRegistry: new BehaviorsRegistry(),
-	conditionsRegistry: new ConditionsRegistry(),
+		this._elements = [];
 
-	version: process.env.npm_package_version,
+		this._scheduledConditionUpdate = false;
 
-	getDefinedBehaviorNames: function() {
+		this.batchUpdateConditions = this.batchUpdateConditions.bind(this);
+
+		this.conditionsRegistry = new ConditionsRegistry(() => {
+			if (!this._scheduledConditionUpdate) {
+				this._scheduledConditionUpdate = true;
+				raf(this.batchUpdateConditions);
+			}
+		});
+	}
+
+	getDefinedBehaviorNames() {
 		return this.behaviorsRegistry.getNames();
-	},
+	}
 
-	getBehaviorOrder: function() {
+	getBehaviorOrder() {
 		return this.behaviorsRegistry.getOrder();
-	},
+	}
 
-	getConditionsOrder: function() {
+	getConditionsOrder() {
 		return this.conditionsRegistry.getOrder();
-	},
+	}
 
-	registerBehavior: function(classDefinition) {
+	registerBehavior(classDefinition) {
 		this.behaviorsRegistry.add(classDefinition);
-	},
+	}
 
-	attachBehaviors: function(element, behaviorPropertiesMap) {
+	updateBehaviors(element, behaviorMap) {
 		let behaviorOrder = this.getBehaviorOrder();
 		let conditionsOrder = this.getConditionsOrder();
+		let behaviorsToDetach = [];
 
 		for (let i = 0; i < behaviorOrder.length; i++) {
 			let behaviorName = behaviorOrder[i];
 
-			if (!behaviorPropertiesMap.hasOwnProperty(behaviorName)) {
+			//We iterate over all registered behaviors, but we only need to update those in the map.
+			if (!behaviorMap.hasOwnProperty(behaviorName)) {
 				continue;
 			}
 
-			let missingDependencies = this._checkBehaviorDependencies(element, behaviorName);
+			let rawPropertiesList = [];
+			let attr = behaviorName;
 
-			if (missingDependencies.length > 0) {
-				let error = new Error(
-					`The "${behaviorName}" behavior requires the "${missingDependencies.join(
-						'", "'
-					)}" behavior(s). Make sure you add the attribute to the element.`
-				);
-
-				element.renderError(error);
-
-				throw error;
+			if (element.hasAttribute(attr)) {
+				rawPropertiesList.push(element.getAttribute(attr));
 			}
-
-			let conditionalProperties = [behaviorPropertiesMap[behaviorName]];
 
 			for (let j = 0; j < conditionsOrder.length; j++) {
 				let conditionName = conditionsOrder[j];
 
-				if (behaviorPropertiesMap.hasOwnProperty(`${behaviorName}_${conditionName}`)) {
+				attr = `${behaviorName}_${conditionName}`;
+
+				if (element.hasAttribute(attr)) {
 					if (this.conditionsRegistry.is(conditionName)) {
-						conditionalProperties.push(behaviorPropertiesMap[`${behaviorName}_${conditionName}`]);
+						rawPropertiesList.push(element.getAttribute(attr));
 					}
 				}
 			}
 
-			this.attachBehavior(element, behaviorName, conditionalProperties);
-		}
-	},
+			if (rawPropertiesList.length > 0) {
+				let missingDependencies = this._checkBehaviorDependencies(element, behaviorName);
 
-	attachBehavior: function(element, name, rawPropertiesList) {
+				if (missingDependencies.length > 0) {
+					let error = new Error(
+						`The "${behaviorName}" behavior requires the "${missingDependencies.join(
+							'", "'
+						)}" behavior(s). Make sure you add the attribute to the element.`
+					);
+
+					element.renderError(error);
+
+					throw error;
+				}
+
+				this.attachOrUpdateBehavior(element, behaviorName, rawPropertiesList);
+			} else {
+				//We need to detach them in reverse order, that's why we need to collect them first.
+				//Because we're iterating in regular order for attaching.
+				behaviorsToDetach.unshift(behaviorName);
+			}
+		}
+
+		for (let i = 0; i < behaviorsToDetach.length; i++) {
+			let name = behaviorsToDetach[i];
+			this.detachBehavior(element, name);
+		}
+	}
+
+	attachOrUpdateBehavior(element, name, rawPropertiesList) {
 		if (!this.behaviorsRegistry.has(name)) {
 			throw new Error(
 				`Tried to attach an unknown behavior "${name}". This should never happen since we only track attributes that correspond to defined behaviors.`
@@ -87,30 +122,11 @@ const Scrollmeister = {
 
 			new Behavior(element, contentElement, rawPropertiesList);
 		}
-	},
+	}
 
-	detachBehaviors: function(element, behaviorPropertiesMap, skipDependencies = false) {
-		//Remove the behaviors in reverse order to make sure their dependencies still exist for cleanup.
-		let reverseBehaviorOrder = this.getBehaviorOrder()
-			.slice()
-			.reverse();
-
-		for (let i = 0; i < reverseBehaviorOrder.length; i++) {
-			let behaviorName = reverseBehaviorOrder[i];
-
-			if (behaviorPropertiesMap.hasOwnProperty(behaviorName)) {
-				this.detachBehavior(element, behaviorName, skipDependencies);
-			}
-		}
-	},
-
-	detachBehavior: function(element, name, skipDependencies = false) {
+	detachBehavior(element, name) {
 		if (element.hasOwnProperty(name)) {
 			element[name].destructor();
-		}
-
-		if (skipDependencies) {
-			return;
 		}
 
 		//Check if all dependencies are still resolved.
@@ -125,9 +141,66 @@ const Scrollmeister = {
 				throw new Error(`You just removed the "${name}" behavior, which "${otherName}" requires.`);
 			}
 		}
-	},
+	}
 
-	_checkBehaviorDependencies: function(element, name) {
+	detachAllBehaviors(element) {
+		//Detach in reverse order to not crash because of dependencies.
+		let reverseBehaviorOrder = this.getBehaviorOrder()
+			.slice()
+			.reverse();
+
+		for (let i = 0; i < reverseBehaviorOrder.length; i++) {
+			let behaviorName = reverseBehaviorOrder[i];
+
+			if (element.hasOwnProperty(behaviorName)) {
+				element[behaviorName].destructor();
+			}
+		}
+	}
+
+	batchUpdateConditions() {
+		//TODO: this might have a race condition with updateBehaviors
+		//If a condition changes in the same frame that an attribute is added/removed/updated
+		//we're doing unnecessary work and additionally if this loop right here runs before updateBehaviors
+		//then the behavior might not exist yet.
+
+		let behaviorOrder = this.getBehaviorOrder();
+		let conditionsOrder = this.getConditionsOrder();
+
+		for (let i = 0; i < this._elements.length; i++) {
+			let element = this._elements[i];
+
+			for (let j = 0; j < behaviorOrder.length; j++) {
+				let behaviorName = behaviorOrder[j];
+				let attr = behaviorName;
+				let rawPropertiesList = [];
+
+				if (element.hasAttribute(attr)) {
+					rawPropertiesList.push(element.getAttribute(attr));
+				}
+
+				for (let k = 0; k < conditionsOrder.length; k++) {
+					let conditionName = conditionsOrder[k];
+
+					attr = `${behaviorName}_${conditionName}`;
+
+					if (element.hasAttribute(attr)) {
+						if (this.conditionsRegistry.is(conditionName)) {
+							rawPropertiesList.push(element.getAttribute(attr));
+						}
+					}
+				}
+
+				if (rawPropertiesList.length > 0) {
+					this.attachOrUpdateBehavior(element, behaviorName, rawPropertiesList);
+				}
+			}
+		}
+
+		this._scheduledConditionUpdate = false;
+	}
+
+	_checkBehaviorDependencies(element, name) {
 		const Behavior = this.behaviorsRegistry.get(name);
 		let missingDependencies = [];
 
@@ -148,17 +221,19 @@ const Scrollmeister = {
 		}
 
 		return missingDependencies;
-	},
+	}
 
-	defineCondition: function(name, valueFn, updaterFn) {
+	defineCondition(name, valueFn, updaterFn) {
 		this.conditionsRegistry.add(name, valueFn, updaterFn);
-	},
+	}
 
-	getDefinedConditionNames: function() {
+	getDefinedConditionNames() {
 		return this.conditionsRegistry.getNames();
-	},
+	}
 
-	componentConnected: function(element) {
+	componentConnected(element) {
+		this._elements.push(element);
+
 		let event = new CustomEvent('scrollmeister:connected', {
 			bubbles: false,
 			cancelable: false,
@@ -166,9 +241,12 @@ const Scrollmeister = {
 		});
 
 		document.dispatchEvent(event);
-	},
+	}
 
-	componentDisconnected: function(element) {
+	componentDisconnected(element) {
+		let index = this._elements.indexOf(element);
+		this._elements.splice(index, 1);
+
 		let event = new CustomEvent('scrollmeister:disconnected', {
 			bubbles: false,
 			cancelable: false,
@@ -176,9 +254,9 @@ const Scrollmeister = {
 		});
 
 		document.dispatchEvent(event);
-	},
+	}
 
-	wrapContents: function(element) {
+	wrapContents(element) {
 		if (element.tagName.toLowerCase() !== 'element-meister') {
 			return null;
 		}
@@ -204,6 +282,6 @@ const Scrollmeister = {
 
 		return contentEl;
 	}
-};
+}
 
-export default Scrollmeister;
+export default new Scrollmeister();

@@ -1,10 +1,11 @@
 const lowerCaseAndDashRegex = /^[a-z-]+$/;
 
 export default class ConditionsRegistry {
-	constructor() {
+	constructor(changeCallback) {
 		this._conditions = {};
 		this._values = {};
 		this._order = [];
+		this._changeCallback = changeCallback;
 	}
 
 	add(name, valueFn, updaterFn) {
@@ -19,7 +20,12 @@ export default class ConditionsRegistry {
 		}
 
 		updaterFn((...args) => {
-			this._values[name] = valueFn(...args);
+			let newValue = valueFn(...args);
+
+			if (newValue !== this._values[name]) {
+				this._values[name] = newValue;
+				this._changeCallback(name, newValue);
+			}
 		});
 
 		this._conditions[name] = valueFn;

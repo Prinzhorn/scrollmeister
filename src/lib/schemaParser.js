@@ -6,6 +6,12 @@ const whiteSpaceRegex = /\s+/;
 
 export default {
 	parseProperties: function(element, schema, rawPropertiesList, props) {
+		//TODO: instead of parsing them and putting them immediately on the behavior
+		//I want to return an array which also knows about conditions.
+		//This way we only need to parse the props once and as soon as the condition changes
+		//we can do assign(props, propsM, propsXL, ...)
+		//So basically it is something different if the attributes on the elemrnt change (rare)
+		//or if the a condition changes (expected).
 		for (let i = 0; i < rawPropertiesList.length; i++) {
 			let rawProperties = rawPropertiesList[i];
 			this._parseProperties(element, schema, rawProperties, props);

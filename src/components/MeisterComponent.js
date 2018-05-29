@@ -17,7 +17,7 @@ export default class MeisterComponent extends HTMLElement {
 	behaviors: any;
 	_behaviorsStyleMerger: BehaviorsStyleMerger;
 	_scheduledBatchUpdate: boolean;
-	_scheduledBehaviors: { attach: any, detach: any };
+	_scheduledBehaviors: {};
 	_batchHandle: number;
 
 	//Polyfill (modern browsers have this).
@@ -45,10 +45,7 @@ export default class MeisterComponent extends HTMLElement {
 		this._behaviorsStyleMerger = new BehaviorsStyleMerger(this, Scrollmeister.getBehaviorOrder());
 
 		this._scheduledBatchUpdate = false;
-		this._scheduledBehaviors = {
-			attach: {},
-			detach: {}
-		};
+		this._scheduledBehaviors = {};
 	}
 
 	connectedCallback() {
@@ -60,16 +57,18 @@ export default class MeisterComponent extends HTMLElement {
 
 		Scrollmeister.componentConnected(this);
 
-		//Make some sanity checks on the markup for UX.
-		raf(() => {
-			if (document.querySelector(invalidMarkupSelectors.join(','))) {
-				this.renderError(
-					new Error(
-						'You have nested <scroll-meister> and <element-meister> elements in an unsupported way. <element-meister> elements need to always be direct children of <scroll-meister>.'
-					)
-				);
-			}
-		});
+		if (process.env.NODE_ENV !== 'production') {
+			//Make some sanity checks on the markup for UX.
+			raf(() => {
+				if (document.querySelector(invalidMarkupSelectors.join(','))) {
+					this.renderError(
+						new Error(
+							'You have nested <scroll-meister> and <element-meister> elements in an unsupported way. <element-meister> elements need to always be direct children of <scroll-meister>.'
+						)
+					);
+				}
+			});
+		}
 	}
 
 	disconnectedCallback() {
@@ -86,20 +85,16 @@ export default class MeisterComponent extends HTMLElement {
 		raf.cancel(this._batchHandle);
 		delete this._batchHandle;
 
-		//Remove all attached behaviors so they can be garbage collected.
-		Scrollmeister.detachBehaviors(this, this.behaviors, true);
+		Scrollmeister.detachAllBehaviors(this);
 
 		Scrollmeister.componentDisconnected(this);
 	}
 
-	attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null) {
-		if (newValue === null) {
-			this._scheduledBehaviors.detach[attr] = true;
-			delete this._scheduledBehaviors.attach[attr];
-		} else {
-			this._scheduledBehaviors.attach[attr] = newValue;
-			delete this._scheduledBehaviors.detach[attr];
-		}
+	attributeChangedCallback(attr: string) {
+		//Get rid of the condition, if any.
+		attr = attr.split('_')[0];
+
+		this._scheduledBehaviors[attr] = true;
 
 		if (!this._scheduledBatchUpdate) {
 			this._scheduledBatchUpdate = true;
@@ -156,10 +151,7 @@ export default class MeisterComponent extends HTMLElement {
 	_batchUpdateBehaviors() {
 		this._scheduledBatchUpdate = false;
 
-		Scrollmeister.attachBehaviors(this, this._scheduledBehaviors.attach);
-		this._scheduledBehaviors.attach = {};
-
-		Scrollmeister.detachBehaviors(this, this._scheduledBehaviors.detach);
-		this._scheduledBehaviors.detach = {};
+		Scrollmeister.updateBehaviors(this, this._scheduledBehaviors);
+		this._scheduledBehaviors = {};
 	}
 }
