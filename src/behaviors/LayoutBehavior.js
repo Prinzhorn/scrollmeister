@@ -154,7 +154,10 @@ export default class LayoutBehavior extends Behavior {
 
 		if (this.props.clip) {
 			overflow = 'hidden';
-			height = this.layout.clipRect.height;
+
+			if (this.layout.clipRect) {
+				height = this.layout.clipRect.height;
+			}
 		}
 
 		if (this.props.hidden) {
