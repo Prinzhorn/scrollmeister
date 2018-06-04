@@ -14,7 +14,7 @@ export default class ScrollBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'scroll';
+		return 'real-scroll';
 	}
 
 	static get behaviorDependencies(): Array<string> {

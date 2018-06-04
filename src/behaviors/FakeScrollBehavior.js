@@ -33,7 +33,7 @@ export default class FakeScrollBehavior extends Behavior {
 	}
 
 	static get behaviorName(): string {
-		return 'fake-scroll';
+		return 'scroll';
 	}
 
 	static get behaviorDependencies(): Array<string> {
