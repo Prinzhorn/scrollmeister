@@ -53,6 +53,24 @@
     "singleQuote": true,
     "printWidth": 120
   },
+  "jest": {
+    "preset": "jest-puppeteer",
+    "projects": [
+      {
+        "displayName": "integration",
+        "testMatch": [
+          "<rootDir>/__tests__/*"
+        ],
+        "preset": "jest-puppeteer"
+      },
+      {
+        "displayName": "unit",
+        "testMatch": [
+          "<rootDir>/src/**/__tests__/**"
+        ]
+      }
+    ]
+  },
   "keywords": [
     "scrolling",
     "scroll",
@@ -86,7 +104,6 @@
     "youtube-iframe": "^1.0.3"
   },
   "devDependencies": {
-    "browserify-banner": "^1.0.8",
     "autoprefixer": "^8.4.1",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.3",
@@ -94,15 +111,18 @@
     "babel-preset-flow": "^6.23.0",
     "babelify": "^8.0.0",
     "browser-sync": "^2.24.1",
+    "browserify-banner": "^1.0.8",
     "envify": "^4.1.0",
     "eslint": "^4.19.1",
     "eslint-plugin-flowtype": "^2.46.3",
     "flow-bin": "^0.71.0",
     "http-server": "^0.11.1",
-    "jest": "^22.4.3",
+    "jest": "^22.4.4",
+    "jest-puppeteer": "^3.0.1",
     "postcss": "^6.0.22",
     "pre-commit": "^1.2.2",
     "prettier": "^1.12.1",
+    "puppeteer": "^1.4.0",
     "scssify": "^3.0.1",
     "tinyify": "^2.4.0",
     "watchify": "^3.11.0"

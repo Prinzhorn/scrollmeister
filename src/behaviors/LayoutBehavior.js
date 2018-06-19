@@ -100,6 +100,8 @@ export default class LayoutBehavior extends Behavior {
 		if (this.props.height === 'auto') {
 			this._observeHeight();
 		}
+
+		this._observeLayoutDependencies();
 	}
 
 	update(prevProps: { height: 'auto' | { length: number, unit: string } }) {
@@ -130,6 +132,15 @@ export default class LayoutBehavior extends Behavior {
 	_unobserveHeight() {
 		this._resizeObserver.disconnect();
 		this._resizeObserver = null;
+	}
+
+	_observeLayoutDependencies() {
+		//layout:attach and layout:detach are needed when new nodes are added/removed.
+		//scrollmeister:connected is mostly needed for reordering of nodes (the layout behavior on the node does not change).
+		this.listen(document, 'layout:attach layout:detach scrollmeister:connected', () => {
+			//Force update/parsing with the same raw property.
+			this._updateProperty('dependencies', this.dependencies);
+		});
 	}
 
 	_render() {

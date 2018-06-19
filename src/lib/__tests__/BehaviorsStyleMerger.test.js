@@ -28,11 +28,11 @@ describe('regular properties', () => {
 	test('reset is a noop when there is nothing to reset', () => {
 		const { element, merger } = createMerger();
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 
 		merger.resetBehaviorStyle('foo', 'color');
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 	});
 
 	test('overwrites a single property', () => {
@@ -150,11 +150,11 @@ describe('transform', () => {
 	test('reset is a noop when there is nothing to reset', () => {
 		const { element, merger } = createMerger();
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 
 		merger.resetBehaviorStyle('foo', 'transform');
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 	});
 
 	test('overwrites a single transform', () => {
@@ -214,10 +214,10 @@ describe('opacity', () => {
 	test('reset is a noop when there is nothing to reset', () => {
 		const { element, merger } = createMerger();
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 
 		merger.resetBehaviorStyle('foo', 'opacity');
 
-		expect(element.style.transform).toBe(undefined);
+		expect(element.style.transform).toBe('');
 	});
 });

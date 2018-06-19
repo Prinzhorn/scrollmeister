@@ -6,7 +6,6 @@ import CustomEvent from 'ponies/CustomEvent.js';
 
 import cssProps from 'lib/cssProps.js';
 import schemaParser from 'lib/schemaParser.js';
-import { domtypes } from 'types';
 
 const supportsPassiveEvents = (function() {
 	let passiveSupported;
@@ -87,7 +86,6 @@ export default class Behavior {
 
 		this._shadowChildren = [];
 
-		this._observeDOMTypes();
 		this._proxyCSS();
 		this._proxyProps();
 		this._parseProperties(rawPropertiesList);
@@ -394,37 +392,6 @@ export default class Behavior {
 		}
 
 		this.emit('update');
-	}
-
-	_observeDOMTypes() {
-		let propertiesWithDOMTypes = [];
-		let schema = this.constructor.behaviorSchema;
-
-		for (let property in schema) {
-			if (!schema.hasOwnProperty(property)) {
-				continue;
-			}
-
-			if (domtypes.indexOf(schema[property].type) !== -1) {
-				propertiesWithDOMTypes.push(property);
-			}
-		}
-
-		if (propertiesWithDOMTypes.length > 0) {
-			//If this behavior has DOM types, we need to update it every time the DOM changes.
-			//E.g. if a new component is inserted between existing ones, layout needs to be updated.
-			this.listen(document, 'scrollmeister:connected scrollmeister:disconnected', () => {
-				let properties = {};
-
-				for (let i = 0; i < propertiesWithDOMTypes.length; i++) {
-					let name = propertiesWithDOMTypes[i];
-					properties[name] = this[name];
-				}
-
-				//Force update/parsing with the same properties.
-				this.updateProperties(properties);
-			});
-		}
 	}
 
 	_proxyCSS() {

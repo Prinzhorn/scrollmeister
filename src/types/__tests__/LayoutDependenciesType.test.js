@@ -16,6 +16,10 @@ function prepareZeBody(html) {
 				mode: el.getAttribute('layout')
 			}
 		};
+
+		el.behaviors = {
+			layout: el.layout
+		};
 	}
 }
 

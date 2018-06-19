@@ -2,7 +2,7 @@ const skipRegex = /skip\s+(\d+)/;
 const consumeRegex = /consume\s+(\d+)/;
 
 function isFlowElement(element) {
-	return element.hasAttribute('layout') && element.layout.props.mode === 'flow';
+	return element.behaviors.layout && element.layout.props.mode === 'flow';
 }
 
 function findPreviousFlowElement(context) {

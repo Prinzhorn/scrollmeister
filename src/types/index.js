@@ -17,5 +17,3 @@ export default {
 	string: StringType,
 	template: TemplateType
 };
-
-export const domtypes = ['layoutdependencies'];

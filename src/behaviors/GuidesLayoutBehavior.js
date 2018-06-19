@@ -60,7 +60,7 @@ export default class GuidesLayoutBehavior extends Behavior {
 		});
 
 		//Whenever a new layout behavior is attached or changed, we need to do layout.
-		this.listen('layout:attach layout:update layout:heightchange', this._scheduleLayout.bind(this));
+		this.listen('layout:attach layout:detach layout:update layout:heightchange', this._scheduleLayout.bind(this));
 	}
 
 	_getScrollbarWidth() {
