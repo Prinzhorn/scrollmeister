@@ -92,7 +92,10 @@ export default class LayoutBehavior extends Behavior {
 			//contentTopOffsetChanged will never become true.
 			contentTopOffset: 0
 		};
-		this.layout = {};
+
+		this.layout = {
+			hasLayout: false
+		};
 
 		this.connectTo('^guides-layout', this._render.bind(this));
 		this.connectTo('^scroll', this._scroll.bind(this));
@@ -144,6 +147,10 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_render() {
+		if (!this.layout.hasLayout) {
+			return;
+		}
+
 		this._renderWrapper();
 		this._renderContent();
 
@@ -199,6 +206,10 @@ export default class LayoutBehavior extends Behavior {
 	}
 
 	_scroll(scrollBehavior: ScrollBehavior, forceUpdate: boolean = false) {
+		if (!this.layout.hasLayout) {
+			return;
+		}
+
 		let scrollUpdate = this.scrollUpdate;
 
 		this.parentEl.guidesLayout.engine.doScroll(this.layout, scrollBehavior.scrollState.position, scrollUpdate);

@@ -138,7 +138,10 @@ export default class GuidesLayoutBehavior extends Behavior {
 	_doLayout() {
 		this._layoutScheduled = false;
 
-		let nodes = Array.prototype.slice.call(this.el.querySelectorAll('[layout]')).map(el => el.layout);
+		let nodes = Array.prototype.slice
+			.call(this.el.querySelectorAll('[layout]'))
+			.filter(el => !!el.behaviors.layout)
+			.map(el => el.layout);
 
 		this.engine.doLayout(nodes, this.props.guides, this.props.width);
 

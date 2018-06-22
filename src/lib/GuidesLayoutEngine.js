@@ -44,6 +44,7 @@ type ScrollUpdate = {
 
 type Layout = {
 	dirty: boolean,
+	hasLayout: boolean,
 	spacingTop: number,
 	spacingBottom: number,
 	leaderTop: number,
@@ -225,6 +226,7 @@ export default class GuidesLayoutEngine {
 
 				//We found a layout we can compute, yay!
 				node.layout.dirty = false;
+				node.layout.hasLayout = true;
 				didANewLayout = true;
 
 				//This node requires more height than the previous ones we've enountered.

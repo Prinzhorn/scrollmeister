@@ -88,12 +88,14 @@ export default class InterpolateBehavior extends Behavior {
 
 		this.values = {};
 
-		this.connectTo('^guides-layout', this._createInterpolators.bind(this));
-		this.connectTo('^scroll', this._interpolate.bind(this));
+		this.connectTo('layout', this._createInterpolators.bind(this), () => {
+			this.connectTo('^scroll', this._interpolate.bind(this));
+		});
 	}
 
-	_createInterpolators(guidesLayoutBehavior: GuidesLayoutBehavior) {
+	_createInterpolators() {
 		let schema = this.constructor.behaviorSchema;
+		let guidesLayoutBehavior = this.parentEl.guidesLayout;
 
 		for (let prop in schema) {
 			if (schema.hasOwnProperty(prop)) {

@@ -176,11 +176,11 @@ export default class Behavior {
 			//After the first time we call the notifyCallback directly.
 			callback = notifyCallback;
 
+			notifyCallback(behavior);
+
 			if (connectedCallback) {
 				connectedCallback(behavior);
 			}
-
-			notifyCallback(behavior);
 		};
 
 		//For the most part this is what "connecting" is about.
